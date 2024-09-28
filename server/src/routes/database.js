@@ -1,0 +1,47 @@
+import Router from 'express-promise-router';
+import connectToDatabase, { connectToPostgres } from '../utils.js';
+import queries from '../queries.js';
+
+const router = new Router();
+
+router.post('/tables', async (req, res) => {
+  const db = await connectToDatabase(req, res);
+
+  db.query(queries.postgre.tables, (err, queryRes) => {
+    res.json(queryRes);
+    db.end();
+  });
+});
+
+router.post('/constraints', async (req, res) => {
+  const db = await connectToDatabase(req, res);
+
+  db.query(queries.postgre.constraints, (err, queryRes) => {
+    res.json(queryRes);
+    db.end();
+  });
+});
+
+router.post('/columns', async (req, res) => {
+  const db = await connectToDatabase(req, res);
+
+  db.query(queries.postgre.columns, (err, queryRes) => {
+    res.json(queryRes);
+    db.end();
+  });
+});
+
+router.post('/databases', async (req, res) => {
+  try {
+    const db = await connectToPostgres(req, res);
+    await db.query(queries.postgre.databases, (err, queryRes) => {
+      res.json(queryRes);
+      db.end();
+    });
+  } catch (err) {
+    console.error('Error in /databases route:', err);
+    res.status(500).json({ message: 'An unexpected error occurred' });
+  }
+});
+
+export default router;
