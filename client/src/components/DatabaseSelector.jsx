@@ -18,10 +18,6 @@ const DatabaseSelector = () => {
 
   const handleDatabaseClick = (database) => {
     const params = {
-      host: process.env.REACT_APP_DATABASE_HOST,
-      port: process.env.REACT_APP_DATABASE_PORT,
-      user: process.env.REACT_APP_DATABASE_USERNAME,
-      password: process.env.REACT_APP_DATABASE_PASSWORD,
       database: database,
     };
 

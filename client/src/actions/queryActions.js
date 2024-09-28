@@ -140,11 +140,7 @@ export const updateJoinsOrder = data => (dispatch) => {
 export const queryAction = state => ({
   type: ADD_RESULT,
   payload: axiosClient.post('/query/query', {
-    host: state.host,
-    port: state.port,
     database: state.database,
-    user: state.user,
-    password: state.password,
     sql: state.sql,
   }),
 });

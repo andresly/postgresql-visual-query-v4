@@ -51,11 +51,7 @@ QueryButton.propTypes = {
 };
 
 const mapStateToProps = store => ({
-  host: store.host.host,
-  port: store.host.port,
   database: store.host.database,
-  user: store.host.user,
-  password: store.host.password,
   sql: store.query.sql,
   language: store.settings.language,
   querying: store.query.querying,

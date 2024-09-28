@@ -1,11 +1,7 @@
 import { UPDATE_HOST, DELETE_HOST, CONNECT_ERROR, CONNECTING, CONNECTED } from '../actions/hostActions';
 
 export const INITIAL_STATE = {
-  host: '',
-  port: 8080,
   database: '',
-  user: '',
-  password: '',
   error: '',
   connected: false,
   connecting: false,
@@ -16,11 +12,7 @@ export const hostReducer = (state = INITIAL_STATE, action = {}) => {
     case UPDATE_HOST: {
       return {
         ...state,
-        host: action.payload.host,
-        port: action.payload.port,
         database: action.payload.database,
-        user: action.payload.user,
-        password: action.payload.password,
       };
     }
     case DELETE_HOST: {
