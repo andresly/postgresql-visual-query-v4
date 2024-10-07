@@ -2,7 +2,7 @@
 export const translations = {
   eng: {
     loginForm: {
-      formHeader: 'Connect to database',
+      formHeader: 'Log in',
       serverL: 'Server',
       serverPh: 'Enter server address',
       portL: 'Port',
@@ -19,6 +19,9 @@ export const translations = {
       about: `This software has been created and extended by the following people.
              - Erik Dzotsenidze (version 1)
              - Ragnar Pärnamäe (version 2)`,
+      logout: 'Log out',
+      searchDatabases: 'Search databases...',
+      availableDatabases: 'Available databases',
     },
     sideBar: {
       disconnectB: 'Disconnect',
@@ -88,7 +91,7 @@ export const translations = {
   },
   est: {
     loginForm: {
-      formHeader: 'Ühenda andmebaasiga',
+      formHeader: 'Logi sisse',
       serverL: 'Server',
       serverPh: 'Sisesta serveri aadress',
       portL: 'Port',
@@ -105,6 +108,9 @@ export const translations = {
       about: `Selle tarkvara on loonud ja laiendanud järgmised inimesed.
              - Erik Dzotsenidze (versioon 1)
              - Ragnar Pärnamäe (versioon 2)`,
+      logout: 'Logi välja',
+      searchDatabases: 'Otsi andmebaase...',
+      availableDatabases: 'Saadaval andmebaasid',
     },
     sideBar: {
       disconnectB: 'Välju',

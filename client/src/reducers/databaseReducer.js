@@ -5,9 +5,8 @@ import {
   CHANGE_SELECTED_SCHEMA,
   UPDATE_SEARCH_EXPR,
   DELETE_DATABASE,
+  ADD_DATABASES,
 } from '../actions/databaseActions';
-
-import { ADD_DATABASES } from '../actions/fetchAvailableDatabases';
 
 export const INITIAL_STATE = {
   schemas: [],

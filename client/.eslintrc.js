@@ -19,6 +19,9 @@ module.exports = {
   plugins: ['react'],
   rules: {
     quotes: ['error', 'single'],
+    'spaced-comment': 'off',
+    'max-len': 'off',
+    'react/jsx-tag-spacing': 'off',
     'no-multiple-empty-lines': 'off',
     'object-shorthand': 'off',
     'operator-linebreak': 'off',

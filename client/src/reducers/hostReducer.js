@@ -1,8 +1,20 @@
-import { UPDATE_HOST, DELETE_HOST, CONNECT_ERROR, CONNECTING, CONNECTED } from '../actions/hostActions';
+import {
+  UPDATE_HOST,
+  DELETE_HOST,
+  CONNECT_ERROR,
+  CONNECTING,
+  CONNECTED,
+  LOGGED_IN,
+  LOGGED_OUT,
+  DISCONNECT_FROM_DATABASE,
+} from '../actions/hostActions';
 
 export const INITIAL_STATE = {
   database: '',
+  user: '',
+  password: '',
   error: '',
+  loggedIn: false,
   connected: false,
   connecting: false,
 };
@@ -12,12 +24,20 @@ export const hostReducer = (state = INITIAL_STATE, action = {}) => {
     case UPDATE_HOST: {
       return {
         ...state,
-        database: action.payload.database,
+        user: action.payload.user,
+        password: action.payload.password,
       };
     }
     case DELETE_HOST: {
       return {
         ...INITIAL_STATE,
+      };
+    }
+    case DISCONNECT_FROM_DATABASE: {
+      return {
+        ...state,
+        database: '',
+        connected: false,
       };
     }
     case CONNECT_ERROR: {
@@ -32,6 +52,18 @@ export const hostReducer = (state = INITIAL_STATE, action = {}) => {
         ...state,
         connected: true,
         connecting: false,
+      };
+    }
+    case LOGGED_IN: {
+      return {
+        ...state,
+        loggedIn: true,
+      };
+    }
+    case LOGGED_OUT: {
+      return {
+        ...state,
+        loggedIn: false,
       };
     }
     case CONNECTING: {

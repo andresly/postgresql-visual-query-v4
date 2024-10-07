@@ -1,23 +1,46 @@
-import pg from 'pg';
+import pg from "pg";
+import crypto from "crypto";
+
+const decrypt = (text) => {
+  const iv = Buffer.from(text.iv, "hex");
+  const secret = Buffer.from(
+    "f010b843fe6830456476d9ba544246b1063086cb072e4804ece61bb58c551117",
+    "hex",
+  );
+  const encryptedData = Buffer.from(text.encryptedData, "hex");
+  const decipher = crypto.createDecipheriv("aes-256-cbc", secret, iv);
+
+  let decrypted = decipher.update(encryptedData);
+
+  decrypted += decipher.final("utf8");
+
+  return decrypted;
+};
 
 const connectToDatabase = async (req, res) => {
   const db = new pg.Client({
     database: req.body.database,
-    user: process.env.DATABASE_USERNAME,
+    user: req.body.user,
     host: process.env.DATABASE_HOST,
-    password: process.env.DATABASE_PASSWORD,
+    password: req.body.password,
     port: process.env.DATABASE_PORT,
   });
 
   db.connect().catch((err) => {
     if (err) {
-      if (err.code === 'ENOTFOUND') {
-        res.status(502).json({ message: 'Error: Host not found (code: ENOTFOUND)' });
-      } else if (err.code === 'ETIMEDOUT') {
-        res.status(504).json({ message: 'Error: Connection timed out (code: ETIMEDOUT)' });
+      if (err.code === "ENOTFOUND") {
+        res
+          .status(502)
+          .json({ message: "Error: Host not found (code: ENOTFOUND)" });
+      } else if (err.code === "ETIMEDOUT") {
+        res
+          .status(504)
+          .json({ message: "Error: Connection timed out (code: ETIMEDOUT)" });
       } else {
-        console.log('err', err);
-        res.status(500).json({ message: 'Error: Something went wrong (code: UNEXPECTED)' });
+        console.log("err", err);
+        res
+          .status(500)
+          .json({ message: "Error: Something went wrong (code: UNEXPECTED)" });
       }
     }
   });
@@ -27,27 +50,34 @@ const connectToDatabase = async (req, res) => {
 
 export const connectToPostgres = async (req, res) => {
   const data = {
-    database: 'postgres',
-    user: process.env.DATABASE_USERNAME,
+    database: "postgres",
+    user: req.body.user,
+    password: req.body.password,
     host: process.env.DATABASE_HOST,
-    password: process.env.DATABASE_PASSWORD,
     port: process.env.DATABASE_PORT,
   };
 
+  console.log("data", data);
   const db = new pg.Client(data);
 
   try {
     await db.connect();
     return db;
   } catch (err) {
-    console.error('Database connection error:', err);
-    if (err.code === 'ENOTFOUND') {
-      res.status(502).json({ message: 'Error: Host not found (code: ENOTFOUND)' });
-    } else if (err.code === 'ETIMEDOUT') {
-      res.status(504).json({ message: 'Error: Connection timed out (code: ETIMEDOUT)' });
+    console.error("code:", err.code);
+    if (err.code === "ENOTFOUND") {
+      res
+        .status(502)
+        .json({ message: "Error: Host not found (code: ENOTFOUND)" });
+    } else if (err.code === "ETIMEDOUT") {
+      res
+        .status(504)
+        .json({ message: "Error: Connection timed out (code: ETIMEDOUT)" });
+    } else if (err.code === "28000") {
+      res.status(401).json({ message: "Invalid username or password" });
     } else {
       res.status(500).json({
-        message: `Error: ${err.message} (code: ${err.code || 'UNEXPECTED'})`,
+        message: `Error: ${err.message} (code: ${err.code || "UNEXPECTED"})`,
       });
     }
     throw err; // Re-throw the error to be caught in the route handler
