@@ -18,26 +18,15 @@ export const QueryButton = (props) => {
   };
 
   return (
-    <Button
-      type="button"
-      size="lg"
-      color="primary"
-      className="mr-2"
-      onClick={handleOnClick}
-      disabled={props.querying}
-    >
-      {props.querying
-        ? (
-          <div className="d-flex align-items-center justify-content-center">
-            <div
-              className="mr-2"
-            >
-              {translations[props.language.code].queryBuilder.querying}
-            </div>
-            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
-          </div>
-        )
-        : translations[props.language.code].queryBuilder.queryB}
+    <Button type="button" size="lg" color="primary" className="mr-2" onClick={handleOnClick} disabled={props.querying}>
+      {props.querying ? (
+        <div className="d-flex align-items-center justify-content-center">
+          <div className="mr-2">{translations[props.language.code].queryBuilder.querying}</div>
+          <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
+        </div>
+      ) : (
+        translations[props.language.code].queryBuilder.queryB
+      )}
     </Button>
   );
 };
@@ -50,7 +39,7 @@ QueryButton.propTypes = {
   updateValidity: PropTypes.func,
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   host: store.host.host,
   port: store.host.port,
   database: store.host.database,

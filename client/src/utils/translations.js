@@ -18,7 +18,9 @@ export const translations = {
       aboutH: 'About',
       about: `This software has been created and extended by the following people.
              - Erik Dzotsenidze (version 1)
-             - Ragnar Pärnamäe (version 2)`,
+             - Ragnar Pärnamäe (version 2)
+             - Karel Markus Mulk (version 3)
+             - Andres Lüiste (version 4)`,
       logout: 'Log out',
       searchDatabases: 'Search databases...',
       availableDatabases: 'Available databases',
@@ -107,7 +109,9 @@ export const translations = {
       aboutH: 'Teave',
       about: `Selle tarkvara on loonud ja laiendanud järgmised inimesed.
              - Erik Dzotsenidze (versioon 1)
-             - Ragnar Pärnamäe (versioon 2)`,
+             - Ragnar Pärnamäe (versioon 2)
+             - Karel Markus Mulk (versioon 3)
+             - Andres Lüiste (versioon 4)`,
       logout: 'Logi välja',
       searchDatabases: 'Otsi andmebaase...',
       availableDatabases: 'Saadaval andmebaasid',

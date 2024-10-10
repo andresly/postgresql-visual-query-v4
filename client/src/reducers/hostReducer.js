@@ -26,6 +26,7 @@ export const hostReducer = (state = INITIAL_STATE, action = {}) => {
         ...state,
         user: action.payload.user,
         password: action.payload.password,
+        database: action.payload.database,
       };
     }
     case DELETE_HOST: {

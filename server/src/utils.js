@@ -18,13 +18,16 @@ const decrypt = (text) => {
 };
 
 const connectToDatabase = async (req, res) => {
-  const db = new pg.Client({
-    database: req.body.database,
-    user: req.body.user,
+  const data = {
     host: process.env.DATABASE_HOST,
-    password: req.body.password,
     port: process.env.DATABASE_PORT,
-  });
+    user: req.body.user,
+    password: req.body.password,
+    database: req.body.database,
+  };
+  console.log({ data });
+
+  const db = new pg.Client(data);
 
   db.connect().catch((err) => {
     if (err) {

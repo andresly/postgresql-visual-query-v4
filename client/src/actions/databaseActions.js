@@ -19,6 +19,8 @@ export const connectToDatabase = (state) => async (dispatch) => {
 
   const hostInfo = {
     database: state.database,
+    user: state.user,
+    password: state.password,
   };
 
   console.log('hostInfo', hostInfo);
@@ -39,6 +41,7 @@ export const connectToDatabase = (state) => async (dispatch) => {
       }),
     )
     .catch((error) => {
+      console.log(error.toString());
       dispatch({ type: CONNECT_ERROR, payload: error.toString() });
     });
 };
@@ -49,7 +52,6 @@ export const search = (expr) => ({ type: UPDATE_SEARCH_EXPR, payload: expr });
 
 export const fetchAvailableDatabases = (state) => async (dispatch) => {
   try {
-    console.log('fetchAvailableDatabases', state);
     const data = {
       user: state.user,
       password: state.password,
