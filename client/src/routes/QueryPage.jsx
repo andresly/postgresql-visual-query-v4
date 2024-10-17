@@ -17,7 +17,7 @@ import SearchBar from '../components/SearchBar';
 import DatabaseViewer from '../components/DatabaseViewer';
 import NavBar from '../components/NavBar';
 
-export const SideBar = props => (
+export const SideBar = (props) => (
   <div className="d-flex flex-column w-100">
     <div className="">
       <LanguageSwitcher />
@@ -39,7 +39,9 @@ SideBar.propTypes = {
 export const TableTypeWrapper = (props) => (
   <div className="d-inline-flex">
     <div className={`d-flex flex-column m-2 border ${props.index === 0 ? 'border-success' : 'border-danger'}`}>
-      <h6 className={`text-center ${props.index === 0 ? 'text-success' : 'text-danger'}`}>{props.index === 0 ? 'MAIN TABLE' : 'JOIN'}</h6>
+      <h6 className={`text-center ${props.index === 0 ? 'text-success' : 'text-danger'}`}>
+        {props.index === 0 ? 'MAIN TABLE' : 'JOIN'}
+      </h6>
       {props.children}
     </div>
   </div>
@@ -54,17 +56,18 @@ export const QueryBuilder = (props) => (
           return (
             <TableTypeWrapper
               index={index}
-              children={(
+              children={
                 <QueryTable
                   key={`query-table-${index}-${table.id}`}
                   id={`query-table-${index}`}
                   data={table}
                   firstTableId={props.tables[0].id}
                 />
-          )}
+              }
             />
           );
-        } return (
+        }
+        return (
           <QueryTable
             key={`query-table-${index}-${table.id}`}
             id={`query-table-${index}`}
@@ -78,19 +81,17 @@ export const QueryBuilder = (props) => (
     <div className="my-2">
       <QueryButton queryValid={props.queryValid} />
 
-      {props.tables.length
-        ? (
-          <>
-            <DownloadSQLButton />
-            <DownloadCSVButton />
-          </>
-        ) : null}
-
+      {props.tables.length ? (
+        <>
+          <DownloadSQLButton />
+          <DownloadCSVButton />
+        </>
+      ) : null}
     </div>
     {!props.queryValid && (
-    <Alert color="danger" className="w-25">
-      {translations[props.language.code].queryBuilder.invalidQuery}
-    </Alert>
+      <Alert color="danger" className="w-25">
+        {translations[props.language.code].queryBuilder.invalidQuery}
+      </Alert>
     )}
     <ResultTabs />
   </div>
@@ -103,7 +104,7 @@ QueryBuilder.propTypes = {
   queryType: PropTypes.string,
 };
 
-export const QueryPage = props => (
+export const QueryPage = (props) => (
   <Container fluid>
     <Row>
       <Col sm="2" className="py-2 vh-100 d-flex bg-light">
@@ -133,7 +134,7 @@ QueryPage.propTypes = {
   queries: PropTypes.arrayOf(PropTypes.shape({})),
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   tables: store.query.tables,
   language: store.settings.language,
   queryValid: store.query.queryValid,

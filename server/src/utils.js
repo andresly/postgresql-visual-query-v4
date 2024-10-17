@@ -25,7 +25,6 @@ const connectToDatabase = async (req, res) => {
     password: req.body.password,
     database: req.body.database,
   };
-  console.log({ data });
 
   const db = new pg.Client(data);
 
@@ -60,7 +59,6 @@ export const connectToPostgres = async (req, res) => {
     port: process.env.DATABASE_PORT,
   };
 
-  console.log("data", data);
   const db = new pg.Client(data);
 
   try {

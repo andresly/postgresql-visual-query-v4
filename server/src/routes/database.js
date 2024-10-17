@@ -35,8 +35,11 @@ router.post("/databases", async (req, res) => {
   try {
     const db = await connectToPostgres(req, res);
     await db.query(queries.postgre.databases, (err, queryRes) => {
-      console.log(queryRes);
       if (queryRes && queryRes.rows) {
+        // filfer alphabetical order
+        queryRes.rows = queryRes.rows.sort((a, b) =>
+          a.Name.localeCompare(b.Name),
+        );
         queryRes.rows = queryRes.rows.filter(
           (row) => !["postgres", "template0", "template1"].includes(row.Name),
         );

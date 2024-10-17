@@ -4,8 +4,7 @@ const queries = {
     SELECT datname AS "Name",
            pg_catalog.pg_get_userbyid(datdba) AS "Owner"
     FROM pg_catalog.pg_database
-    WHERE datistemplate = false
-    ORDER BY datname COLLATE "en_US.utf8";
+    WHERE datistemplate = false;
   `,
     tables:
       "SELECT table_schema, table_name, table_type\n" +

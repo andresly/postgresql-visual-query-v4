@@ -10,4 +10,19 @@ const axiosClient = axios.create({
   },
 });
 
+// Add a response interceptor
+axiosClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.log('siiiiin');
+    console.log('error2', error);
+
+    // Handle 400 error
+    console.error('Bad Request:', error.response.data);
+    // You can dispatch an action here to update the state with the error message
+    //
+    return Promise.reject(error);
+  },
+);
+
 export default axiosClient;
