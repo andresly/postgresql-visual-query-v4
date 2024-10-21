@@ -230,8 +230,6 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
 
       columns[columnIndex].column_filters = filters;
 
-      console.log('filters', filters);
-      console.log('columns', columns);
       return {
         ...state,
         columns,
@@ -251,7 +249,6 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       const updatedColumn = action.payload;
       const columnIndex = state.columns.findIndex((column) => _.isEqual(column.id, updatedColumn.id));
 
-      console.log('updatedColumn', updatedColumn);
       if (columnIndex > -1) {
         columns[columnIndex] = updatedColumn;
       }

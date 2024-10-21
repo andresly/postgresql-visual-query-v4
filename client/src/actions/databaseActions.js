@@ -23,8 +23,6 @@ export const connectToDatabase = (state) => async (dispatch) => {
     password: state.password,
   };
 
-  console.log('hostInfo', hostInfo);
-
   axios
     .all([
       axiosClient.post('/database/tables', hostInfo),

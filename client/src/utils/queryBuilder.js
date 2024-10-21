@@ -192,7 +192,6 @@ const buildJoinOn = (join) => {
       conditionArray.push(conditionString);
     }
   });
-  console.log('conditionArray', conditionArray);
   return conditionArray.join(' AND ');
 };
 
