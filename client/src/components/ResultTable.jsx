@@ -14,7 +14,7 @@ export const ResultTable = (props) => {
       const tableRow = row;
 
       props.result.fields.forEach((field) => {
-        if (_.isObject(tableRow[field.name]) || typeof (tableRow[field.name]) === 'boolean') {
+        if (_.isObject(tableRow[field.name]) || typeof tableRow[field.name] === 'boolean') {
           tableRow[field.name] = JSON.stringify(tableRow[field.name]);
         }
       });
@@ -35,7 +35,7 @@ export const ResultTable = (props) => {
       filterable: false,
       resizable: false,
       // eslint-disable-next-line react/no-unstable-nested-components
-      Cell: row => <div>{row.index + 1}</div>,
+      Cell: (row) => <div>{row.index + 1}</div>,
     });
 
     props.result.fields.forEach((field) => {
@@ -48,10 +48,14 @@ export const ResultTable = (props) => {
     return columns;
   };
 
+  let { error } = props;
+
+  if (props.error && props.error.request && props.error.request.response) {
+    error = JSON.parse(props.error.request.response);
+  }
   return (
     <div className="result">
-      {props.result
-      && (
+      {props.result && (
         <ReactTable
           className="-striped -highlight"
           data={parseRows()}
@@ -60,14 +64,13 @@ export const ResultTable = (props) => {
           showPagination={parseRows().length > 20}
         />
       )}
-      {props.error
-      && (
+      {props.error && (
         <div>
-          {`ERROR: ${props.error.message}`}
+          {`ERROR: ${error.message}`}
           <div className="w-100" />
-          {`CODE: ${props.error.code}`}
+          {`CODE: ${error.code}`}
           <div className="w-100" />
-          {`POSITION: ${props.error.position}`}
+          {`POSITION: ${error.position}`}
         </div>
       )}
     </div>
@@ -86,7 +89,7 @@ ResultTable.propTypes = {
   }),
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   result: store.query.result,
   error: store.query.error,
 });

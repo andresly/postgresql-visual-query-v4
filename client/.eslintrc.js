@@ -19,6 +19,7 @@ module.exports = {
   plugins: ['react'],
   rules: {
     quotes: ['error', 'single'],
+    'arrow-body-style': 'off',
     'implicit-arrow-linebreak': 'off',
     'no-confusing-arrow': 'off',
     'spaced-comment': 'off',

@@ -148,8 +148,8 @@ export const queryAction = (state) => ({
 });
 
 export const query = (state) => async (dispatch) => {
-  dispatch({ type: QUERYING });
   try {
+    dispatch({ type: QUERYING });
     await dispatch(queryAction(state));
   } catch (error) {
     dispatch({ type: `${ADD_RESULT}_REJECTED`, payload: error });
