@@ -26,7 +26,7 @@ export const translations = {
       availableDatabases: 'Available databases',
     },
     sideBar: {
-      disconnectB: 'Disconnect',
+      disconnectB: 'Switch database',
       tablesH: 'Tables',
       schemaH: 'Schema',
       searchPh: 'Search',
@@ -117,7 +117,7 @@ export const translations = {
       availableDatabases: 'Saadaval andmebaasid',
     },
     sideBar: {
-      disconnectB: 'Välju',
+      disconnectB: 'Vaheta andmebaasi',
       tablesH: 'Tabelid',
       schemaH: 'Skeem',
       searchPh: 'Otsi',

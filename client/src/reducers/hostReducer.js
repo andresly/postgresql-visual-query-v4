@@ -7,6 +7,7 @@ import {
   LOGGED_IN,
   LOGGED_OUT,
   DISCONNECT_FROM_DATABASE,
+  PSQL_VERSION,
 } from '../actions/hostActions';
 
 export const INITIAL_STATE = {
@@ -17,6 +18,7 @@ export const INITIAL_STATE = {
   loggedIn: false,
   connected: false,
   connecting: false,
+  psqlVersion: '',
 };
 
 export const hostReducer = (state = INITIAL_STATE, action = {}) => {
@@ -71,6 +73,12 @@ export const hostReducer = (state = INITIAL_STATE, action = {}) => {
       return {
         ...state,
         connecting: true,
+      };
+    }
+    case PSQL_VERSION: {
+      return {
+        ...state,
+        psqlVersion: action.payload,
       };
     }
     default:

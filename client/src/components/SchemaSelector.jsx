@@ -13,22 +13,15 @@ export const SchemaSelector = (props) => {
 
   return (
     <div className="mb-2">
+      <h6>{props.psqlVersion}</h6>
       <h5>{translations[props.language.code].sideBar.schemaH}</h5>
-      <Dropdown
-        size="sm"
-        className="w-100"
-        isOpen={props.toggleStatus}
-        toggle={props.toggle}
-      >
+      <Dropdown size="sm" className="w-100" isOpen={props.toggleStatus} toggle={props.toggle}>
         <DropdownToggle caret className="w-100 btn btn-light btn-outline-secondary text-truncate">
           {props.selectedSchema}
         </DropdownToggle>
         <DropdownMenu>
-          {props.schemas.map(schema => (
-            <DropdownItem
-              key={schema}
-              onClick={() => handleOnClick(schema)}
-            >
+          {props.schemas.map((schema) => (
+            <DropdownItem key={schema} onClick={() => handleOnClick(schema)}>
               {schema}
             </DropdownItem>
           ))}
@@ -46,12 +39,14 @@ SchemaSelector.propTypes = {
   data: PropTypes.shape({ table_type: PropTypes.string, table_name: PropTypes.string }),
   toggle: PropTypes.func,
   toggleStatus: PropTypes.bool,
+  psqlVersion: PropTypes.string,
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   schemas: store.database.schemas,
   selectedSchema: store.database.selectedSchema,
   language: store.settings.language,
+  psqlVersion: store.host.psqlVersion,
 });
 
 const mapDispatchToProps = {

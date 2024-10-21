@@ -3,22 +3,24 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Button, Input } from 'reactstrap';
 import { Redirect } from 'react-router-dom';
 import { connectToDatabase, fetchAvailableDatabases } from '../actions/databaseActions';
-import { logout } from '../actions/hostActions';
+import { logout, getDatabaseVersion } from '../actions/hostActions';
 import { translations } from '../utils/translations';
 
 const DatabaseSelector = () => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState('');
-  const { availableDatabases, connected, user, password, language } = useSelector((state) => ({
+  const { availableDatabases, connected, user, password, language, psqlVersion } = useSelector((state) => ({
     availableDatabases: state.database.availableDatabases,
     connected: state.host.connected,
     user: state.host.user,
     password: state.host.password,
     language: state.settings.language,
+    psqlVersion: state.host.psqlVersion,
   }));
 
   useEffect(() => {
     dispatch(fetchAvailableDatabases({ user, password }));
+    dispatch(getDatabaseVersion({ user, password }));
   }, [dispatch, user, password]);
 
   const handleDatabaseClick = (database) => {
@@ -41,7 +43,8 @@ const DatabaseSelector = () => {
 
   return (
     <div>
-      <h1 className="mb-4">{translations[language.code].loginForm.availableDatabases}</h1>
+      <h1 className="mb-1">{translations[language.code].loginForm.availableDatabases}</h1>
+      <div className="mb-4">{psqlVersion}</div>
       <Button className="w-100 btn-danger mb-4" onClick={() => dispatch(logout())}>
         {translations[language.code].loginForm.logout}
       </Button>

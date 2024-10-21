@@ -6,6 +6,7 @@ const queries = {
     FROM pg_catalog.pg_database
     WHERE datistemplate = false;
   `,
+    databaseVersion: `SELECT substring(version(), '^[[:alpha:]]+[ ]+[[:digit:]\\.]+') AS version;`,
     tables:
       "SELECT table_schema, table_name, table_type\n" +
       "FROM information_schema.tables\n" +
