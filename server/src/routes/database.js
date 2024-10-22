@@ -67,9 +67,7 @@ router.post("/login", async (req, res) => {
 router.post("/version", async (req, res) => {
   try {
     const db = await connectToPostgres(req, res);
-    console.log("query", queries.postgre.databaseVersion);
     await db.query(queries.postgre.databaseVersion, (err, queryRes) => {
-      console.log("queryRes", queryRes);
       res.json(queryRes.rows[0]);
       db.end();
     });
