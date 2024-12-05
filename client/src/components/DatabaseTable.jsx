@@ -3,19 +3,23 @@ import { Button, Tooltip } from 'reactstrap';
 import { connect } from 'react-redux';
 import _ from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import * as PropTypes from 'prop-types';
 import { addColumn, addTable, removeTable, resetQuery } from '../actions/queryActions';
 import { withToggle } from '../hocs/withToggle';
 
-export const DatabaseTable = ({
-  data, checked, id, addTableProp, toggle, toggleStatus, queryType, resetQuery,
-}) => {
+export const DatabaseTable = ({ data, checked, id, addTableProp, toggle, toggleStatus, queryType, resetQuery }) => {
   const handleOnClick = () => {
     if (queryType === 'INSERT') {
       resetQuery(queryType);
     }
 
     addTableProp(data);
+  };
+
+  const handleOpenNewTab = (e) => {
+    e.preventDefault();
+    window.open(data.table_name, '_blank');
   };
 
   let tableTypeColor = 'primary';
@@ -41,24 +45,24 @@ export const DatabaseTable = ({
 
   return (
     <div className="w-100 pr-1">
-      <Button
-        size="sm"
-        color={btnSelected}
-        id={id}
-        className="btn-block my-1 pt-0 text-left"
-        onClick={handleOnClick}
-      >
-        <small
-          color={tableTypeColor}
-          className="text-truncate align-self-start"
-        >
-          <span className="mr-1 px-0">
-            <FontAwesomeIcon icon="th-large" />
-          </span>
-          {data.table_type}
-        </small>
-        <div className="text-truncate">
-          {` ${data.table_name}`}
+      <Button size="sm" color={btnSelected} id={id} className="btn-block my-1 pt-0 text-left">
+        <div className="d-flex justify-content-between align-items-center">
+          <div onClick={handleOnClick} className="w-100">
+            <small color={tableTypeColor} className="text-truncate align-self-start">
+              <span className="mr-1 px-0">
+                <FontAwesomeIcon icon="th-large" />
+              </span>
+              {data.table_type}
+            </small>
+            <div className="text-truncate">{` ${data.table_name}`}</div>
+          </div>
+          <div>
+            <FontAwesomeIcon
+              icon={faExternalLinkAlt}
+              style={{ width: '1rem', height: '1rem' }}
+              onClick={handleOpenNewTab}
+            />
+          </div>
         </div>
       </Button>
       <Tooltip
@@ -88,7 +92,7 @@ DatabaseTable.propTypes = {
 
 const mapDispatchToProps = {
   addColumn,
-  addTableProp: data => addTable(data),
+  addTableProp: (data) => addTable(data),
   removeTable,
   resetQuery,
 };

@@ -18,8 +18,12 @@ module.exports = {
   },
   plugins: ['react'],
   rules: {
-    quotes: ['error', 'single'],
+    quotes: 'off',
     'arrow-body-style': 'off',
+    'react/jsx-curly-brace-presence': 'off',
+    'jsx-a11y/no-static-element-interactions': 'off',
+    'jsx-a11y/click-events-have-key-events': 'off',
+    'react/no-unused-prop-types': 'off',
     'implicit-arrow-linebreak': 'off',
     'no-confusing-arrow': 'off',
     'spaced-comment': 'off',

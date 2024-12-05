@@ -29,13 +29,7 @@ import { getCorrectQueryName } from '../utils/getCorrectQueryName';
 
 const CopyButton = ({ id, handleCopy, languageCode }) => (
   <div>
-    <Button
-      size="sm"
-      color="secondary"
-      id={`${id}_copy`}
-      className="mr-1"
-      onClick={handleCopy}
-    >
+    <Button size="sm" color="secondary" id={`${id}_copy`} className="mr-1" onClick={handleCopy}>
       <FontAwesomeIcon icon="copy" />
     </Button>
     <UncontrolledTooltip placement="top" target={`${id}_copy`} delay={{ show: 500, hide: 0 }}>
@@ -52,12 +46,7 @@ CopyButton.propTypes = {
 
 const RemoveButton = ({ id, handleRemoveColumn }) => (
   <div>
-    <Button
-      size="sm"
-      color="danger"
-      id={`${id}_remove`}
-      onClick={handleRemoveColumn}
-    >
+    <Button size="sm" color="danger" id={`${id}_remove`} onClick={handleRemoveColumn}>
       <FontAwesomeIcon icon="times" />
     </Button>
   </div>
@@ -92,10 +81,9 @@ export class QueryColumn extends Component {
     if (this.props.data.subqueryId) {
       let column = _.cloneDeep(this.props.data);
 
-      const subquery = this.props.queries
-        .find(query => query.id === this.props.data.subqueryId);
+      const subquery = this.props.queries.find((query) => query.id === this.props.data.subqueryId);
 
-      const subquerySql = (!typeof subquery === 'undefined' ? subquery.sql : '');
+      const subquerySql = !typeof subquery === 'undefined' ? subquery.sql : '';
 
       column = {
         ...column,
@@ -107,7 +95,7 @@ export class QueryColumn extends Component {
   }
 
   handleDropDown() {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       dropDownOpen: !prevState.dropDownOpen,
     }));
   }
@@ -161,7 +149,7 @@ export class QueryColumn extends Component {
 
     if (e.currentTarget.name === 'subqueryId') {
       const subqueryId = +e.target.value;
-      const subquerySql = this.props.queries.find(query => query.id === subqueryId).sql;
+      const subquerySql = this.props.queries.find((query) => query.id === subqueryId).sql;
 
       column = {
         ...column,
@@ -218,17 +206,15 @@ export class QueryColumn extends Component {
       ? `${this.props.data.table_schema}.${this.props.data.table_name}.${this.props.data.column_name}`
       : `${this.props.data.table_schema}.${this.props.data.table_alias}.${this.props.data.column_name}`;
     const filterValid = this.state.filter_valid ? '' : 'is-invalid';
-    const linkedQuery = this.props.queries.find(query => query.id === this.props.data.subqueryId);
+    const linkedQuery = this.props.queries.find((query) => query.id === this.props.data.subqueryId);
     const linkedQueryName = linkedQuery
       ? getCorrectQueryName(this.props.language, linkedQuery.queryName, linkedQuery.id)
       : translations[this.props.language.code].queryBuilder.linkSq;
 
+    console.log(this.props.data);
     return (
-      <Draggable
-        draggableId={`${this.props.id}`}
-        index={this.props.index}
-      >
-        {provided => (
+      <Draggable draggableId={`${this.props.id}`} index={this.props.index}>
+        {(provided) => (
           <div className="m-auto">
             <Card
               className="px-0 my-2"
@@ -254,17 +240,10 @@ export class QueryColumn extends Component {
                               checked={this.props.data.display_in_query}
                               onChange={this.handleSwitch}
                             />
-                            <h6
-                              className="m-0 mr-2 align-self-center"
-                              id="column_name"
-                            >
+                            <h6 className="m-0 mr-2 align-self-center" id="column_name">
                               {columnName}
                             </h6>
-                            <UncontrolledTooltip
-                              placement="top"
-                              delay={{ show: 0, hide: 0 }}
-                              target="column_name"
-                            >
+                            <UncontrolledTooltip placement="top" delay={{ show: 0, hide: 0 }} target="column_name">
                               {this.props.data.data_type}
                             </UncontrolledTooltip>
                           </div>
@@ -278,9 +257,7 @@ export class QueryColumn extends Component {
                                 name="column_distinct_on"
                                 checked={this.props.data.column_distinct_on}
                                 onChange={this.handleSwitch}
-                                label={
-                                  translations[this.props.language.code].queryBuilder.distinctOnL
-                                }
+                                label={translations[this.props.language.code].queryBuilder.distinctOnL}
                               />
                               <CustomInput
                                 className="mr-2"
@@ -349,10 +326,7 @@ export class QueryColumn extends Component {
                             </CustomInput>
                           </div>
                           <div className="col-auto">
-                            <InputGroup
-                              className="my-1 align-self-start"
-                              size="sm"
-                            >
+                            <InputGroup className="my-1 align-self-start" size="sm">
                               <Input
                                 style={{ flexBasis: 'auto' }}
                                 className="text-dark"
@@ -362,9 +336,7 @@ export class QueryColumn extends Component {
                                 onBlur={this.handleSave}
                                 onChange={this.handleChange}
                                 value={this.state.column_alias}
-                                placeholder={
-                                  translations[this.props.language.code].queryBuilder.aliasPh
-                                }
+                                placeholder={translations[this.props.language.code].queryBuilder.aliasPh}
                               />
                               <UncontrolledTooltip
                                 placement="top"
@@ -395,9 +367,7 @@ export class QueryColumn extends Component {
                                 onBlur={this.handleSave}
                                 onChange={this.handleChange}
                                 value={this.state.column_filter}
-                                placeholder={
-                                  translations[this.props.language.code].queryBuilder.filterPh
-                                }
+                                placeholder={translations[this.props.language.code].queryBuilder.filterPh}
                               />
                               <div className="invalid-feedback order-1">
                                 {translations[this.props.language.code].tooltips.invalidFilter}
@@ -440,11 +410,7 @@ export class QueryColumn extends Component {
                                         value={query.id}
                                         onClick={this.handleSave}
                                       >
-                                        {getCorrectQueryName(
-                                          this.props.language,
-                                          query.queryName,
-                                          query.id,
-                                        )}
+                                        {getCorrectQueryName(this.props.language, query.queryName, query.id)}
                                       </DropdownItem>
                                     ))}
                                   </DropdownMenu>
@@ -537,11 +503,10 @@ QueryColumn.propTypes = {
   queries: PropTypes.arrayOf(PropTypes.shape({})),
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   distinct: store.query.distinct,
   language: store.settings.language,
-  queries: store.queries.filter(query => query.id !== 0)
-    .sort((query1, query2) => query1.id - query2.id),
+  queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
 });
 
 const mapDispatchToProps = {

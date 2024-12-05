@@ -49,7 +49,7 @@ export const TableTypeWrapper = (props) => (
 
 export const QueryBuilder = (props) => (
   <div className="mt-0 pr-2">
-    <NavBar language={props.language} />
+    <NavBar language={props.language} queryType={props.queryType} />
     <div style={{ minHeight: '40vh' }}>
       {props.tables.map((table, index) => {
         if (['DELETE', 'UPDATE'].includes(props.queryType)) {

@@ -1,5 +1,5 @@
 import * as PropTypes from 'prop-types';
-import React, { Fragment, useState } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import {
   Button,
   ButtonDropdown,
@@ -18,8 +18,9 @@ import NavBarMenu from './NavBarMenu';
 import NavBarQueryTabs from './NavBarQueryTabs';
 import { getCorrectQueryName } from '../utils/getCorrectQueryName';
 
-const NavBar = ({ language, queries }) => {
+const NavBar = ({ language, queries, queryType }) => {
   const [showNavBarMenu, setShowNavBarMenu] = useState(true);
+  const [isNavbarHidden, setIsNavbarHidden] = useState(false);
   const [dropdownOpen, setOpen] = useState(false);
   const [treeElementOpen, setTreeElementOpen] = useState({});
 
@@ -29,71 +30,61 @@ const NavBar = ({ language, queries }) => {
     setShowNavBarMenu(!showNavBarMenu);
   };
 
-  const mapper = (queriesObj, parentId, lvl) => queriesObj.map((query) => {
-    const toggleTreeElement = (e) => {
-      const id = e.target.getAttribute('id');
+  useEffect(() => {
+    if (queryType === 'TABLE_PREVIEW') {
+      setIsNavbarHidden(true);
+    } else {
+      setIsNavbarHidden(false);
+    }
+  }, [queryType]);
 
-      setTreeElementOpen(state => ({ [id]: !state[id] }));
-    };
+  const mapper = (queriesObj, parentId, lvl) =>
+    queriesObj.map((query) => {
+      const toggleTreeElement = (e) => {
+        const id = e.target.getAttribute('id');
 
-    const id = `${query.id}-${parentId || 'top'}`.replace(/[^a-zA-Z0-9-_]/g, '');
+        setTreeElementOpen((state) => ({ [id]: !state[id] }));
+      };
 
-    return (
-      <Fragment key={_.uniqueId('fragment_')}>
-        <ListGroupItem
-          key={id}
-          style={{ zIndex: 0 }}
-          className={`${parentId ? `rounded-0 ${lvl ? 'border-bottom-0' : ''}` : ''}`}
-        >
-          <div style={{ paddingLeft: `${25 * lvl}px` }}>
-            {query.subqueries && (
-              <Button
-                color="link"
-                className="pt-0 ml-n3"
-                id={id}
-                key={id}
-                onClick={toggleTreeElement}
-              >
-                {treeElementOpen[id]
-                  ? <FontAwesomeIcon icon="sort-down" className="fa-rotate-270" />
-                  : <FontAwesomeIcon icon="sort-down" />}
-              </Button>
-            )}
-            {getCorrectQueryName(language, query.queryName, query.id)}
-          </div>
-        </ListGroupItem>
-        {query.subqueries
-        && (
-          <Collapse isOpen={treeElementOpen[id]}>
-            {mapper(query.subqueries, id, (lvl || 0) + 1)}
-          </Collapse>
-        )}
-      </Fragment>
-    );
-  });
+      const id = `${query.id}-${parentId || 'top'}`.replace(/[^a-zA-Z0-9-_]/g, '');
+
+      return (
+        <Fragment key={_.uniqueId('fragment_')}>
+          <ListGroupItem
+            key={id}
+            style={{ zIndex: 0 }}
+            className={`${parentId ? `rounded-0 ${lvl ? 'border-bottom-0' : ''}` : ''}`}
+          >
+            <div style={{ paddingLeft: `${25 * lvl}px` }}>
+              {query.subqueries && (
+                <Button color="link" className="pt-0 ml-n3" id={id} key={id} onClick={toggleTreeElement}>
+                  {treeElementOpen[id] ? (
+                    <FontAwesomeIcon icon="sort-down" className="fa-rotate-270" />
+                  ) : (
+                    <FontAwesomeIcon icon="sort-down" />
+                  )}
+                </Button>
+              )}
+              {getCorrectQueryName(language, query.queryName, query.id)}
+            </div>
+          </ListGroupItem>
+          {query.subqueries && (
+            <Collapse isOpen={treeElementOpen[id]}>{mapper(query.subqueries, id, (lvl || 0) + 1)}</Collapse>
+          )}
+        </Fragment>
+      );
+    });
 
   return (
     <div className="mb-2">
-      <Navbar
-        className="m-0 pt-1 pl-2 pb-0"
-        color="light"
-        light
-        expand="sm"
-      >
+      <Navbar className="m-0 pt-1 pl-2 pb-0" color="light" light expand="sm">
         <ButtonDropdown size="sm" isOpen={dropdownOpen} toggle={toggleDropdown}>
           <DropdownToggle className="btn-sm btn-light btn-outline-secondary" caret>
-            <FontAwesomeIcon
-              icon="project-diagram"
-              size="1x"
-              className="pr-2"
-              style={{ width: '1.6rem' }}
-            />
+            <FontAwesomeIcon icon="project-diagram" size="1x" className="pr-2" style={{ width: '1.6rem' }} />
             {translations[language.code].queryBuilder.queriesH}
           </DropdownToggle>
           <DropdownMenu className="p-0">
-            <ListGroup>
-              {mapper(queries)}
-            </ListGroup>
+            <ListGroup>{mapper(queries)}</ListGroup>
           </DropdownMenu>
         </ButtonDropdown>
         <span
@@ -127,7 +118,7 @@ const NavBar = ({ language, queries }) => {
           </Button>
         </div>
       </Navbar>
-      {showNavBarMenu && <NavBarMenu language={language} />}
+      {showNavBarMenu && !isNavbarHidden && <NavBarMenu language={language} />}
     </div>
   );
 };
@@ -138,13 +129,13 @@ NavBar.propTypes = {
 };
 
 const mapStateToProps = (store) => {
-  const queries = [...store.queries, store.query].slice()
-    .sort((query1, query2) => query1.id - query2.id);
+  const queries = [...store.queries, store.query].slice().sort((query1, query2) => query1.id - query2.id);
   // .map(query => ({ ...query, subqueries: [{ id: _.uniqueId(), queryName: 'subquery' }] }));
 
-  return ({
+  return {
     queries,
-  });
+    queryType: store.query.queryType,
+  };
 };
 
 export default connect(mapStateToProps)(NavBar);
