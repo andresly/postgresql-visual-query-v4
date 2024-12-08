@@ -4,6 +4,7 @@ import connectToDatabase from "../utils.js";
 const router = new Router();
 
 router.post("/query", async (req, res) => {
+  console.log("sql", req.body.sql);
   const db = await connectToDatabase(req, res);
   const query = {
     text: req.body.sql,

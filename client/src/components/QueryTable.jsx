@@ -10,7 +10,7 @@ import { translations } from '../utils/translations';
 import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
 
-const QueryTableHeader = props => (
+const QueryTableHeader = (props) => (
   <CardTitle className="d-flex pb-1 mb-0 border-bottom">
     <div className="px-1 flex-fill d-flex">
       <Button
@@ -20,16 +20,9 @@ const QueryTableHeader = props => (
         type="button"
         className="align-self-center btn-block p-0 px-1 text-left text-truncate"
       >
-        {props.data.table_alias
-          ? `${props.data.table_name} (${props.data.table_alias})`
-          : `${props.data.table_name}`}
+        {props.data.table_alias ? `${props.data.table_name} (${props.data.table_alias})` : `${props.data.table_name}`}
       </Button>
-      <UncontrolledTooltip
-        placement="top"
-        target={props.target}
-        delay={{ hide: 0 }}
-        className="text-truncate"
-      >
+      <UncontrolledTooltip placement="top" target={props.target} delay={{ hide: 0 }} className="text-truncate">
         {props.data.table_schema}
       </UncontrolledTooltip>
     </div>
@@ -80,10 +73,10 @@ QueryTableHeader.propTypes = {
   handleRemoveTable: PropTypes.func,
 };
 
-const QueryTableBody = props => (
+const QueryTableBody = (props) => (
   <Scrollbars autoHeight autoHeightMax={400}>
     <CardBody className="py-0 mt-2 px-2">
-      {props.data.columns.map(column => (
+      {props.data.columns.map((column) => (
         <TableColumn
           key={`table-column-${_.uniqueId()}`}
           id={`${props.id}-table-column-${_.uniqueId()}`}
@@ -149,11 +142,7 @@ export class QueryTable extends Component {
           handleRemoveTable={this.handleRemoveTable}
           handleCopy={this.handleCopy}
         />
-        <QueryTableBody
-          data={this.props.data}
-          id={this.props.id}
-          constructData={this.constructData}
-        />
+        <QueryTableBody data={this.props.data} id={this.props.id} constructData={this.constructData} />
       </Card>
     );
   }
@@ -177,7 +166,7 @@ QueryTable.propTypes = {
   firstTableId: PropTypes.string,
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   language: store.settings.language,
   queryType: store.query.queryType,
 });

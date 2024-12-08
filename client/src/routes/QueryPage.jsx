@@ -16,6 +16,7 @@ import SchemaSelector from '../components/SchemaSelector';
 import SearchBar from '../components/SearchBar';
 import DatabaseViewer from '../components/DatabaseViewer';
 import NavBar from '../components/NavBar';
+import DragDropWrapper from '../components/DragDropWrapper';
 
 export const SideBar = (props) => (
   <div className="d-flex flex-column w-100">
@@ -50,33 +51,35 @@ export const TableTypeWrapper = (props) => (
 export const QueryBuilder = (props) => (
   <div className="mt-0 pr-2">
     <NavBar language={props.language} queryType={props.queryType} />
-    <div style={{ minHeight: '40vh' }}>
-      {props.tables.map((table, index) => {
-        if (['DELETE', 'UPDATE'].includes(props.queryType)) {
+    <DragDropWrapper>
+      <div style={{ minHeight: '40vh' }}>
+        {props.tables.map((table, index) => {
+          if (['DELETE', 'UPDATE'].includes(props.queryType)) {
+            return (
+              <TableTypeWrapper
+                index={index}
+                children={
+                  <QueryTable
+                    key={`query-table-${index}-${table.id}`}
+                    id={`query-table-${index}`}
+                    data={table}
+                    firstTableId={props.tables[0].id}
+                  />
+                }
+              />
+            );
+          }
           return (
-            <TableTypeWrapper
-              index={index}
-              children={
-                <QueryTable
-                  key={`query-table-${index}-${table.id}`}
-                  id={`query-table-${index}`}
-                  data={table}
-                  firstTableId={props.tables[0].id}
-                />
-              }
+            <QueryTable
+              key={`query-table-${index}-${table.id}`}
+              id={`query-table-${index}`}
+              data={table}
+              firstTableId={props.tables[0].id}
             />
           );
-        }
-        return (
-          <QueryTable
-            key={`query-table-${index}-${table.id}`}
-            id={`query-table-${index}`}
-            data={table}
-            firstTableId={props.tables[0].id}
-          />
-        );
-      })}
-    </div>
+        })}
+      </div>
+    </DragDropWrapper>
     <QueryTabs />
     <div className="my-2">
       <QueryButton queryValid={props.queryValid} />
