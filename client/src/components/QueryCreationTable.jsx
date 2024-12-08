@@ -24,6 +24,9 @@ export const QueryCreationTable = () => {
     queryId: store.query.id,
   }));
 
+  // Calculate maxConditions from all columns
+  const maxConditions = columns.length > 0 ? Math.max(...columns.map((col) => col.column_conditions.length)) : 2;
+
   const onDragEnd = useCallback(
     (result) => {
       const { destination, source, draggableId } = result;
@@ -52,61 +55,38 @@ export const QueryCreationTable = () => {
     [],
   );
 
-  const data = [
-    {
-      column: 'Name',
-      table: 'City',
-      aggregate: '',
-      sort: '',
-      show: true,
-      removeDuplicates: false,
-      criteria: 'NOT IN {Query1}',
-      or1: "LIKE '%M'",
-      or2: '',
-    },
-    {
-      column: 'Population',
-      table: 'City',
-      aggregate: '',
-      sort: '',
-      show: true,
-      removeDuplicates: false,
-      criteria: "'P'",
-      or1: '',
-      or2: '',
-    },
+  // Create dynamic table labels array
+  const baseLabels = [
+    'Column',
+    'Alias',
+    'Table',
+    'Aggregate',
+    'Scalar function',
+    'Sort',
+    'Sort order',
+    'Show',
+    'Remove Duplicates',
+    'Criteria',
   ];
-
-  const tableStyles = {
-    fixedWidth: { width: '200px', height: '36px' },
-    cellCenter: {
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      height: '24px', // Match the height of form-control inputs
-    },
-  };
-
-  const tableLabels = ['Column', 'Table', 'Aggregate', 'Sort', 'Show', 'Remove Duplicates', 'Criteria', 'Or'];
+  const tableLabels = [
+    ...baseLabels,
+    ...Array(maxConditions - 1).fill('Or'), // Add "Or" labels for remaining conditions
+  ];
 
   return (
     <table className="table table-bordered query-creation-table" style={{ width: 'auto' }}>
-      <tbody>
-        <td className="bg-light">
-          <table>
-            {tableLabels.map((label, index) => (
-              <tr key={index} style={{ height: '56px' }}>
-                <td className="bg-light" style={{ width: '200px' }}>
-                  {label}
-                </td>
-              </tr>
-            ))}
-          </table>
-        </td>
-        {columns.map((column, index) => (
-          <QueryCreationTableColumn key={index} data={column} id={`query-column-${column.id}`} index={index} />
-        ))}
-      </tbody>
+      <td>
+        <table style={{ background: '#D9D9D9' }}>
+          {tableLabels.map((label, index) => (
+            <tr key={index} style={{ height: '56px' }}>
+              <td style={{ minWidth: '200px' }}>{label}</td>
+            </tr>
+          ))}
+        </table>
+      </td>
+      {columns.map((column, index) => (
+        <QueryCreationTableColumn key={index} data={column} id={`query-column-${column.id}`} index={index} />
+      ))}
     </table>
   );
 };

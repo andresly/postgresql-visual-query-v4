@@ -7,9 +7,6 @@ const squelPostgres = squel.useFlavour('postgres');
 const addColumnsToQuery = (data, query) => {
   const columns = _.cloneDeep(data.columns);
 
-  let whereQuery = '';
-  let havingQuery = '';
-
   const addOrder = (column) => {
     if (_.isEmpty(column.table_alias)) {
       query.order(`${format.ident(column.table_name)}.${format.ident(column.column_name)}`, column.column_order_dir);
@@ -30,103 +27,156 @@ const addColumnsToQuery = (data, query) => {
     query.group(`${format.ident(table)}.${format.ident(column)}`);
   };
 
-  const buildFilter = (column, index) => {
-    let filtersValue = '';
+  // Function to process individual conditions
+  const processCondition = (columnName, condition) => {
+    // Replace double quotes with single quotes
+    const filterValue = condition.replace(/"/g, "'").trim();
+    return `${columnName} ${filterValue}`;
+  };
 
-    if (!_.isEmpty(column.column_filter)) {
-      let columnName = `${format.ident(column.table_name)}.${format.ident(column.column_name)}`;
+  // Build filters by combining conditions at the same index across columns
+  const buildFilters = (columns) => {
+    const maxConditionsLength = Math.max(...columns.map((column) => column.column_conditions.length));
+    const whereClauses = [];
+    const havingClauses = [];
 
-      if (!_.isEmpty(column.table_alias)) {
-        columnName = `${format.ident(column.table_alias)}.${format.ident(column.column_name)}`;
-      }
+    Array.from({ length: maxConditionsLength }).forEach((_, i) => {
+      const whereConditionsAtIndex = [];
+      const havingConditionsAtIndex = [];
 
-      const columnFilter =
-        column.filter_as_having && column.column_aggregate
-          ? _.replace(column.column_filter, /:c/g, `(${columnName})`)
-          : _.replace(column.column_filter, /:c/g, columnName);
+      columns.forEach((column) => {
+        const condition = column.column_conditions[i];
 
-      const filterOperand = column.column_filter_operand;
+        if (condition && condition.trim() !== '') {
+          let columnName = `${format.ident(column.table_name)}.${format.ident(column.column_name)}`;
+          if (!_.isEmpty(column.table_alias)) {
+            columnName = `${format.ident(column.table_alias)}.${format.ident(column.column_name)}`;
+          }
 
-      if (index !== columns.length - 1) {
-        if (column.filter_as_having && column.column_aggregate) {
-          filtersValue += `${column.column_aggregate}${columnFilter} ${filterOperand} `;
-        } else if (column.subquerySql) {
-          filtersValue += `${columnFilter}`;
-        } else {
-          filtersValue += `${columnFilter} ${filterOperand} `;
+          if (column.column_aggregate && column.column_aggregate.length > 0) {
+            const aggregatedColumn = `${column.column_aggregate}(${columnName})`;
+            havingConditionsAtIndex.push(processCondition(aggregatedColumn, condition));
+          } else {
+            whereConditionsAtIndex.push(processCondition(columnName, condition));
+          }
         }
-      } else if (column.filter_as_having && column.column_aggregate) {
-        filtersValue += `${column.column_aggregate}${columnFilter}`;
-      } else {
-        filtersValue += columnFilter;
-      }
+      });
 
-      if (column.subquerySql) {
-        filtersValue += ` (${column.subquerySql.slice(0, -1)}) ${filterOperand} `;
+      if (whereConditionsAtIndex.length > 0) {
+        whereClauses.push(`(${whereConditionsAtIndex.join(' AND ')})`);
       }
-    }
+      if (havingConditionsAtIndex.length > 0) {
+        havingClauses.push(`(${havingConditionsAtIndex.join(' AND ')})`);
+      }
+    });
 
-    return filtersValue;
+    return {
+      where: whereClauses.join(' OR '),
+      having: havingClauses.join(' OR '),
+    };
   };
 
-  const cleanFinalFilter = (filterExpression) => {
-    let finalFilter = filterExpression.trim().split(' ');
+  // Check if any column uses aggregation
+  const hasAggregates = columns.some((col) => col.column_aggregate && col.column_aggregate.length > 0);
 
-    const lastWord = finalFilter[finalFilter.length - 1];
-
-    if (lastWord === 'AND' || lastWord === 'OR') {
-      finalFilter = finalFilter.slice(0, -1);
-    } else if (lastWord === 'NOT') {
-      finalFilter = finalFilter.slice(0, -2);
-    }
-
-    return finalFilter.join(' ').trim();
-  };
-
-  columns.forEach((column, index) => {
+  // Process columns for fields, orders, group by, etc.
+  columns.forEach((column) => {
     if (!data.distinct && column.column_distinct_on) {
       query.distinct(`${format.ident(column.table_name)}.${format.ident(column.column_name)}`);
     }
 
     if (column.display_in_query) {
-      if (column.column_alias.length === 0) {
-        if (column.table_alias.length === 0) {
-          let field = `${column.column_name}`;
+      // Generate automatic alias for aggregated or single line function columns if no alias is specified
+      const hasInlineAlias = column.column_name.toUpperCase().includes(' AS ');
+      const autoAlias = hasInlineAlias ? '' : column.column_alias;
 
-          if (column.column_aggregate.length === 0) {
-            addField(column.table_name, column.column_name);
-          } else {
-            field = `${column.column_aggregate}(${column.table_name}.${field})`;
+      if (autoAlias.length === 0) {
+        if (column.table_alias.length === 0) {
+          let field = column.column_name;
+
+          // Only add table prefix if column_name matches the original
+          if (column.column_name === column.column_name_original) {
+            field = `${column.table_name}.${field}`;
+          }
+
+          if (column.column_aggregate.length > 0) {
+            field = `${column.column_aggregate}(${field})`;
             query.field(field);
+          } else if (column.column_single_line_function.length > 0) {
+            field = `${column.column_single_line_function}(${field})`;
+            query.field(field);
+          } else {
+            // If column name is modified, use it directly without table prefix
+            if (column.column_name === column.column_name_original) {
+              addField(column.table_name, column.column_name);
+            } else {
+              query.field(column.column_name);
+            }
           }
         } else {
-          let field = `${column.table_alias}.${column.column_name}`;
+          let field = column.column_name;
 
-          if (column.column_aggregate.length === 0) {
-            addField(column.table_alias, column.column_name);
-          } else {
+          // Only add table alias prefix if column_name matches the original
+          if (column.column_name === column.column_name_original) {
+            field = `${column.table_alias}.${field}`;
+          }
+
+          if (column.column_aggregate.length > 0) {
             field = `${column.column_aggregate}(${field})`;
-
             query.field(field);
+          } else if (column.column_single_line_function.length > 0) {
+            field = `${column.column_single_line_function}(${field})`;
+            query.field(field);
+          } else {
+            // If column name is modified, use it directly without table prefix
+            if (column.column_name === column.column_name_original) {
+              addField(column.table_alias, column.column_name);
+            } else {
+              query.field(column.column_name);
+            }
           }
         }
       } else if (column.table_alias.length === 0) {
-        let field = `${column.table_name}.${column.column_name}`;
+        let field = column.column_name;
 
-        if (column.column_aggregate.length === 0) {
-          addFieldWithAlias(column.table_name, column.column_name, column.column_alias);
-        } else {
+        // Only add table prefix if column_name matches the original
+        if (column.column_name === column.column_name_original) {
+          field = `${column.table_name}.${field}`;
+        }
+
+        if (column.column_aggregate.length > 0) {
           field = `${column.column_aggregate}(${field})`;
-          query.field(field, column.column_alias);
+          query.field(field, autoAlias);
+        } else if (column.column_single_line_function.length > 0) {
+          field = `${column.column_single_line_function}(${field})`;
+          query.field(field, autoAlias);
+        } else {
+          if (column.column_name === column.column_name_original) {
+            addFieldWithAlias(column.table_name, column.column_name, autoAlias);
+          } else {
+            query.field(column.column_name, autoAlias);
+          }
         }
       } else {
-        let field = `${column.table_alias}.${column.column_name}`;
+        let field = column.column_name;
 
-        if (column.column_aggregate.length === 0) {
-          addFieldWithAlias(column.table_alias, column.column_name, column.column_alias);
-        } else {
+        // Only add table alias prefix if column_name matches the original
+        if (column.column_name === column.column_name_original) {
+          field = `${column.table_alias}.${field}`;
+        }
+
+        if (column.column_aggregate.length > 0) {
           field = `${column.column_aggregate}(${field})`;
-          query.field(field, column.column_alias);
+          query.field(field, autoAlias);
+        } else if (column.column_single_line_function.length > 0) {
+          field = `${column.column_single_line_function}(${field})`;
+          query.field(field, autoAlias);
+        } else {
+          if (column.column_name === column.column_name_original) {
+            addFieldWithAlias(column.table_alias, column.column_name, autoAlias);
+          } else {
+            query.field(column.column_name, autoAlias);
+          }
         }
       }
     }
@@ -135,34 +185,63 @@ const addColumnsToQuery = (data, query) => {
       if (!column.column_alias) {
         query.field(`${column.column_aggregate}(*)`);
       } else {
-        query.field(`${column.column_aggregate}(*) AS ${column.column_alias}`);
+        query.field(`${column.column_aggregate}(*) AS ${format.ident(column.column_alias)}`);
       }
     }
 
-    if (column.column_order) {
-      if (_.isEmpty(column.column_alias)) {
-        addOrder(column);
-      } else {
-        query.order(`${format.ident(column.column_alias)}`, column.column_order_dir);
-      }
-    }
-
-    if (column.column_group_by) {
+    // If we have aggregates, automatically add group by for non-aggregated displayed columns
+    if (
+      hasAggregates &&
+      column.display_in_query &&
+      (!column.column_aggregate || column.column_aggregate.length === 0)
+    ) {
       if (_.isEmpty(column.table_alias)) {
         addGroupBy(column.table_name, column.column_name);
       } else {
         addGroupBy(column.table_alias, column.column_name);
       }
     }
-
-    if (column.filter_as_having) {
-      havingQuery += buildFilter(column, index);
-    } else {
-      whereQuery += buildFilter(column, index);
-    }
   });
-  query.where(cleanFinalFilter(whereQuery));
-  query.having(cleanFinalFilter(havingQuery));
+
+  // Handle ordering separately, sorted by column_sort_order
+  columns
+    .filter((column) => column.column_order)
+    .sort((a, b) => {
+      const aOrder = parseInt(a.column_sort_order, 10) || Number.MAX_SAFE_INTEGER;
+      const bOrder = parseInt(b.column_sort_order, 10) || Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder;
+    })
+    .forEach((column) => {
+      if (column.column_aggregate && column.column_aggregate.length > 0) {
+        const autoAlias =
+          column.column_alias.length > 0
+            ? column.column_alias
+            : `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
+        query.order(format.ident(autoAlias), column.column_order_dir);
+      } else if (column.column_single_line_function && column.column_single_line_function.length > 0) {
+        // Handle single line function in ORDER BY
+        if (column.column_alias.length > 0) {
+          query.order(format.ident(column.column_alias), column.column_order_dir);
+        } else {
+          const tableName = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+          const field = `${column.column_single_line_function}(${format.ident(tableName)}.${format.ident(column.column_name)})`;
+          query.order(field, column.column_order_dir);
+        }
+      } else if (_.isEmpty(column.column_alias)) {
+        addOrder(column);
+      } else {
+        query.order(`${format.ident(column.column_alias)}`, column.column_order_dir);
+      }
+    });
+
+  // Build and apply the WHERE and HAVING clauses
+  const { where, having } = buildFilters(columns);
+  if (where) {
+    query.where(where);
+  }
+  if (having) {
+    query.having(having);
+  }
 };
 
 const buildJoinOn = (join) => {

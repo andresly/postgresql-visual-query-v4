@@ -91,14 +91,19 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
     case ADD_COLUMN: {
       const column = _.cloneDeep(action.payload);
 
+      column.column_name = action.payload.column_name;
+      column.column_name_original = action.payload.column_name;
       column.id = state.lastColumnId + 1;
       column.column_alias = '';
       column.column_filter = '';
+      column.column_conditions = ['', ''];
       column.column_filters = Array.from({ length: state.filterRows }, (_, index) => ({ id: index, filter: '' }));
       column.column_aggregate = '';
+      column.column_single_line_function = '';
       column.column_distinct_on = false;
-      column.column_order = false;
+      column.column_sort_order = 0;
       column.column_order_dir = true;
+      column.column_order_nr = null;
       column.column_group_by = false;
       column.display_in_query = true;
       column.column_filter_operand = '';
