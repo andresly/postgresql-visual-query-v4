@@ -245,9 +245,10 @@ const addColumnsToQuery = (data, query) => {
 };
 
 const buildJoinOn = (join) => {
-  let mainTable = join.conditions[0].main_table.table_name;
-  if (!_.isEmpty(join.conditions[0].main_table.table_alias)) {
-    mainTable = join.conditions[0].main_table.table_alias;
+  let mainTable = join.main_table.table_name;
+
+  if (!_.isEmpty(join.main_table.table_alias)) {
+    mainTable = join.main_table.table_alias;
   }
 
   const conditionArray = [];
@@ -260,11 +261,13 @@ const buildJoinOn = (join) => {
       !_.isEmpty(condition.secondary_table.table_name)
     ) {
       let secondaryTable = condition.secondary_table.table_name;
+
       if (!_.isEmpty(condition.secondary_table.table_alias)) {
         secondaryTable = condition.secondary_table.table_alias;
       }
 
-      const conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} = ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
+      const conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} =
+             ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
       conditionArray.push(conditionString);
     }
   });
@@ -275,20 +278,25 @@ const addJoinsToQuery = (data, query) => {
   const joins = _.cloneDeep(data.joins);
 
   const addJoin = (joinObj, on, joinFn) => {
-    const tableName = `${format.ident(joinObj.conditions[0].secondary_table.table_schema)}.${format.ident(joinObj.conditions[0].secondary_table.table_name)}`;
-    const tableAlias = joinObj.conditions[0].secondary_table.table_alias;
-
-    if (!_.isEmpty(tableAlias)) {
-      joinFn(tableName, format.ident(tableAlias), on);
+    if (!_.isEmpty(joinObj.main_table.table_alias)) {
+      joinFn(
+        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
+        `${format.ident(joinObj.main_table.table_alias)}`,
+        on,
+      );
     } else {
-      joinFn(tableName, null, on);
+      joinFn(
+        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
+        null,
+        on,
+      );
     }
   };
 
   joins.forEach((joinObj) => {
     const on = buildJoinOn(joinObj);
 
-    if (!_.isEmpty(joinObj.conditions[0].secondary_table.table_name) && !_.isEmpty(on)) {
+    if (!_.isEmpty(joinObj.main_table.table_name) && !_.isEmpty(on)) {
       switch (joinObj.type) {
         case 'inner': {
           addJoin(joinObj, on, query.join);

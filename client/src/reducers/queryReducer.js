@@ -94,7 +94,24 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       column.column_name = action.payload.column_name;
       column.column_name_original = action.payload.column_name;
       column.id = state.lastColumnId + 1;
-      column.column_alias = '';
+
+      // Find existing columns with the same name
+      const existingColumns = state.columns.filter(
+        (stateColumn) => stateColumn.column_name === action.payload.column_name,
+      );
+
+      console.log('state.columns', state.columns);
+      console.log('existingColumns', existingColumns);
+      // Set alias if there are existing columns with the same name
+      if (existingColumns.length > 0) {
+        column.column_alias = `${column.column_name}_${existingColumns.length + 1}`;
+      } else {
+        column.column_alias = '';
+      }
+
+      column.column_name = action.payload.column_name;
+      column.column_name_original = action.payload.column_name;
+      column.id = state.lastColumnId + 1;
       column.column_filter = '';
       column.column_conditions = ['', ''];
       column.column_filters = Array.from({ length: state.filterRows }, (_, index) => ({ id: index, filter: '' }));

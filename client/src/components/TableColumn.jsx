@@ -72,9 +72,10 @@ export class TableColumn extends Component {
   }
 
   handleDrop(sourceColumn) {
+    console.log('joins', this.props.joins);
     // First create a new join object
     const newJoin = {
-      id: 0,
+      id: this.props.joins.length,
       type: 'inner',
       color: '#' + Math.floor(Math.random() * 16777215).toString(16),
       main_table: {
@@ -149,9 +150,13 @@ export class TableColumn extends Component {
     // Clone the join object before updating
     const join = _.cloneDeep(newJoin);
 
-    // Add the join first
-    this.props.addJoin(join);
+    // Add the join first only if it is not already present
+    if (!this.props.joins.some((existingJoin) => existingJoin.id === join.id)) {
+      console.log('siiiin');
+      this.props.addJoin(join);
+    }
 
+    console.log({ join });
     // Then update it
     this.props.updateJoin(join);
   }
