@@ -4,6 +4,7 @@ import 'bootstrap/dist/css/bootstrap.css';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import './assets/styles/_global.scss';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import {
   faCalendarAlt,

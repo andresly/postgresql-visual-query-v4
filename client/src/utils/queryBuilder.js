@@ -325,6 +325,57 @@ const addJoinsToQuery = (data, query) => {
   });
 };
 
+const addJoinsToQueryByDragAndDrop = (data, query) => {
+  const joins = _.cloneDeep(data.joins);
+
+  const addJoin = (joinObj, on, joinFn) => {
+    if (!_.isEmpty(joinObj.main_table.table_alias)) {
+      joinFn(
+        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
+        `${format.ident(joinObj.main_table.table_alias)}`,
+        on,
+      );
+    } else {
+      joinFn(
+        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
+        null,
+        on,
+      );
+    }
+  };
+
+  joins.forEach((joinObj) => {
+    const on = buildJoinOn(joinObj);
+
+    if (!_.isEmpty(joinObj.main_table.table_name) && !_.isEmpty(on)) {
+      switch (joinObj.type) {
+        case 'inner': {
+          addJoin(joinObj, on, query.join);
+          break;
+        }
+        case 'right': {
+          addJoin(joinObj, on, query.right_join);
+          break;
+        }
+        case 'left': {
+          addJoin(joinObj, on, query.left_join);
+          break;
+        }
+        case 'outer': {
+          addJoin(joinObj, on, query.outer_join);
+          break;
+        }
+        case 'cross': {
+          addJoin(joinObj, on, query.cross_join);
+          break;
+        }
+        default:
+          break;
+      }
+    }
+  });
+};
+
 const buildSetQuery = (data) => {
   const sets = _.cloneDeep(data.sets);
 
@@ -381,7 +432,11 @@ const addTablesToQuery = (data, query) => {
       });
     } else {
       addTable(tables[0]);
-      addJoinsToQuery(data, query);
+      if (data.isDragAndDrop) {
+        addJoinsToQueryByDragAndDrop(data, query);
+      } else {
+        addJoinsToQuery(data, query);
+      }
       buildSetQuery(data, query);
     }
   }

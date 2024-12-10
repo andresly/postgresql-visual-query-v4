@@ -13,7 +13,7 @@ module.exports = {
     ecmaFeatures: {
       jsx: true,
     },
-    ecmaVersion: 2018,
+    ecmaVersion: 2020,
     sourceType: 'module',
   },
   plugins: ['react'],
@@ -24,6 +24,7 @@ module.exports = {
     'react/prefer-destructuring': 'off',
     'no-lonely-if': 'off',
     'no-plusplus': 'off',
+    'import/order': 'off',
     'prefer-destructuring': 'off',
     'jsx-a11y/no-static-element-interactions': 'off',
     'jsx-a11y/click-events-have-key-events': 'off',

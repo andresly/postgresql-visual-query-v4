@@ -21,7 +21,7 @@ export const JoinCondition = (props) => {
     };
 
     const conditions = _.cloneDeep(props.join.conditions);
-    const conditionIndex = conditions.findIndex(_condition => _condition.id === value.id);
+    const conditionIndex = conditions.findIndex((_condition) => _condition.id === value.id);
 
     conditions[conditionIndex] = condition;
 
@@ -49,7 +49,7 @@ export const JoinCondition = (props) => {
     };
 
     const conditions = _.cloneDeep(props.join.conditions);
-    const conditionIndex = conditions.findIndex(_condition => _condition.id === value.id);
+    const conditionIndex = conditions.findIndex((_condition) => _condition.id === value.id);
 
     conditions[conditionIndex] = condition;
 
@@ -76,7 +76,7 @@ export const JoinCondition = (props) => {
     };
 
     const conditions = _.cloneDeep(props.join.conditions);
-    const conditionIndex = conditions.findIndex(_condition => _condition.id === value.id);
+    const conditionIndex = conditions.findIndex((_condition) => _condition.id === value.id);
 
     conditions[conditionIndex] = condition;
 
@@ -93,7 +93,7 @@ export const JoinCondition = (props) => {
   const handleRemove = () => {
     let conditions = _.cloneDeep(props.join.conditions);
 
-    conditions = conditions.filter(condition => condition.id !== props.condition.id);
+    conditions = conditions.filter((condition) => condition.id !== props.condition.id);
 
     let join = _.cloneDeep(props.join);
 
@@ -114,6 +114,42 @@ export const JoinCondition = (props) => {
     },
   };
 
+  const getSelectedMainColumnOption = () => {
+    if (!props.condition.main_column) return '';
+
+    const value = {
+      id: props.condition.id,
+      column_name: props.condition.main_column,
+    };
+
+    return JSON.stringify(value);
+  };
+
+  const getSelectedSecondaryTableOption = () => {
+    if (!props.condition.secondary_table.table_name) {
+      return JSON.stringify(defaultValue);
+    }
+
+    const secondaryTableOption = JSON.stringify({
+      id: props.condition.id,
+      table: props.condition.secondary_table,
+    });
+
+    console.log({ secondaryTableOption });
+
+    return secondaryTableOption;
+  };
+
+  const getSelectedSecondaryColumnOption = () => {
+    if (!props.condition.secondary_column) return '';
+
+    const secondaryColumnOption = JSON.stringify({
+      id: props.condition.id,
+      column_name: props.condition.secondary_column,
+    });
+    return secondaryColumnOption;
+  };
+
   return (
     <Row form className="my-2">
       <div className="col-auto">
@@ -125,12 +161,9 @@ export const JoinCondition = (props) => {
             type="select"
             id="main_table_columns"
             onChange={handleMainColumnChange}
-            defaultValue=""
+            value={getSelectedMainColumnOption()}
           >
-            <option
-              key={`${props.condition.id}-main-column-null`}
-              value=""
-            >
+            <option key={`${props.condition.id}-main-column-null`} value="">
               {translations[props.language.code].queryBuilder.joinConditionMainColumn}
             </option>
             {props.join.main_table.columns.map((column) => {
@@ -140,10 +173,7 @@ export const JoinCondition = (props) => {
               };
 
               return (
-                <option
-                  key={`${props.condition.id}-main-column-${column.column_name}`}
-                  value={JSON.stringify(value)}
-                >
+                <option key={`${props.condition.id}-main-column-${column.column_name}`} value={JSON.stringify(value)}>
                   {column.column_name}
                 </option>
               );
@@ -162,12 +192,9 @@ export const JoinCondition = (props) => {
             id="secondary_table"
             className="text-secondary"
             onChange={handleSecondaryTableChange}
-            defaultValue={JSON.stringify(defaultValue)}
+            value={getSelectedSecondaryTableOption()}
           >
-            <option
-              key={`${props.condition.id}-secondary-table-null`}
-              value={JSON.stringify(defaultValue)}
-            >
+            <option key={`${props.condition.id}-secondary-table-null`} value={JSON.stringify(defaultValue)}>
               {translations[props.language.code].queryBuilder.joinConditionSecondaryTable}
             </option>
             {props.tables.map((table) => {
@@ -175,15 +202,15 @@ export const JoinCondition = (props) => {
                 id: props.condition.id,
                 table,
               };
-              const option = table.table_alias.length > 0 ? `${table.table_name} (${table.table_alias})` : `${table.table_name}`;
+              const option =
+                table.table_alias.length > 0 ? `${table.table_name} (${table.table_alias})` : `${table.table_name}`;
 
-              return props.join.main_table.id !== table.id && (
-                <option
-                  key={`${props.condition.id}-secondary-table-${table.id}`}
-                  value={JSON.stringify(value)}
-                >
-                  {option}
-                </option>
+              return (
+                props.join.main_table.id !== table.id && (
+                  <option key={`${props.condition.id}-secondary-table-${table.id}`} value={JSON.stringify(value)}>
+                    {option}
+                  </option>
+                )
               );
             })}
           </CustomInput>
@@ -193,27 +220,27 @@ export const JoinCondition = (props) => {
             id="secondary_table_columns"
             className="text-secondary"
             onChange={handleSecondaryColumnChange}
-            defaultValue=""
+            value={getSelectedSecondaryColumnOption()}
           >
             <option key={`${props.condition.id}-secondary-column-null`} value="">
               {translations[props.language.code].queryBuilder.joinConditionSecondaryColumn}
             </option>
-            {!_.isEmpty(props.condition.secondary_table.table_name)
-            && props.condition.secondary_table.columns.map((column) => {
-              const value = {
-                id: props.condition.id,
-                column_name: column.column_name,
-              };
+            {!_.isEmpty(props.condition.secondary_table.table_name) &&
+              props.condition.secondary_table.columns.map((column) => {
+                const value = {
+                  id: props.condition.id,
+                  column_name: column.column_name,
+                };
 
-              return (
-                <option
-                  key={`${props.condition.id}-secondary-column-${column.column_name}`}
-                  value={JSON.stringify(value)}
-                >
-                  {column.column_name}
-                </option>
-              );
-            })}
+                return (
+                  <option
+                    key={`${props.condition.id}-secondary-column-${column.column_name}`}
+                    value={JSON.stringify(value)}
+                  >
+                    {column.column_name}
+                  </option>
+                );
+              })}
           </CustomInput>
         </InputGroup>
       </div>
@@ -231,7 +258,7 @@ JoinCondition.propTypes = {
   language: PropTypes.shape({ code: PropTypes.string }),
   join: PropTypes.shape({
     id: PropTypes.number,
-    conditions: PropTypes.shape([]),
+    conditions: PropTypes.arrayOf(PropTypes.shape({})),
     main_table: PropTypes.shape({
       table_name: PropTypes.string,
       id: PropTypes.number,
@@ -248,14 +275,16 @@ JoinCondition.propTypes = {
       columns: PropTypes.arrayOf(PropTypes.shape({})),
     }),
   }),
-  tables: PropTypes.arrayOf(PropTypes.shape({
-    table_alias: PropTypes.string,
-    table_name: PropTypes.string,
-    table_schema: PropTypes.string,
-  })),
+  tables: PropTypes.arrayOf(
+    PropTypes.shape({
+      table_alias: PropTypes.string,
+      table_name: PropTypes.string,
+      table_schema: PropTypes.string,
+    }),
+  ),
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   tables: store.query.tables,
   language: store.settings.language,
 });

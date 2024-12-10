@@ -559,6 +559,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       return {
         ...state,
         joins: [...state.joins, join],
+        isDragAndDrop: action.payload.isDragAndDrop,
       };
     }
     case UPDATE_JOIN: {
@@ -619,6 +620,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       };
     }
     case REMOVE_JOIN: {
+      console.log('remove join payload', action.payload);
       const filteredJoins = state.joins.filter((join) => join.id !== action.payload.id);
 
       return {

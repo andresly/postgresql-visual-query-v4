@@ -17,6 +17,7 @@ import SearchBar from '../components/SearchBar';
 import DatabaseViewer from '../components/DatabaseViewer';
 import NavBar from '../components/NavBar';
 import DragDropWrapper from '../components/DragDropWrapper';
+import { ArcherContainer } from 'react-archer';
 
 export const SideBar = (props) => (
   <div className="d-flex flex-column w-100">
@@ -53,31 +54,34 @@ export const QueryBuilder = (props) => (
     <NavBar language={props.language} queryType={props.queryType} />
     <DragDropWrapper>
       <div style={{ minHeight: '40vh' }}>
-        {props.tables.map((table, index) => {
-          if (['DELETE', 'UPDATE'].includes(props.queryType)) {
+        <ArcherContainer strokeColor="rgba(0,0,0)" strokeWidth={1} svgContainerStyle={{ zIndex: 100 }}>
+          {props.tables.map((table, index) => {
+            if (['DELETE', 'UPDATE'].includes(props.queryType)) {
+              return (
+                <TableTypeWrapper
+                  key={`table-wrapper-${index}`}
+                  index={index}
+                  children={
+                    <QueryTable
+                      key={`query-table-${index}-${table.id}`}
+                      id={`query-table-${index}`}
+                      data={table}
+                      firstTableId={props.tables[0].id}
+                    />
+                  }
+                />
+              );
+            }
             return (
-              <TableTypeWrapper
-                index={index}
-                children={
-                  <QueryTable
-                    key={`query-table-${index}-${table.id}`}
-                    id={`query-table-${index}`}
-                    data={table}
-                    firstTableId={props.tables[0].id}
-                  />
-                }
+              <QueryTable
+                key={`query-table-${index}-${table.id}`}
+                id={`query-table-${index}`}
+                data={table}
+                firstTableId={props.tables[0].id}
               />
             );
-          }
-          return (
-            <QueryTable
-              key={`query-table-${index}-${table.id}`}
-              id={`query-table-${index}`}
-              data={table}
-              firstTableId={props.tables[0].id}
-            />
-          );
-        })}
+          })}
+        </ArcherContainer>
       </div>
     </DragDropWrapper>
     <QueryTabs />

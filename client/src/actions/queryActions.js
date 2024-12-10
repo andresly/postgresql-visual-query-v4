@@ -156,7 +156,18 @@ export const query = (state) => async (dispatch) => {
   }
 };
 
-export const addJoin = () => ({ type: ADD_JOIN });
+export const addJoin =
+  (join, isDragAndDrop = false) =>
+  (dispatch) => {
+    dispatch({
+      type: ADD_JOIN,
+      payload: {
+        join,
+        isDragAndDrop,
+      },
+    });
+    dispatch({ type: GENERATE_SQL });
+  };
 
 export const updateJoin = (data) => (dispatch) => {
   dispatch({ type: UPDATE_JOIN, payload: data });

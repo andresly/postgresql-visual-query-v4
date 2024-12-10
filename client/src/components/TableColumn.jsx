@@ -10,6 +10,7 @@ import TableColumnPopover from './TableColumnPopover';
 import { addColumn, removeColumn, addJoin, updateJoin } from '../actions/queryActions';
 import { withToggle } from '../hocs/withToggle';
 import { iconPicker } from '../utils/iconPicker';
+import { ArcherElement } from 'react-archer';
 
 // Drag and Drop wrapper component
 const DraggableColumn = ({ children, data, onDrop }) => {
@@ -41,7 +42,9 @@ const DraggableColumn = ({ children, data, onDrop }) => {
         opacity: isDragging ? 0.5 : 1,
         backgroundColor: isOver ? 'rgba(0,0,0,0.1)' : undefined,
       }}
-      className="d-flex align-items-center"
+      className="d-flex align-items-center position-relative"
+      data-column-id={`${data.table_id}-${data.column_name}`}
+      // id={`${data.table_id}-column-${data.column_name}`}
     >
       {children}
     </div>
@@ -72,7 +75,9 @@ export class TableColumn extends Component {
   }
 
   handleDrop(sourceColumn) {
-    console.log('joins', this.props.joins);
+    if (sourceColumn.table_id === this.props.data.table_id) {
+      return;
+    }
     // First create a new join object
     const newJoin = {
       id: this.props.joins.length,
@@ -106,7 +111,6 @@ export class TableColumn extends Component {
           id: 0,
           main_column: sourceColumn.column_name,
           main_table: {
-            // Add main_table reference in condition
             id: sourceColumn.table_id,
             table_schema: sourceColumn.table_schema,
             table_name: sourceColumn.table_name,
@@ -152,11 +156,9 @@ export class TableColumn extends Component {
 
     // Add the join first only if it is not already present
     if (!this.props.joins.some((existingJoin) => existingJoin.id === join.id)) {
-      console.log('siiiin');
-      this.props.addJoin(join);
+      this.props.addJoin(join, true);
     }
 
-    console.log({ join });
     // Then update it
     this.props.updateJoin(join);
   }
@@ -175,6 +177,32 @@ export class TableColumn extends Component {
     )
       ? 'success'
       : 'light';
+
+    const lineRelations = [];
+
+    if (this.props.joins) {
+      // Find joins where current column is the main column
+      const mainColumnJoins = this.props.joins.filter((join) =>
+        join.conditions.some(
+          (condition) =>
+            _.isEqual(condition?.main_table?.id, this.props.data.table_id) &&
+            _.isEqual(condition.main_column, this.props.data.column_name),
+        ),
+      );
+
+      if (mainColumnJoins.length > 0) {
+        for (let i = 0; i < mainColumnJoins.length; i++) {
+          const join = mainColumnJoins[i];
+          const secondaryTable = join.conditions[0].secondary_table;
+          const secondaryColumnName = join.conditions[0].secondary_column;
+          const secondaryId = `${secondaryTable.id}-column-${secondaryColumnName}`;
+          lineRelations.push({
+            targetId: secondaryId,
+            style: { strokeColor: 'blue', strokeWidth: 1 },
+          });
+        }
+      }
+    }
 
     return (
       <DraggableColumn data={this.props.data} onDrop={this.handleDrop}>

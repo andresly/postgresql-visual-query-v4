@@ -1,16 +1,6 @@
 import React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
-import {
-  Button,
-  Card,
-  CardBody,
-  Container,
-  CustomInput,
-  Form,
-  FormGroup,
-  Row,
-  UncontrolledTooltip,
-} from 'reactstrap';
+import { Button, Card, CardBody, Container, CustomInput, Form, FormGroup, Row, UncontrolledTooltip } from 'reactstrap';
 import Select from 'react-select';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import _ from 'lodash';
@@ -21,6 +11,7 @@ import JoinCondition from './JoinCondition';
 import { translations } from '../utils/translations';
 
 export const Join = (props) => {
+  // console.log('join props', props);
   const constructOptions = () => {
     const options = [];
     const newTables = [];
@@ -30,15 +21,18 @@ export const Join = (props) => {
       const value = JSON.stringify(table);
       const option = table.table_name;
       if (table.table_schema === props.selectedSchema) {
-        newTables.push({ value, key: `join-${props.id}-table-${table.table_name}-query-${props.queryId}`, label: option });
+        newTables.push({
+          value,
+          key: `join-${props.id}-table-${table.table_name}-query-${props.queryId}`,
+          label: option,
+        });
       }
     });
 
     props.tables.forEach((table, index) => {
       const value = JSON.stringify(table);
-      const option = table.table_alias.length > 0
-        ? `${table.table_name} (${table.table_alias})`
-        : `${table.table_name}`;
+      const option =
+        table.table_alias.length > 0 ? `${table.table_name} (${table.table_alias})` : `${table.table_name}`;
 
       if (index > 0) {
         tables.push({ value, key: `join-${props.id}-table-${table.id}-query-${props.queryId}`, label: option });
@@ -46,10 +40,12 @@ export const Join = (props) => {
     });
 
     options.push({
-      label: translations[props.language.code].queryBuilder.joinMainTableExisting, options: tables,
+      label: translations[props.language.code].queryBuilder.joinMainTableExisting,
+      options: tables,
     });
     options.push({
-      label: translations[props.language.code].queryBuilder.joinMainTableNew, options: newTables,
+      label: translations[props.language.code].queryBuilder.joinMainTableNew,
+      options: newTables,
     });
 
     return options;
@@ -65,23 +61,23 @@ export const Join = (props) => {
 
     let constraints = JSON.parse(JSON.stringify(props.constraints));
 
-    constraints = constraints.filter(constraint => constraint.table_schema === data.table_schema
-      && constraint.table_name === data.table_name);
+    constraints = constraints.filter(
+      (constraint) => constraint.table_schema === data.table_schema && constraint.table_name === data.table_name,
+    );
 
     let columns = JSON.parse(JSON.stringify(props.columns));
 
-    columns = columns.filter(column => column.table_name === data.table_name
-      && column.table_schema === data.table_schema).map((column) => {
-      const col = column;
+    columns = columns
+      .filter((column) => column.table_name === data.table_name && column.table_schema === data.table_schema)
+      .map((column) => {
+        const col = column;
 
-      col.constraints = constraints.filter(
-        constraint => _.includes(constraint.column_name, column.column_name),
-      );
+        col.constraints = constraints.filter((constraint) => _.includes(constraint.column_name, column.column_name));
 
-      delete col.table_name;
-      delete col.table_schema;
-      return col;
-    });
+        delete col.table_name;
+        delete col.table_schema;
+        return col;
+      });
 
     data.columns = columns;
 
@@ -107,9 +103,10 @@ export const Join = (props) => {
     let join = _.cloneDeep(props.join);
     let conditions = _.cloneDeep(props.join.conditions);
 
-    if (_.isEmpty(value.table_name)
-      || (!_.isEmpty(props.join.main_table.table_name)
-        && !_.isEqual(props.join.main_table.table_name, value.table_name))) {
+    if (
+      _.isEmpty(value.table_name) ||
+      (!_.isEmpty(props.join.main_table.table_name) && !_.isEqual(props.join.main_table.table_name, value.table_name))
+    ) {
       conditions = [];
     }
 
@@ -175,23 +172,27 @@ export const Join = (props) => {
   let firstTable;
 
   if (props.tables.length) {
-    firstTable = props.tables[0].table_alias === ''
-      ? `${props.tables[0].table_schema}.${props.tables[0].table_name}`
-      : `${props.tables[0].table_alias}`;
+    firstTable =
+      props.tables[0].table_alias === ''
+        ? `${props.tables[0].table_schema}.${props.tables[0].table_name}`
+        : `${props.tables[0].table_alias}`;
   }
+
+  const getSelectedTableOption = () => {
+    if (!props.join.main_table.table_name) return null;
+
+    const table = props.join.main_table;
+    const value = JSON.stringify(table);
+    const label = table.table_alias.length > 0 ? `${table.table_name} (${table.table_alias})` : `${table.table_name}`;
+
+    return { value, label };
+  };
 
   return (
     <div className="my-2">
-      <Draggable
-        draggableId={props.id}
-        index={props.index}
-      >
-        {provided => (
-          <Card
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
-            innerRef={provided.innerRef}
-          >
+      <Draggable draggableId={props.id} index={props.index}>
+        {(provided) => (
+          <Card {...provided.draggableProps} {...provided.dragHandleProps} innerRef={provided.innerRef}>
             <CardBody className="py-2 px-0">
               <Form>
                 <Container fluid>
@@ -202,15 +203,10 @@ export const Join = (props) => {
                     <div className="col-10 px-0">
                       <Row form className="mb-2 align-items-center">
                         <div className="col-auto ">
-                          <FontAwesomeIcon
-                            icon="link"
-                            style={{ color: props.join.color }}
-                          />
+                          <FontAwesomeIcon icon="link" style={{ color: props.join.color }} />
                         </div>
                         <div className="col-auto">
-                          {props.index === 0
-                            ? firstTable
-                            : translations[props.language.code].queryBuilder.joinResult}
+                          {props.index === 0 ? firstTable : translations[props.language.code].queryBuilder.joinResult}
                         </div>
                         <div className="col-auto">
                           <FormGroup className="m-0">
@@ -240,11 +236,10 @@ export const Join = (props) => {
                           <FormGroup className="m-0">
                             <Select
                               id="main_table"
-                              placeholder={
-                                translations[props.language.code].queryBuilder.joinMainTable
-                              }
+                              placeholder={translations[props.language.code].queryBuilder.joinMainTable}
                               onChange={handleTableChange}
                               options={constructOptions()}
+                              value={getSelectedTableOption()}
                             />
                           </FormGroup>
                         </div>
@@ -261,22 +256,22 @@ export const Join = (props) => {
                             onClick={handleAddCondition}
                           >
                             <FontAwesomeIcon icon="plus" />
-                          </Button>
-                          {' '}
+                          </Button>{' '}
                           {translations[props.language.code].queryBuilder.conditionH}
                         </div>
                       </Row>
-                      {!_.isEmpty(props.join.conditions)
-                      && (
+                      {!_.isEmpty(props.join.conditions) && (
                         <Card className="mt-2">
                           <CardBody className="py-0 px-2">
-                            {props.join.conditions.map(condition => (
-                              <JoinCondition
-                                key={`join-${props.join.id}-condition-${condition.id}-query-${props.queryId}`}
-                                condition={condition}
-                                join={props.join}
-                              />
-                            ))}
+                            {props.join.conditions.map((condition) => {
+                              return (
+                                <JoinCondition
+                                  key={`join-${props.join.id}-condition-${condition.id}-query-${props.queryId}`}
+                                  condition={condition}
+                                  join={props.join}
+                                />
+                              );
+                            })}
                           </CardBody>
                         </Card>
                       )}
@@ -316,16 +311,18 @@ Join.propTypes = {
   }),
   updateJoin: PropTypes.func,
   removeJoin: PropTypes.func,
-  tables: PropTypes.arrayOf(PropTypes.shape({
-    table_alias: PropTypes.string,
-    table_name: PropTypes.string,
-    table_schema: PropTypes.string,
-  })),
+  tables: PropTypes.arrayOf(
+    PropTypes.shape({
+      table_alias: PropTypes.string,
+      table_name: PropTypes.string,
+      table_schema: PropTypes.string,
+    }),
+  ),
   index: PropTypes.number,
   queryId: PropTypes.number,
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   databaseTables: store.database.tables,
   columns: store.database.columns,
   selectedSchema: store.database.selectedSchema,
