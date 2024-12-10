@@ -19,6 +19,7 @@ module.exports = {
   plugins: ['react'],
   rules: {
     quotes: 'off',
+    'consistent-return': 'off',
     'arrow-body-style': 'off',
     'react/jsx-curly-brace-presence': 'off',
     'react/prefer-destructuring': 'off',

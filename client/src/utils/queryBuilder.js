@@ -36,7 +36,12 @@ const addColumnsToQuery = (data, query) => {
 
   // Build filters by combining conditions at the same index across columns
   const buildFilters = (columns) => {
-    const maxConditionsLength = Math.max(...columns.map((column) => column.column_conditions.length));
+    // Add safety check for columns
+    if (!Array.isArray(columns)) {
+      return { where: '', having: '' };
+    }
+
+    const maxConditionsLength = Math.max(...columns.map((column) => (column.column_conditions || []).length));
     const whereClauses = [];
     const havingClauses = [];
 
@@ -45,12 +50,23 @@ const addColumnsToQuery = (data, query) => {
       const havingConditionsAtIndex = [];
 
       columns.forEach((column) => {
+        // Add safety checks for column properties
+        if (!column || !column.column_conditions) return;
+
         const condition = column.column_conditions[i];
 
         if (condition && condition.trim() !== '') {
-          let columnName = `${format.ident(column.table_name)}.${format.ident(column.column_name)}`;
-          if (!_.isEmpty(column.table_alias)) {
-            columnName = `${format.ident(column.table_alias)}.${format.ident(column.column_name)}`;
+          let columnName = '';
+
+          // Safe access to table properties
+          const tableName = column.table_name || '';
+          const columnNameVal = column.column_name || '';
+          const tableAlias = column.table_alias;
+
+          if (tableAlias !== '' && !_.isEmpty(tableAlias)) {
+            columnName = `${format.ident(tableAlias)}.${format.ident(columnNameVal)}`;
+          } else {
+            columnName = `${format.ident(tableName)}.${format.ident(columnNameVal)}`;
           }
 
           if (column.column_aggregate && column.column_aggregate.length > 0) {

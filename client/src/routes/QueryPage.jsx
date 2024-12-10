@@ -57,7 +57,7 @@ export const QueryBuilder = (props) => (
         <ArcherContainer
           strokeColor="rgba(0,0,0)"
           strokeWidth={1}
-          svgContainerStyle={{ zIndex: 1 }}
+          svgContainerStyle={{ zIndex: 100 }}
           noCurves
           className={'archer-container'}
         >

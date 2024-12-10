@@ -22,6 +22,11 @@ import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
 import { ArcherContainer, ArcherElement } from 'react-archer';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
+import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
+import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
+import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg';
+import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
 
 const QueryTableHeader = (props) => (
   <CardTitle className="d-flex pb-1 mb-0 border-bottom">
@@ -140,9 +145,21 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                                 color="light"
                                 size="sm"
                                 className="join-type-button"
-                                style={{ padding: 0 }}
+                                style={{ padding: 0, top: '70px' }}
                               >
-                                <FontAwesomeIcon icon={faInfoCircle} style={{ width: '16px', height: '16px' }} />
+                                {joinObj.type === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
+                                {joinObj.type === 'right' && (
+                                  <RightJoinIcon style={{ width: '20px', height: '20px' }} />
+                                )}
+                                {joinObj.type === 'inner' && (
+                                  <InnerJoinIcon style={{ width: '20px', height: '20px' }} />
+                                )}
+                                {joinObj.type === 'outer' && (
+                                  <OuterJoinIcon style={{ width: '20px', height: '20px' }} />
+                                )}
+                                {joinObj.type === 'cross' && (
+                                  <CorssJoinIcon style={{ width: '20px', height: '20px' }} />
+                                )}
                               </DropdownToggle>
                               <DropdownMenu>
                                 <DropdownItem
