@@ -18,6 +18,7 @@ export const JoinCondition = (props) => {
     condition = {
       ...condition,
       main_column: value.column_name,
+      main_table: props.join.main_table,
     };
 
     const conditions = _.cloneDeep(props.join.conditions);
@@ -46,6 +47,7 @@ export const JoinCondition = (props) => {
       ...condition,
       secondary_table: value.table,
       secondary_column: '',
+      main_table: props.join.main_table,
     };
 
     const conditions = _.cloneDeep(props.join.conditions);
@@ -73,6 +75,7 @@ export const JoinCondition = (props) => {
     condition = {
       ...condition,
       secondary_column: value.column_name,
+      main_table: props.join.main_table,
     };
 
     const conditions = _.cloneDeep(props.join.conditions);

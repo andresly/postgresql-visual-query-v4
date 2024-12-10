@@ -54,7 +54,13 @@ export const QueryBuilder = (props) => (
     <NavBar language={props.language} queryType={props.queryType} />
     <DragDropWrapper>
       <div style={{ minHeight: '40vh' }}>
-        <ArcherContainer strokeColor="rgba(0,0,0)" strokeWidth={1} svgContainerStyle={{ zIndex: 100 }} noCurves>
+        <ArcherContainer
+          strokeColor="rgba(0,0,0)"
+          strokeWidth={1}
+          svgContainerStyle={{ zIndex: 1 }}
+          noCurves
+          className={'archer-container'}
+        >
           {props.tables.map((table, index) => {
             if (['DELETE', 'UPDATE'].includes(props.queryType)) {
               return (

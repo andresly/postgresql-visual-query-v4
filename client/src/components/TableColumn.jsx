@@ -141,14 +141,8 @@ export class TableColumn extends Component {
               })),
           },
           secondary_column: this.props.data.column_name,
-          // operator: '=', // Add default operator
-          // filters: [], // Add empty filters array
-          // visible: true, // Add visibility flag
         },
       ],
-      filters: [], // Add join-level filters
-      visible: true, // Add join-level visibility
-      expanded: true, // Add expanded state
     };
 
     // Clone the join object before updating

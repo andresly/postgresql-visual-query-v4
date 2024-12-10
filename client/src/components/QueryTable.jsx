@@ -91,6 +91,7 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
   const handleRemove = (join) => {
     dispatch(removeJoin(join));
   };
+  console.log({ joins });
   return (
     <Scrollbars
       autoHeight
@@ -100,7 +101,7 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
         window.dispatchEvent(new Event('resize'));
       }}
     >
-      <CardBody className="py-0 mt-2 px-2">
+      <CardBody className="py-0 mt-2 mx-2 px-0 position-relative" style={{ zIndex: 1, backgroundColor: 'white' }}>
         {data.columns.map((column) => {
           const columnJoins = (joins || [])?.flatMap((join) => {
             const conditions = join.conditions.filter(
@@ -253,7 +254,7 @@ const QueryTable = ({ data, id }) => {
     );
 
   return (
-    <Card className="d-inline-flex m-2 pb-2 position-relative">
+    <Card className="d-inline-flex m-2 pb-2 mr-4 position-relative">
       <QueryTableHeader
         target={id}
         data={data}
