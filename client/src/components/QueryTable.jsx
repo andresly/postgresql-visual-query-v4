@@ -1,15 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { Button, ButtonGroup, Card, CardBody, CardTitle, UncontrolledTooltip } from 'reactstrap';
+import {
+  Button,
+  ButtonGroup,
+  Card,
+  CardBody,
+  CardTitle,
+  DropdownItem,
+  DropdownMenu,
+  DropdownToggle,
+  UncontrolledDropdown,
+  UncontrolledTooltip,
+} from 'reactstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Scrollbars } from 'react-custom-scrollbars';
 import * as PropTypes from 'prop-types';
 import _, { join } from 'lodash';
-import { addTable, removeTable, resetQuery, removeJoin } from '../actions/queryActions';
+import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../actions/queryActions';
 import { translations } from '../utils/translations';
 import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
 import { ArcherContainer, ArcherElement } from 'react-archer';
+import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const QueryTableHeader = (props) => (
   <CardTitle className="d-flex pb-1 mb-0 border-bottom">
@@ -90,33 +102,91 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
     >
       <CardBody className="py-0 mt-2 px-2">
         {data.columns.map((column) => {
-          const columnJoins = (joins || [])?.flatMap((join) =>
-            join.conditions.filter(
+          const columnJoins = (joins || [])?.flatMap((join) => {
+            const conditions = join.conditions.filter(
               (condition) =>
                 (condition.main_column === column.column_name && condition.main_table?.id === data?.id) ||
                 (condition.secondary_column === column.column_name && condition.secondary_table?.id === data?.id),
-            ),
-          );
+            );
+            // Only return results if there are matching conditions
+            return conditions.length ? conditions.map((condition) => ({ condition, join })) : [];
+          });
+
           return (
             <ArcherElement
               key={`table-column-${_.uniqueId()}`}
               id={`${data.id}-column-${column.column_name}`}
               relations={
-                columnJoins?.map((join) => {
-                  return {
-                    targetId:
-                      join.main_column === column.column_name
-                        ? `${join.secondary_table?.id}-column-${join.secondary_column}`
-                        : ``,
-                    targetAnchor: join.secondary_table?.id > join.main_table?.id ? 'left' : 'right',
-                    sourceAnchor: join.secondary_table?.id > join.main_table?.id ? 'right' : 'left',
-                    label: (
-                      <div className="delete-join" onClick={() => handleRemove(join)}>
-                        X
-                      </div>
-                    ),
-                  };
-                }) || []
+                columnJoins
+                  ?.map((join, index) => {
+                    const condition = join.condition;
+                    const joinObj = join.join;
+                    // Only create arrows from main table to secondary table
+                    if (
+                      joinObj.main_table?.id === data?.id &&
+                      condition.main_column === column.column_name &&
+                      joinObj.main_table?.id !== condition.secondary_table?.id &&
+                      column.column_name === condition.main_column
+                    ) {
+                      return {
+                        targetId: `${condition.secondary_table?.id}-column-${condition.secondary_column}`,
+                        targetAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'left' : 'right',
+                        sourceAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'right' : 'left',
+                        label: (
+                          <div className="join-controls">
+                            <UncontrolledDropdown>
+                              <DropdownToggle
+                                color="light"
+                                size="sm"
+                                className="join-type-button"
+                                style={{ padding: 0 }}
+                              >
+                                <FontAwesomeIcon icon={faInfoCircle} style={{ width: '16px', height: '16px' }} />
+                              </DropdownToggle>
+                              <DropdownMenu>
+                                <DropdownItem
+                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'inner' }))}
+                                  active={joinObj.type === 'inner'}
+                                >
+                                  Inner Join
+                                </DropdownItem>
+                                <DropdownItem
+                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'left' }))}
+                                  active={joinObj.type === 'left'}
+                                >
+                                  Left Join
+                                </DropdownItem>
+                                <DropdownItem
+                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'right' }))}
+                                  active={joinObj.type === 'right'}
+                                >
+                                  Right Join
+                                </DropdownItem>
+                                <DropdownItem
+                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'outer' }))}
+                                  active={joinObj.type === 'outer'}
+                                >
+                                  Outer Join
+                                </DropdownItem>
+                                <DropdownItem
+                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'cross' }))}
+                                  active={joinObj.type === 'cross'}
+                                >
+                                  Cross Join
+                                </DropdownItem>
+                                <DropdownItem divider />
+                                <DropdownItem className="text-danger" onClick={() => handleRemove(joinObj)}>
+                                  Delete Join
+                                </DropdownItem>
+                              </DropdownMenu>
+                            </UncontrolledDropdown>
+                          </div>
+                        ),
+                      };
+                    }
+                    return null;
+                  })
+                  .filter(Boolean) || []
               }
             >
               <div>

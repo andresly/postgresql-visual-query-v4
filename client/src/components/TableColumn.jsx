@@ -141,9 +141,9 @@ export class TableColumn extends Component {
               })),
           },
           secondary_column: this.props.data.column_name,
-          operator: '=', // Add default operator
-          filters: [], // Add empty filters array
-          visible: true, // Add visibility flag
+          // operator: '=', // Add default operator
+          // filters: [], // Add empty filters array
+          // visible: true, // Add visibility flag
         },
       ],
       filters: [], // Add join-level filters

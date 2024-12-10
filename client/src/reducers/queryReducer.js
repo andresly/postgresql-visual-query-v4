@@ -620,8 +620,12 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       };
     }
     case REMOVE_JOIN: {
-      console.log('remove join payload', action.payload);
-      const filteredJoins = state.joins.filter((join) => join.id !== action.payload.id);
+      const filteredJoins = state.joins
+        .filter((join) => join.id !== action.payload.id)
+        .map((join, index) => ({
+          ...join,
+          id: index,
+        }));
 
       return {
         ...state,

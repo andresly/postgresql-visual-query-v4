@@ -135,8 +135,6 @@ export const JoinCondition = (props) => {
       table: props.condition.secondary_table,
     });
 
-    console.log({ secondaryTableOption });
-
     return secondaryTableOption;
   };
 
