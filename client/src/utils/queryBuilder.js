@@ -8,10 +8,45 @@ const addColumnsToQuery = (data, query) => {
   const columns = _.cloneDeep(data.columns);
 
   const addOrder = (column) => {
-    if (_.isEmpty(column.table_alias)) {
-      query.order(`${format.ident(column.table_name)}.${format.ident(column.column_name)}`, column.column_order_dir);
+    // 1) Handle aggregates first
+    if (column.column_aggregate && column.column_aggregate.length > 0) {
+      // If there is an aggregate, we order by its alias (or auto-generated alias).
+      const autoAlias =
+        column.column_alias.length > 0
+          ? column.column_alias
+          : `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
+
+      query.order(format.ident(autoAlias), column.column_order_dir);
+      return;
+    }
+
+    // 2) Handle single-line functions (ALWAYS wrap in the function if present)
+    if (column.column_single_line_function && column.column_single_line_function.length > 0) {
+      // Determine the “base” for the function:
+      //   - If there's an alias, use that alias
+      //   - Otherwise, use table_alias or table_name + the column name
+      const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+
+      const baseExpression =
+        column.column_alias.length > 0
+          ? format.ident(column.column_alias)
+          : `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+
+      // Wrap in the function
+      const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
+      query.order(wrappedField, column.column_order_dir);
+      return;
+    }
+
+    // 3) No aggregate, no single-line function → fallback to alias or table.column
+    if (_.isEmpty(column.column_alias)) {
+      // Use table alias if present, else table_name
+      const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+
+      const orderColumn = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+      query.order(orderColumn, column.column_order_dir);
     } else {
-      query.order(`${format.ident(column.table_alias)}.${format.ident(column.column_name)}`, column.column_order_dir);
+      query.order(format.ident(column.column_alias), column.column_order_dir);
     }
   };
 
@@ -370,26 +405,7 @@ const addColumnsToQuery = (data, query) => {
       return aOrder - bOrder;
     })
     .forEach((column) => {
-      if (column.column_aggregate && column.column_aggregate.length > 0) {
-        const autoAlias =
-          column.column_alias.length > 0
-            ? column.column_alias
-            : `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
-        query.order(format.ident(autoAlias), column.column_order_dir);
-      } else if (column.column_single_line_function && column.column_single_line_function.length > 0) {
-        // Handle single line function in ORDER BY
-        if (column.column_alias.length > 0) {
-          query.order(format.ident(column.column_alias), column.column_order_dir);
-        } else {
-          const tableName = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-          const field = `${column.column_single_line_function}(${format.ident(tableName)}.${format.ident(column.column_name)})`;
-          query.order(field, column.column_order_dir);
-        }
-      } else if (_.isEmpty(column.column_alias)) {
-        addOrder(column);
-      } else {
-        query.order(`${format.ident(column.column_alias)}`, column.column_order_dir);
-      }
+      addOrder(column);
     });
 
   // Build and apply the WHERE and HAVING clauses
