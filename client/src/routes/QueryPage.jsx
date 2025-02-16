@@ -55,6 +55,8 @@ export const QueryBuilder = (props) => (
     <DragDropWrapper>
       <div style={{ minHeight: '40vh' }}>
         <ArcherContainer
+          startMarker={false}
+          endMarker={false}
           strokeColor="rgba(0,0,0)"
           strokeWidth={1}
           svgContainerStyle={{ zIndex: 100 }}

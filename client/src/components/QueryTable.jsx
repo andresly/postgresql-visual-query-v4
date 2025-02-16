@@ -127,6 +127,8 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                   ?.map((join, index) => {
                     const condition = join.condition;
                     const joinObj = join.join;
+                    const mainTable = joinObj.conditions[0].main_table.table_name;
+                    const secondaryTable = joinObj.conditions[0].secondary_table.table_name;
                     // Only create arrows from main table to secondary table
                     if (
                       joinObj.main_table?.id === data?.id &&
@@ -138,6 +140,7 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                         targetId: `${condition.secondary_table?.id}-column-${condition.secondary_column}`,
                         targetAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'left' : 'right',
                         sourceAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'right' : 'left',
+                        arrowLength: 0,
                         label: (
                           <div className="join-controls">
                             <UncontrolledDropdown>
@@ -166,31 +169,36 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                                   onClick={() => dispatch(updateJoin({ ...joinObj, type: 'inner' }))}
                                   active={joinObj.type === 'inner'}
                                 >
-                                  Inner Join
+                                  Select only matching rows from <strong>{mainTable}</strong> and{' '}
+                                  <strong>{secondaryTable}</strong> (Inner Join)
                                 </DropdownItem>
                                 <DropdownItem
                                   onClick={() => dispatch(updateJoin({ ...joinObj, type: 'left' }))}
                                   active={joinObj.type === 'left'}
                                 >
-                                  Left Join
+                                  Select all rows from <strong>{mainTable}</strong>, matching rows from{' '}
+                                  <strong>{secondaryTable}</strong> (Left Join)
                                 </DropdownItem>
                                 <DropdownItem
                                   onClick={() => dispatch(updateJoin({ ...joinObj, type: 'right' }))}
                                   active={joinObj.type === 'right'}
                                 >
-                                  Right Join
+                                  Select all rows from <strong>{secondaryTable}</strong>, matching rows from{' '}
+                                  <strong>{mainTable}</strong> (Right Join)
                                 </DropdownItem>
                                 <DropdownItem
                                   onClick={() => dispatch(updateJoin({ ...joinObj, type: 'outer' }))}
                                   active={joinObj.type === 'outer'}
                                 >
-                                  Outer Join
+                                  Select all rows from both <strong>{mainTable}</strong> and{' '}
+                                  <strong>{secondaryTable}</strong> (Full join)
                                 </DropdownItem>
                                 <DropdownItem
                                   onClick={() => dispatch(updateJoin({ ...joinObj, type: 'cross' }))}
                                   active={joinObj.type === 'cross'}
                                 >
-                                  Cross Join
+                                  Combine every row from <strong>{mainTable}</strong> with every row from{' '}
+                                  <strong>{secondaryTable}</strong> (Cross Join)
                                 </DropdownItem>
                                 <DropdownItem divider />
                                 <DropdownItem className="text-danger" onClick={() => handleRemove(joinObj)}>
