@@ -24,6 +24,9 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
     column_name: data.column_name,
   });
 
+  const scalarFunctions = process.env.REACT_APP_SCALAR_FUNCTIONS.split(',');
+  const singleLineFunctions = process.env.REACT_APP_SINGE_LINE_FUNCTIONS.split(',');
+
   const [conditionsData, setConditionsData] = useState(data.column_conditions);
 
   const updateFilterValue = (index, value) => {
@@ -101,8 +104,6 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
     const name = e.target.name;
     const value = e.target.value;
 
-    console.log('name', name);
-    console.log('value', value);
     setColumnData((prevColumnData) => {
       console.log({ prevColumnData });
       const newData = {
@@ -140,6 +141,11 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
         column_alias: column.column_alias,
       }));
     }
+
+    console.log('alias', column.column_alias);
+    // remove double quotes from column_alias
+    column.column_alias = column.column_alias.replace(/"/g, '');
+    console.log('alias2', column.column_alias);
 
     dispatch(updateColumn(column));
   };
@@ -192,15 +198,11 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
                 value={data.column_aggregate}
               >
                 <option aria-label="Select an option" value="" />
-                <option value="AVG">AVG</option>
-                <option value="BIT_AND">BIT_AND</option>
-                <option value="BIT_OR">BIT_OR</option>
-                <option value="BOOL_AND">BOOL_AND</option>
-                <option value="BOOL_OR">BOOL_OR</option>
-                <option value="COUNT">COUNT</option>
-                <option value="MAX">MAX</option>
-                <option value="MIN">MIN</option>
-                <option value="SUM">SUM</option>
+                {singleLineFunctions.map((scalarFunction) => (
+                  <option key={scalarFunction} value={scalarFunction}>
+                    {scalarFunction}
+                  </option>
+                ))}
               </select>
             </td>
           </tr>
@@ -214,18 +216,11 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
                 value={data.column_single_line_function}
               >
                 <option aria-label="Select an option" value="" />
-
-                <option value="ASCII">ASCII</option>
-                <option value="BIT_LENGTH">BIT_LENGTH</option>
-                <option value="CHAR_LENGTH">CHAR_LENGTH</option>
-                <option value="INITCAP">INITCAP</option>
-                <option value="LENGTH">LENGTH</option>
-                <option value="LOWER">LOWER</option>
-                <option value="OCTET_LENGTH">OCTET_LENGTH</option>
-                <option value="REVERSE">REVERSE</option>
-                <option value="UPPER">UPPER</option>
-                <option value="TO_ASCII">TO_ASCII</option>
-                <option value="TO_HEX">TO_HEX</option>
+                {scalarFunctions.map((scalarFunction) => (
+                  <option key={scalarFunction} value={scalarFunction}>
+                    {scalarFunction}
+                  </option>
+                ))}
               </select>
             </td>
           </tr>

@@ -27,69 +27,211 @@ const addColumnsToQuery = (data, query) => {
     query.group(`${format.ident(table)}.${format.ident(column)}`);
   };
 
-  // Function to process individual conditions
-  const processCondition = (columnName, condition) => {
-    // Replace double quotes with single quotes
-    const filterValue = condition.replace(/"/g, "'").trim();
-    return `${columnName} ${filterValue}`;
+  const matchesIgnoreCase = (str, startIndex, pattern) =>
+    str.slice(startIndex, startIndex + pattern.length).toUpperCase() === pattern.toUpperCase();
+
+  /**
+   * 2) tokenizeConditionString
+   *    - Reads a condition string like "= 'test' OR = 'test2'"
+   *    - Ignores OR/AND inside quotes
+   *    - Produces a token list, e.g.:
+   *      [
+   *        { type: 'TEXT', value: "= 'test'" },
+   *        { type: 'OPERATOR', value: 'OR' },
+   *        { type: 'TEXT', value: "= 'lala'" }
+   *      ]
+   */
+  const tokenizeConditionString = (condition) => {
+    const str = condition.replace(/"/g, "'"); // Replace double quotes with single quotes
+    const tokens = [];
+
+    let insideQuotes = false;
+    let current = '';
+    let i = 0;
+
+    while (i < str.length) {
+      const char = str[i];
+
+      // Toggle quote state if we see a single quote
+      if (char === "'") {
+        insideQuotes = !insideQuotes;
+        current += char;
+        i += 1;
+        continue;
+      }
+
+      // If we are OUTSIDE quotes, check for "OR" or "AND"
+      if (!insideQuotes) {
+        // Check "OR"
+        if (matchesIgnoreCase(str, i, 'OR')) {
+          // If we have accumulated some text, push it as TEXT
+          if (current.trim().length > 0) {
+            tokens.push({ type: 'TEXT', value: current.trim() });
+          }
+          current = ''; // reset
+
+          // Push operator
+          tokens.push({ type: 'OPERATOR', value: 'OR' });
+
+          i += 2; // skip "OR"
+          // Skip spaces
+          while (i < str.length && /\s/.test(str[i])) {
+            i += 1;
+          }
+          continue;
+        }
+
+        // Check "AND"
+        if (matchesIgnoreCase(str, i, 'AND')) {
+          // If we have accumulated some text, push it
+          if (current.trim().length > 0) {
+            tokens.push({ type: 'TEXT', value: current.trim() });
+          }
+          current = ''; // reset
+
+          // Push operator
+          tokens.push({ type: 'OPERATOR', value: 'AND' });
+
+          i += 3; // skip "AND"
+          // Skip spaces
+          while (i < str.length && /\s/.test(str[i])) {
+            i += 1;
+          }
+          continue;
+        }
+      }
+
+      // Default case: add char to current
+      current += char;
+      i += 1;
+    }
+
+    // End of string: push whatever remains as TEXT
+    if (current.trim().length > 0) {
+      tokens.push({ type: 'TEXT', value: current.trim() });
+    }
+
+    return tokens;
   };
 
-  // Build filters by combining conditions at the same index across columns
-  const buildFilters = (columns) => {
-    // Add safety check for columns
+  /**
+   * 3) buildConditionString
+   *    - Takes tokens from tokenizeConditionString
+   *    - For each TEXT token, ensures "columnName = something"
+   *      if there's an '=' present (with optional spaces).
+   *    - Joins OPERATOR tokens ("OR"/"AND") in between.
+   */
+  const buildConditionString = (tokens, columnName) => {
+    let result = '';
+    let hasOperator = false; // track if we've seen an OR/AND
+
+    for (let i = 0; i < tokens.length; i += 1) {
+      const token = tokens[i];
+
+      if (token.type === 'TEXT') {
+        const textVal = token.value.trim();
+
+        // If it starts with '=', handle "colName = <stuff>"
+        const eqMatch = textVal.match(/^=+\s*(.*)/);
+        if (eqMatch) {
+          const rightSide = eqMatch[1];
+          result += `${columnName} = ${rightSide}`;
+        } else {
+          // If text doesn't already have columnName, insert it
+          if (!textVal.includes(columnName)) {
+            result += `${columnName} ${textVal}`;
+          } else {
+            result += textVal;
+          }
+        }
+      } else if (token.type === 'OPERATOR') {
+        hasOperator = true; // we found an OR/AND
+        result += ` ${token.value} `;
+      }
+    }
+
+    // Only wrap in parentheses if we found an OR or AND token
+    if (hasOperator) {
+      result = `(${result.trim()})`;
+    } else {
+      result = result.trim();
+    }
+
+    return result;
+  };
+
+  /**
+   * 4) parseFilterCondition
+   *    - The main function that combines tokenizeConditionString + buildConditionString.
+   *    - For a raw condition like "= 'test' OR ='lala'", it returns "table.col = 'test' OR table.col = 'lala'".
+   */
+  const parseFilterCondition = (condition, columnName) => {
+    const tokens = tokenizeConditionString(condition);
+    return buildConditionString(tokens, columnName);
+  };
+
+  /**
+   * 5) buildFilters
+   *    - For each row index i, gather conditions for all columns and join with "AND".
+   *    - Then join each row with "OR".
+   *    - Aggregate columns go to HAVING, otherwise WHERE.
+   */
+  const buildFilters = (columns = []) => {
     if (!Array.isArray(columns)) {
       return { where: '', having: '' };
     }
 
-    const maxConditionsLength = Math.max(...columns.map((column) => (column.column_conditions || []).length));
+    // Figure out how many 'rows' of conditions we have
+    const maxConditionsLength = Math.max(
+      ...columns.map((col) => (Array.isArray(col.column_conditions) ? col.column_conditions.length : 0)),
+      0,
+    );
+
     const whereClauses = [];
     const havingClauses = [];
 
-    Array.from({ length: maxConditionsLength }).forEach((_, i) => {
-      const whereConditionsAtIndex = [];
-      const havingConditionsAtIndex = [];
+    for (let i = 0; i < maxConditionsLength; i += 1) {
+      const rowWhere = [];
+      const rowHaving = [];
 
       columns.forEach((column) => {
-        // Add safety checks for column properties
-        if (!column || !column.column_conditions) return;
-
-        const condition = column.column_conditions[i];
+        const { table_name = '', column_name = '', table_alias = '', column_aggregate = '' } = column;
+        const conditionArr = column.column_conditions || [];
+        const condition = conditionArr[i];
 
         if (condition && condition.trim() !== '') {
-          let columnName = '';
-
-          // Safe access to table properties
-          const tableName = column.table_name || '';
-          const columnNameVal = column.column_name || '';
-          const tableAlias = column.table_alias;
-
-          if (tableAlias !== '' && !_.isEmpty(tableAlias)) {
-            columnName = `${format.ident(tableAlias)}.${format.ident(columnNameVal)}`;
+          // Build a fully qualified column reference
+          let colRef = '';
+          if (table_alias && !_.isEmpty(table_alias)) {
+            colRef = `${format.ident(table_alias)}.${format.ident(column_name)}`;
           } else {
-            columnName = `${format.ident(tableName)}.${format.ident(columnNameVal)}`;
+            colRef = `${format.ident(table_name)}.${format.ident(column_name)}`;
           }
 
-          if (column.column_aggregate && column.column_aggregate.length > 0) {
-            const aggregatedColumn = `${column.column_aggregate}(${columnName})`;
-            havingConditionsAtIndex.push(processCondition(aggregatedColumn, condition));
+          // If we have an aggregate, that belongs to HAVING
+          if (column_aggregate) {
+            const aggRef = `${column_aggregate}(${colRef})`;
+            rowHaving.push(parseFilterCondition(condition, aggRef));
           } else {
-            whereConditionsAtIndex.push(processCondition(columnName, condition));
+            // Otherwise, normal WHERE
+            rowWhere.push(parseFilterCondition(condition, colRef));
           }
         }
       });
 
-      if (whereConditionsAtIndex.length > 0) {
-        whereClauses.push(`(${whereConditionsAtIndex.join(' AND ')})`);
+      // Join conditions in the same row with AND
+      if (rowWhere.length > 0) {
+        whereClauses.push(`(${rowWhere.join(' AND ')})`);
       }
-      if (havingConditionsAtIndex.length > 0) {
-        havingClauses.push(`(${havingConditionsAtIndex.join(' AND ')})`);
+      if (rowHaving.length > 0) {
+        havingClauses.push(`(${rowHaving.join(' AND ')})`);
       }
-    });
+    }
 
-    return {
-      where: whereClauses.join(' OR '),
-      having: havingClauses.join(' OR '),
-    };
+    const where = whereClauses.join(' OR ');
+    const having = havingClauses.join(' OR ');
+
+    return { where, having };
   };
 
   // Check if any column uses aggregation

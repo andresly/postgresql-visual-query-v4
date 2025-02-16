@@ -19,6 +19,8 @@ module.exports = {
   plugins: ['react'],
   rules: {
     quotes: 'off',
+    'no-continue': 'off',
+    camelcase: 'off',
     'consistent-return': 'off',
     'arrow-body-style': 'off',
     'react/jsx-curly-brace-presence': 'off',

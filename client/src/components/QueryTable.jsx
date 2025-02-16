@@ -140,7 +140,6 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                         targetId: `${condition.secondary_table?.id}-column-${condition.secondary_column}`,
                         targetAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'left' : 'right',
                         sourceAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'right' : 'left',
-                        arrowLength: 0,
                         label: (
                           <div className="join-controls">
                             <UncontrolledDropdown>

@@ -103,6 +103,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       console.log('state.columns', state.columns);
       console.log('existingColumns', existingColumns);
       // Set alias if there are existing columns with the same name
+      // remove double quotes from column_alias
       if (existingColumns.length > 0) {
         column.column_alias = `${column.column_name}_${existingColumns.length + 1}`;
       } else {
