@@ -48,6 +48,7 @@ export const UPDATE_TABLE = 'UPDATE_TABLE';
 export const UPDATE_JOINS_ORDER = 'UPDATE_JOINS_ORDER';
 export const ADD_RESULT = 'ADD_RESULT';
 export const ADD_RESULT_REJECTED = 'ADD_RESULT_REJECTED';
+export const ADD_RESULT_FULFILLED = 'ADD_RESULT_FULFILLED';
 export const ADD_JOIN = 'ADD_JOIN';
 export const UPDATE_JOIN = 'UPDATE_JOIN';
 export const UPDATE_JOIN_NEW_TABLE = 'UPDATE_JOIN_NEW_TABLE';
@@ -188,7 +189,8 @@ export const query = (state: any) => async (dispatch: Dispatch<QueryActions>) =>
       password: state.password,
       sql: state.sql,
     });
-    dispatch({ type: ADD_RESULT, payload: response.data });
+
+    dispatch({ type: ADD_RESULT_FULFILLED, payload: response.data });
   } catch (error) {
     dispatch({ type: ADD_RESULT_REJECTED, payload: error as string });
   }

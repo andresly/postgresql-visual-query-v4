@@ -15,18 +15,6 @@ export const CONNECTED = 'CONNECTED';
 export const CONNECTING = 'CONNECTING';
 export const ADD_DATABASES = 'ADD_DATABASES';
 
-interface DatabaseState {
-  database?: string;
-  user: string;
-  password: string;
-}
-
-interface HostInfo {
-  database: string;
-  user: string;
-  password: string;
-}
-
 export const connectToDatabase =
   (state: { database?: string; user: string; password: string }) =>
   async (dispatch: Dispatch): Promise<void> => {

@@ -4,6 +4,7 @@ import {
   ADD_COLUMN,
   ADD_JOIN,
   ADD_RESULT,
+  ADD_RESULT_FULFILLED,
   ADD_SET,
   ADD_TABLE,
   CHANGE_QUERY_TYPE,
@@ -640,14 +641,14 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       };
     }
 
-    // case `${ADD_RESULT}_${ActionType.Fulfilled}`: {
-    //   return {
-    //     ...state,
-    //     result: action.payload.data,
-    //     error: null,
-    //     querying: false,
-    //   };
-    // }
+    case ADD_RESULT_FULFILLED: {
+      return {
+        ...state,
+        result: action.payload,
+        error: null,
+        querying: false,
+      };
+    }
     case UPDATE_JOINS_ORDER: {
       return {
         ...state,

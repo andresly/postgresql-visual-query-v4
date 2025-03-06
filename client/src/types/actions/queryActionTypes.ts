@@ -3,6 +3,7 @@ import {
   ADD_FILTER_ROW,
   ADD_JOIN,
   ADD_RESULT,
+  ADD_RESULT_FULFILLED,
   ADD_RESULT_REJECTED,
   ADD_ROWS,
   ADD_SET,
@@ -54,7 +55,7 @@ import {
   PSQL_VERSION,
 } from '../../actions/hostActions';
 
-import { QueryColumnType, JoinType, QueryTableType, QueryType, SetType, UsingType } from '../queryTypes';
+import { QueryColumnType, JoinType, QueryTableType, QueryType, SetType, UsingType, ResultType } from '../queryTypes';
 
 export interface SetActiveQueryAction {
   type: typeof SET_ACTIVE_QUERY;
@@ -322,6 +323,11 @@ export interface AddResultRejectedAction {
   payload: string; // Result from the API call
 }
 
+export interface AddResultFulfilledAction {
+  type: typeof ADD_RESULT_FULFILLED;
+  payload: ResultType; // Result from the API call
+}
+
 // Combine all actions into QueryActions type
 export type QueryActions =
   | SetActiveQueryAction
@@ -373,4 +379,5 @@ export type QueryActions =
   | LoggedInAction
   | LoggedOutAction
   | AddResultRejectedAction
+  | AddResultFulfilledAction
   | PsqlVersionAction;
