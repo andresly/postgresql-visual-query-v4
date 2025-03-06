@@ -6,7 +6,7 @@ import store from './store';
 import LandingPage from './routes/LandingPage';
 import QueryPage from './routes/QueryPage';
 
-const App = () => (
+const App: React.FC = () => (
   <Provider store={store}>
     <Router history={history}>
       <div>

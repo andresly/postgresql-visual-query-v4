@@ -80,14 +80,7 @@ export const QueryBuilder = (props) => (
                 />
               );
             }
-            return (
-              <QueryTable
-                key={`query-table-${index}-${table.id}`}
-                id={`query-table-${index}`}
-                data={table}
-                firstTableId={props.tables[0].id}
-              />
-            );
+            return <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />;
           })}
         </ArcherContainer>
       </div>

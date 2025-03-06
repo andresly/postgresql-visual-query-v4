@@ -11,92 +11,107 @@ import {
   UncontrolledDropdown,
   UncontrolledTooltip,
 } from 'reactstrap';
-import { useDispatch, useSelector } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Scrollbars } from 'react-custom-scrollbars';
-import * as PropTypes from 'prop-types';
-import _, { join } from 'lodash';
+import _ from 'lodash';
 import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../actions/queryActions';
 import { translations } from '../utils/translations';
 import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
-import { ArcherContainer, ArcherElement } from 'react-archer';
-import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { ArcherElement } from 'react-archer';
 import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
 import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
 import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
 import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg';
 import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { QueryTableType, JoinType, QueryColumnType } from '../types/queryTypes';
+import { LanguageType } from '../types/settingsType';
 
-const QueryTableHeader = (props) => (
-  <CardTitle className="d-flex pb-1 mb-0 border-bottom">
-    <div className="px-1 flex-fill d-flex">
-      <Button
-        outline
-        color="info"
-        id={props.target}
-        type="button"
-        className="align-self-center btn-block p-0 px-1 text-left text-truncate"
-      >
-        {props.data.table_alias ? `${props.data.table_name} (${props.data.table_alias})` : `${props.data.table_name}`}
-      </Button>
-      <UncontrolledTooltip placement="top" target={props.target} delay={{ hide: 0 }} className="text-truncate">
-        {props.data.table_schema}
-      </UncontrolledTooltip>
-    </div>
-    <ButtonGroup>
-      <Button
-        size="sm"
-        color="secondary"
-        className=""
-        style={{ borderTopLeftRadius: '0px' }}
-        onClick={props.handleCopy}
-        id={`${props.target}_copy`}
-      >
-        <FontAwesomeIcon icon="copy" />
-      </Button>
-      <UncontrolledTooltip
-        placement="top"
-        target={`${props.target}_copy`}
-        delay={{ show: 500, hide: 0 }}
-        className="text-truncate"
-      >
-        {translations[props.language.code].tooltips.copyTable}
-      </UncontrolledTooltip>
-      <Button
-        size="sm"
-        className="align-self-start"
-        color="danger"
-        style={{ borderBottomRightRadius: '0px' }}
-        onClick={props.handleRemoveTable}
-        id={`${props.target}_remove`}
-      >
-        <FontAwesomeIcon icon="times" />
-      </Button>
-    </ButtonGroup>
-    <QueryTablePopover target={props.target} data={props.data} />
-  </CardTitle>
-);
+interface QueryTableHeaderProps {
+  data: {
+    table_type: string;
+    table_name: string;
+    table_alias?: string;
+    table_schema: string;
+    id: number;
+  };
+  target: string;
+  handleCopy: () => void;
+  language: LanguageType;
+  handleRemoveTable: () => void;
+}
 
-QueryTableHeader.propTypes = {
-  data: PropTypes.shape({
-    table_type: PropTypes.string,
-    table_name: PropTypes.string,
-    table_alias: PropTypes.string,
-    table_schema: PropTypes.string,
-  }),
-  target: PropTypes.string,
-  handleCopy: PropTypes.func,
-  language: PropTypes.shape({ code: PropTypes.string }),
-  handleRemoveTable: PropTypes.func,
+const QueryTableHeader: React.FC<QueryTableHeaderProps> = ({
+  target,
+  data,
+  language,
+  handleCopy,
+  handleRemoveTable,
+}) => {
+  return (
+    <CardTitle className="d-flex pb-1 mb-0 border-bottom">
+      <div className="px-1 flex-fill d-flex">
+        <Button
+          outline
+          color="info"
+          id={target}
+          type="button"
+          className="align-self-center btn-block p-0 px-1 text-left text-truncate"
+        >
+          {data.table_alias ? `${data.table_name} (${data.table_alias})` : `${data.table_name}`}
+        </Button>
+        <UncontrolledTooltip placement="top" target={target} className="text-truncate">
+          {data.table_schema}
+        </UncontrolledTooltip>
+      </div>
+      <ButtonGroup>
+        <Button
+          size="sm"
+          color="secondary"
+          className=""
+          style={{ borderTopLeftRadius: '0px' }}
+          onClick={handleCopy}
+          id={`${target}_copy`}
+        >
+          <FontAwesomeIcon icon="copy" />
+        </Button>
+        <UncontrolledTooltip
+          placement="top"
+          target={`${target}_copy`}
+          delay={{ show: 500, hide: 0 }}
+          className="text-truncate"
+        >
+          {translations[language.code].tooltips.copyTable}
+        </UncontrolledTooltip>
+        <Button
+          size="sm"
+          className="align-self-start"
+          color="danger"
+          style={{ borderBottomRightRadius: '0px' }}
+          onClick={handleRemoveTable}
+          id={`${target}_remove`}
+        >
+          <FontAwesomeIcon icon="times" />
+        </Button>
+      </ButtonGroup>
+      <QueryTablePopover target={target} data={data} />
+    </CardTitle>
+  );
 };
 
-const QueryTableBody = ({ data, id, constructData, joins }) => {
-  const dispatch = useDispatch();
-  const handleRemove = (join) => {
+interface QueryTableBodyProps {
+  data: QueryTableType;
+  id: string;
+  constructData: (column: QueryColumnType) => any;
+  joins?: JoinType[] | false;
+}
+
+const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData, joins }) => {
+  const dispatch = useAppDispatch();
+  const handleRemove = (join: JoinType) => {
     dispatch(removeJoin(join));
   };
-  console.log({ joins });
   return (
     <Scrollbars
       autoHeight
@@ -211,7 +226,7 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
                     }
                     return null;
                   })
-                  .filter(Boolean) || []
+                  .filter((relation): relation is any => relation !== null) || []
               }
             >
               <div>
@@ -229,26 +244,17 @@ const QueryTableBody = ({ data, id, constructData, joins }) => {
   );
 };
 
-QueryTableBody.propTypes = {
-  data: PropTypes.shape({
-    table_type: PropTypes.string,
-    table_name: PropTypes.string,
-    table_alias: PropTypes.string,
-    table_schema: PropTypes.string,
-    columns: PropTypes.arrayOf(PropTypes.shape({})),
-  }),
-  language: PropTypes.shape({ code: PropTypes.string }),
-  id: PropTypes.string,
-  constructData: PropTypes.func,
-  joins: PropTypes.arrayOf(PropTypes.shape({})),
-};
+interface QueryTableProps {
+  data: QueryTableType;
+  id: string;
+}
 
-const QueryTable = ({ data, id }) => {
-  const dispatch = useDispatch();
-  const language = useSelector((state) => state.settings.language);
-  const queryType = useSelector((state) => state.query.queryType);
-  const joins = useSelector((state) => state.query.joins);
-  const firstTableId = useSelector((state) => state.query.tables[0]?.id);
+const QueryTable: React.FC<QueryTableProps> = ({ data, id }) => {
+  const dispatch = useAppDispatch();
+  const language = useAppSelector((state) => state.settings.language);
+  const queryType = useAppSelector((state) => state.query.queryType);
+  const joins = useAppSelector((state) => state.query.joins);
+  const firstTableId = useAppSelector((state) => state.query.tables[0]?.id);
 
   const handleRemoveTable = () => {
     if (['DELETE', 'UPDATE'].includes(queryType) && data.id === firstTableId) {
@@ -262,7 +268,7 @@ const QueryTable = ({ data, id }) => {
     dispatch(addTable(data));
   };
 
-  const constructData = (column) => ({
+  const constructData = (column: QueryColumnType) => ({
     ...column,
     table_name: data.table_name,
     table_schema: data.table_schema,
@@ -289,18 +295,6 @@ const QueryTable = ({ data, id }) => {
       <QueryTableBody data={data} id={id} constructData={constructData} joins={tableJoins} />
     </Card>
   );
-};
-
-QueryTable.propTypes = {
-  data: PropTypes.shape({
-    table_type: PropTypes.string,
-    table_name: PropTypes.string,
-    table_alias: PropTypes.string,
-    table_schema: PropTypes.string,
-    columns: PropTypes.arrayOf(PropTypes.shape({})),
-    id: PropTypes.number,
-  }),
-  id: PropTypes.string,
 };
 
 export default QueryTable;

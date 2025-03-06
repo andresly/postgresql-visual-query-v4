@@ -1,13 +1,13 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Col, Container, Row } from 'reactstrap';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import InformationPopover from '../components/InformationPopover';
 import DatabaseSelector from '../components/DatabaseSelector';
 import LoginFormContainer from '../components/LoginFormContainer';
+import { useAppSelector } from '../hooks';
 
 const LandingPage = () => {
-  const { loggedIn } = useSelector((state) => ({
+  const { loggedIn } = useAppSelector((state) => ({
     loggedIn: state.host.loggedIn,
   }));
 

@@ -184,7 +184,7 @@ export const translations = {
   },
 };
 
-export const languages = [
+export const languages: { code: 'eng' | 'est'; name: string }[] = [
   { code: 'eng', name: 'English' },
   { code: 'est', name: 'Eesti' },
 ];

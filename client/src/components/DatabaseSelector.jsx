@@ -5,11 +5,12 @@ import { Redirect } from 'react-router-dom';
 import { connectToDatabase, fetchAvailableDatabases } from '../actions/databaseActions';
 import { logout, getDatabaseVersion } from '../actions/hostActions';
 import { translations } from '../utils/translations';
+import { useAppDispatch, useAppSelector } from '../hooks';
 
 const DatabaseSelector = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState('');
-  const { availableDatabases, connected, user, password, language, psqlVersion } = useSelector((state) => ({
+  const { availableDatabases, connected, user, password, language, psqlVersion } = useAppSelector((state) => ({
     availableDatabases: state.database.availableDatabases,
     connected: state.host.connected,
     user: state.host.user,

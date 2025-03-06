@@ -4,11 +4,12 @@ module.exports = {
     es6: true,
     jest: true,
   },
-  extends: ['airbnb', 'prettier'],
+  extends: ['airbnb', 'prettier', 'plugin:@typescript-eslint/recommended'],
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
       jsx: true,
@@ -16,7 +17,14 @@ module.exports = {
     ecmaVersion: 2020,
     sourceType: 'module',
   },
-  plugins: ['react'],
+  settings: {
+    'import/resolver': {
+      node: {
+        extensions: ['.js', '.jsx', '.ts', '.tsx'], // Add TypeScript extensions
+      },
+    },
+  },
+  plugins: ['react', '@typescript-eslint'],
   rules: {
     quotes: 'off',
     'no-continue': 'off',
@@ -70,5 +78,26 @@ module.exports = {
     ],
     // 'prefer-destructuring': ['error', { object: true, array: false }],
     'react/destructuring-assignment': [0, 'always', { ignoreClassFields: false }],
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-explicit-any': 'off',
+    '@typescript-eslint/no-unused-vars': ['warn'],
+    'no-use-before-define': 'off',
+    '@typescript-eslint/no-use-before-define': ['error'],
+    'default-param-last': 'off',
+    '@typescript-eslint/ban-ts-comment': 'off',
+    'jsx-a11y/control-has-associated-label': 'off',
+    'react/jsx-filename-extension': [1, { extensions: ['.jsx', '.tsx'] }],
+    // '@typescript-eslint/no-shadow': 'off',
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
   },
 };

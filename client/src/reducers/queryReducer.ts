@@ -1,6 +1,5 @@
 import _ from 'lodash';
 import randomColor from 'randomcolor';
-import { ActionType } from 'redux-promise-middleware';
 import {
   ADD_COLUMN,
   ADD_JOIN,
@@ -46,8 +45,11 @@ import {
   UPDATE_COLUMN_FILTER,
 } from '../actions/queryActions';
 import { buildQuery, buildDeleteQuery, buildInsertQuery, buildUpdateQuery } from '../utils/queryBuilder';
+import { QueryType } from '../types/queryTypes';
+import { QueryActions } from '../types/actions/queryActionTypes';
+import { Reducer } from 'redux';
 
-export const INITIAL_STATE = {
+export const INITIAL_STATE: QueryType = {
   id: 0,
   columns: [],
   queryType: 'SELECT',
@@ -70,13 +72,14 @@ export const INITIAL_STATE = {
   sets: [],
   rows: 1,
   filterRows: 1,
+  isDragAndDrop: true,
   fromQuery: false,
   subqueryId: 0,
   subquerySql: '',
   defaultValue: 'DEFAULT',
 };
 
-export const queryReducer = (state = INITIAL_STATE, action = {}) => {
+export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_STATE, action: QueryActions) => {
   switch (action.type) {
     case SET_ACTIVE_QUERY: {
       const activeQuery = _.cloneDeep(action.payload);
@@ -100,8 +103,6 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
         (stateColumn) => stateColumn.column_name === action.payload.column_name,
       );
 
-      console.log('state.columns', state.columns);
-      console.log('existingColumns', existingColumns);
       // Set alias if there are existing columns with the same name
       // remove double quotes from column_alias
       if (existingColumns.length > 0) {
@@ -119,7 +120,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       column.column_aggregate = '';
       column.column_single_line_function = '';
       column.column_distinct_on = false;
-      column.column_sort_order = 0;
+      column.column_sort_order = 'desc';
       column.column_order_dir = true;
       column.column_order_nr = null;
       column.column_group_by = false;
@@ -446,7 +447,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
     case SET_LIMIT_VALUE: {
       return {
         ...state,
-        limitValue: action.payload.limitValue,
+        limitValue: action.payload,
       };
     }
     case ADD_USING: {
@@ -459,6 +460,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
       const usingTable = {
         id,
         main_table: {
+          id: 0,
           table_name: '',
           table_schema: '',
           table_alias: '',
@@ -527,6 +529,10 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
           using,
         };
       }
+      return {
+        ...state,
+        using,
+      };
     }
     case REMOVE_USING: {
       const filteredUsing = state.using.filter((using) => using.id !== action.payload.id);
@@ -633,14 +639,15 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
         joins: filteredJoins,
       };
     }
-    case `${ADD_RESULT}_${ActionType.Fulfilled}`: {
-      return {
-        ...state,
-        result: action.payload.data,
-        error: null,
-        querying: false,
-      };
-    }
+
+    // case `${ADD_RESULT}_${ActionType.Fulfilled}`: {
+    //   return {
+    //     ...state,
+    //     result: action.payload.data,
+    //     error: null,
+    //     querying: false,
+    //   };
+    // }
     case UPDATE_JOINS_ORDER: {
       return {
         ...state,
@@ -690,6 +697,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
           sql: query,
         };
       }
+      return state;
     }
     case UPDATE_SQL: {
       return {
@@ -697,7 +705,7 @@ export const queryReducer = (state = INITIAL_STATE, action = {}) => {
         sql: action.payload.sqlString,
       };
     }
-    case `${ADD_RESULT}_REJECTED`: {
+    case `ADD_RESULT_REJECTED`: {
       return {
         ...state,
         error: action.payload,

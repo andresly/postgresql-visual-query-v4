@@ -1,13 +1,14 @@
 import * as _ from 'lodash';
 import * as format from 'pg-format';
-import * as squel from 'squel';
+import squel, { JoinMixin } from 'squel';
+import { QueryColumnType, JoinType, QueryTableType, QueryType } from '../types/queryTypes';
 
 const squelPostgres = squel.useFlavour('postgres');
 
-const addColumnsToQuery = (data, query) => {
+const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const columns = _.cloneDeep(data.columns);
 
-  const addOrder = (column) => {
+  const addOrder = (column: QueryColumnType) => {
     // 1) Handle aggregates first
     if (column.column_aggregate && column.column_aggregate.length > 0) {
       // If there is an aggregate, we order by its alias (or auto-generated alias).
@@ -50,19 +51,19 @@ const addColumnsToQuery = (data, query) => {
     }
   };
 
-  const addField = (table, column) => {
+  const addField = (table: string, column: string) => {
     query.field(`${format.ident(table)}.${format.ident(column)}`);
   };
 
-  const addFieldWithAlias = (table, column, alias) => {
+  const addFieldWithAlias = (table: string, column: string, alias: string) => {
     query.field(`${format.ident(table)}.${format.ident(column)}`, `${format.ident(alias)}`);
   };
 
-  const addGroupBy = (table, column) => {
+  const addGroupBy = (table: string, column: string) => {
     query.group(`${format.ident(table)}.${format.ident(column)}`);
   };
 
-  const matchesIgnoreCase = (str, startIndex, pattern) =>
+  const matchesIgnoreCase = (str: string, startIndex: number, pattern: string) =>
     str.slice(startIndex, startIndex + pattern.length).toUpperCase() === pattern.toUpperCase();
 
   /**
@@ -76,7 +77,7 @@ const addColumnsToQuery = (data, query) => {
    *        { type: 'TEXT', value: "= 'lala'" }
    *      ]
    */
-  const tokenizeConditionString = (condition) => {
+  const tokenizeConditionString = (condition: string) => {
     const str = condition.replace(/"/g, "'"); // Replace double quotes with single quotes
     const tokens = [];
 
@@ -156,7 +157,7 @@ const addColumnsToQuery = (data, query) => {
    *      if there's an '=' present (with optional spaces).
    *    - Joins OPERATOR tokens ("OR"/"AND") in between.
    */
-  const buildConditionString = (tokens, columnName) => {
+  const buildConditionString = (tokens: { type: string; value: string }[], columnName: string) => {
     let result = '';
     let hasOperator = false; // track if we've seen an OR/AND
 
@@ -200,7 +201,7 @@ const addColumnsToQuery = (data, query) => {
    *    - The main function that combines tokenizeConditionString + buildConditionString.
    *    - For a raw condition like "= 'test' OR ='lala'", it returns "table.col = 'test' OR table.col = 'lala'".
    */
-  const parseFilterCondition = (condition, columnName) => {
+  const parseFilterCondition = (condition: string, columnName: string) => {
     const tokens = tokenizeConditionString(condition);
     return buildConditionString(tokens, columnName);
   };
@@ -211,7 +212,7 @@ const addColumnsToQuery = (data, query) => {
    *    - Then join each row with "OR".
    *    - Aggregate columns go to HAVING, otherwise WHERE.
    */
-  const buildFilters = (columns = []) => {
+  const buildFilters = (columns: QueryColumnType[] = []) => {
     if (!Array.isArray(columns)) {
       return { where: '', having: '' };
     }
@@ -226,8 +227,8 @@ const addColumnsToQuery = (data, query) => {
     const havingClauses = [];
 
     for (let i = 0; i < maxConditionsLength; i += 1) {
-      const rowWhere = [];
-      const rowHaving = [];
+      const rowWhere: string[] = [];
+      const rowHaving: string[] = [];
 
       columns.forEach((column) => {
         const { table_name = '', column_name = '', table_alias = '', column_aggregate = '' } = column;
@@ -418,14 +419,14 @@ const addColumnsToQuery = (data, query) => {
   }
 };
 
-const buildJoinOn = (join) => {
+const buildJoinOn = (join: JoinType) => {
   let mainTable = join.main_table.table_name;
 
   if (!_.isEmpty(join.main_table.table_alias)) {
     mainTable = join.main_table.table_alias;
   }
 
-  const conditionArray = [];
+  const conditionArray: string[] = [];
   const conditions = _.cloneDeep(join.conditions);
 
   conditions.forEach((condition) => {
@@ -448,10 +449,10 @@ const buildJoinOn = (join) => {
   return conditionArray.join(' AND ');
 };
 
-const addJoinsToQuery = (data, query) => {
+const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
 
-  const addJoin = (joinObj, on, joinFn) => {
+  const addJoin = (joinObj: JoinType, on: string, joinFn: JoinMixin['join']) => {
     if (!_.isEmpty(joinObj.main_table.table_alias)) {
       joinFn(
         `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
@@ -461,7 +462,7 @@ const addJoinsToQuery = (data, query) => {
     } else {
       joinFn(
         `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        null,
+        undefined,
         on,
       );
     }
@@ -499,10 +500,10 @@ const addJoinsToQuery = (data, query) => {
   });
 };
 
-const addJoinsToQueryByDragAndDrop = (data, query) => {
+const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
 
-  const addJoin = (joinObj, on, joinFn) => {
+  const addJoin = (joinObj: JoinType, on: string, joinFn: JoinMixin['join']) => {
     if (!_.isEmpty(joinObj.main_table.table_alias)) {
       joinFn(
         `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
@@ -512,7 +513,7 @@ const addJoinsToQueryByDragAndDrop = (data, query) => {
     } else {
       joinFn(
         `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        null,
+        undefined,
         on,
       );
     }
@@ -550,7 +551,7 @@ const addJoinsToQueryByDragAndDrop = (data, query) => {
   });
 };
 
-const buildSetQuery = (data) => {
+const buildSetQuery = (data: QueryType) => {
   const sets = _.cloneDeep(data.sets);
 
   let setQuery = '';
@@ -585,8 +586,8 @@ const buildSetQuery = (data) => {
   return setQuery;
 };
 
-const addTablesToQuery = (data, query) => {
-  const addTable = (table) => {
+const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
+  const addTable = (table: QueryTableType) => {
     if (_.isEmpty(table.table_alias)) {
       query.from(`${format.ident(table.table_schema)}.${format.ident(table.table_name)}`);
     } else {
@@ -611,12 +612,12 @@ const addTablesToQuery = (data, query) => {
       } else {
         addJoinsToQuery(data, query);
       }
-      buildSetQuery(data, query);
+      buildSetQuery(data);
     }
   }
 };
 
-export const buildQuery = (data) => {
+export const buildQuery = (data: QueryType) => {
   const query = squelPostgres.select({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -641,18 +642,18 @@ export const buildQuery = (data) => {
   return `${query}${setQueryString};`;
 };
 
-const addFilterToQueryNew = (data) => {
+const addFilterToQueryNew = (data: QueryType) => {
   const columns = _.cloneDeep(data.columns);
 
   let whereQuery = '';
-  const filterList = [];
-  let filterLength;
+  const filterList: { id: number; filter: string }[] = [];
+  let filterLength = 0;
 
   if (columns[0]) {
     filterLength = columns[0].column_filters.length;
   }
 
-  columns.forEach((column) => {
+  columns.forEach((column: QueryColumnType) => {
     column.column_filters.forEach((filter) => {
       if (filter.filter.length > 0 && !column.returningOnly) {
         filterList.push({ id: filter.id, filter: `${column.table_name}.${column.column_name} ${filter.filter}` });
@@ -663,7 +664,7 @@ const addFilterToQueryNew = (data) => {
   const finalFilter = [];
 
   for (let i = 0; i < filterLength + 1; i += 1) {
-    const filterRow = [];
+    const filterRow: string[] = [];
     filterList.forEach((filterCell) => {
       if (filterCell.id === i) {
         filterRow.push(filterCell.filter);
@@ -682,10 +683,10 @@ const addFilterToQueryNew = (data) => {
   return whereQuery;
 };
 
-const getUsingTables = (data) => {
+const getUsingTables = (data: QueryType) => {
   const usings = _.cloneDeep(data.using);
 
-  const usingTables = [];
+  const usingTables: string[] = [];
 
   usings.forEach((using) => {
     usingTables.push(`${using.main_table.table_schema}.${using.main_table.table_name}`);
@@ -694,10 +695,10 @@ const getUsingTables = (data) => {
   return usingTables;
 };
 
-const getUsingConditions = (data) => {
+const getUsingConditions = (data: QueryType) => {
   const usings = _.cloneDeep(data.using);
 
-  const usingConditions = [];
+  const usingConditions: string[] = [];
 
   usings.forEach((using) => {
     using.conditions.forEach((condition) => {
@@ -710,11 +711,11 @@ const getUsingConditions = (data) => {
   return usingConditions;
 };
 
-const addReturningToQuery = (data) => {
+const addReturningToQuery = (data: QueryType) => {
   const columns = _.cloneDeep(data.columns);
 
   let returning = '';
-  const returningColumns = [];
+  const returningColumns: string[] = [];
 
   columns.forEach((column) => {
     if (column.returning || column.returningOnly) {
@@ -730,12 +731,12 @@ const addReturningToQuery = (data) => {
   return returning;
 };
 
-const addInsertValuesToQuery = (data, query) => {
+const addInsertValuesToQuery = (data: QueryType, query: squel.PostgresInsert) => {
   const columns = _.cloneDeep(data.columns);
   const valuesList = [];
 
   for (let i = 0; i < data.rows; i += 1) {
-    const valueRow = {};
+    const valueRow: Record<string, string> = {};
 
     columns.forEach((column) => {
       if (!column.returningOnly) {
@@ -747,13 +748,13 @@ const addInsertValuesToQuery = (data, query) => {
       }
     });
 
-    query.setFields(valueRow, { dontQuote: true });
+    query.setFields(valueRow, { ignorePeriodsForFieldNameQuotes: true });
     valuesList.push(query.toString().split('\n').slice(-1).toString().split('VALUES').slice(-1));
   }
   return valuesList;
 };
 
-const addUpdateValuesToQuery = (data, query) => {
+const addUpdateValuesToQuery = (data: QueryType, query: squel.PostgresUpdate) => {
   const columns = _.cloneDeep(data.columns);
 
   columns.forEach((column) => {
@@ -763,7 +764,7 @@ const addUpdateValuesToQuery = (data, query) => {
   });
 };
 
-export const buildDeleteQuery = (data) => {
+export const buildDeleteQuery = (data: QueryType) => {
   const query = squelPostgres.delete({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -774,8 +775,8 @@ export const buildDeleteQuery = (data) => {
 
   query.from(`${format.ident(data.tables[0].table_schema)}.${format.ident(data.tables[0].table_name)}`);
 
-  const usingTables = getUsingTables(data, query);
-  const usingConditions = getUsingConditions(data, query);
+  const usingTables = getUsingTables(data);
+  const usingConditions = getUsingConditions(data);
 
   return `${`${
     query.toString() +
@@ -783,14 +784,14 @@ export const buildDeleteQuery = (data) => {
       ? `\nUSING ${usingTables.join(', ')}\n` +
         'WHERE ' +
         `(${usingConditions.join(' AND ')})` +
-        (addFilterToQueryNew(data).length > 0 ? ` AND ${addFilterToQueryNew(data, query)}` : '')
-      : addFilterToQueryNew(data, query).length > 0
-        ? `\nWHERE ${addFilterToQueryNew(data, query)}`
+        (addFilterToQueryNew(data).length > 0 ? ` AND ${addFilterToQueryNew(data)}` : '')
+      : addFilterToQueryNew(data).length > 0
+        ? `\nWHERE ${addFilterToQueryNew(data)}`
         : '')
-  }\n${addReturningToQuery(data, query).length > 0 ? `RETURNING ${addReturningToQuery(data, query)}` : ''}`};`;
+  }\n${addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : ''}`};`;
 };
 
-export const buildInsertQuery = (data) => {
+export const buildInsertQuery = (data: QueryType) => {
   const query = squelPostgres.insert({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -801,7 +802,7 @@ export const buildInsertQuery = (data) => {
 
   query.into(`${format.ident(data.tables[0].table_schema)}.${format.ident(data.tables[0].table_name)}`);
 
-  const columnString = [];
+  const columnString: string[] = [];
   data.columns.forEach((column) => {
     if (!column.returningOnly) {
       columnString.push(column.column_name);
@@ -809,34 +810,24 @@ export const buildInsertQuery = (data) => {
   });
 
   if (data.fromQuery) {
-    return `${`${query.toString()} ${columnString.length > 0 ? `(${columnString.join(', ')})` : ''}` + `\n${data.subquerySql.slice(0, -1)}\n${addReturningToQuery(data, query).length > 0 ? `RETURNING ${addReturningToQuery(data, query)}` : ''}`};`;
+    const columnsPart = columnString.length > 0 ? `(${columnString.join(', ')})` : '';
+    const subqueryPart = data.subquerySql.slice(0, -1);
+    const returningPart = addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : '';
+
+    return `${query.toString()} ${columnsPart}\n${subqueryPart}\n${returningPart};`;
   }
-  return `${`INSERT\n${query.toString().split('\n').slice(-1).join('\n')} ${
+
+  const lastQueryLine = query.toString().split('\n').slice(-1).join('\n');
+  const columnsPart =
     columnString.length > 0
-      ? `(${columnString.join(', ')})\nVALUES${addInsertValuesToQuery(data, query).join(',')}\n`
-      : ''
-  }${addReturningToQuery(data, query).length > 0 ? `RETURNING ${addReturningToQuery(data, query)}` : ''}`};`;
+      ? `(${columnString.join(', ')})\nVALUES ${addInsertValuesToQuery(data, query).join(',')}\n`
+      : '';
+  const returningPart = addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : '';
+
+  return `INSERT\n${lastQueryLine} ${columnsPart}${returningPart};`;
 };
 
-export const addFilterUpdate = (data, query) => {
-  const columns = _.cloneDeep(data.columns);
-
-  const filterList = [];
-
-  columns.forEach((column) => {
-    if (column.subquerySql.length > 0) {
-      filterList.push(`${column.column_filter}(${column.subquerySql.replaceAll('\n', ' ').replace(';', '')})`);
-    } else if (column.column_filter.length > 0) {
-      filterList.push(`${column.column_filter}`);
-    }
-  });
-
-  const usingConditions = getUsingConditions(data, query);
-
-  query.where(`(${usingConditions.join(' AND ')}) AND (${filterList.join(' AND ')})`);
-};
-
-export const buildUpdateQuery = (data) => {
+export const buildUpdateQuery = (data: QueryType) => {
   const query = squelPostgres.update({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -849,7 +840,7 @@ export const buildUpdateQuery = (data) => {
 
   addUpdateValuesToQuery(data, query);
 
-  const usingTables = getUsingTables(data, query);
+  const usingTables = getUsingTables(data);
   const usingConditions = getUsingConditions(data);
 
   return `${`${
@@ -858,9 +849,9 @@ export const buildUpdateQuery = (data) => {
       ? `\nFROM ${usingTables.join(', ')}\n` +
         'WHERE ' +
         `(${usingConditions.join(' AND ')})` +
-        (addFilterToQueryNew(data).length > 0 ? ` AND ${addFilterToQueryNew(data, query)}` : '')
-      : addFilterToQueryNew(data, query).length > 0
-        ? `\nWHERE ${addFilterToQueryNew(data, query)}`
+        (addFilterToQueryNew(data).length > 0 ? ` AND ${addFilterToQueryNew(data)}` : '')
+      : addFilterToQueryNew(data).length > 0
+        ? `\nWHERE ${addFilterToQueryNew(data)}`
         : '')
-  }\n${addReturningToQuery(data, query).length > 0 ? `RETURNING ${addReturningToQuery(data, query)}` : ''}`};`;
+  }\n${addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : ''}`};`;
 };

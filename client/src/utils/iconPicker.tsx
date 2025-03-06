@@ -1,4 +1,4 @@
-export const iconPicker = (dataType) => {
+export const iconPicker = (dataType: string) => {
   let iconType;
 
   switch (true) {

@@ -1,3 +1,4 @@
+import { DatabaseTableType, DatabaseType } from '../types/databaseTypes';
 import {
   ADD_TABLES,
   ADD_COLUMNS,
@@ -7,8 +8,10 @@ import {
   DELETE_DATABASE,
   ADD_DATABASES,
 } from '../actions/databaseActions';
+import { Reducer } from '@reduxjs/toolkit';
+import { DatabaseActions } from '../types/actions/databaseActionTypes';
 
-export const INITIAL_STATE = {
+export const INITIAL_STATE: DatabaseType = {
   schemas: [],
   tables: [],
   columns: [],
@@ -17,7 +20,10 @@ export const INITIAL_STATE = {
   searchExpr: '',
 };
 
-export const databaseReducer = (state = INITIAL_STATE, action = {}) => {
+export const databaseReducer: Reducer<DatabaseType, DatabaseActions> = (
+  state: DatabaseType = INITIAL_STATE,
+  action,
+) => {
   switch (action.type) {
     case ADD_DATABASES: {
       return {
@@ -26,9 +32,9 @@ export const databaseReducer = (state = INITIAL_STATE, action = {}) => {
       };
     }
     case ADD_TABLES: {
-      const schemas = [];
+      const schemas: string[] = [];
 
-      action.payload.forEach((table) => {
+      action.payload.forEach((table: DatabaseTableType) => {
         if (!schemas.includes(table.table_schema)) {
           schemas.push(table.table_schema);
         }

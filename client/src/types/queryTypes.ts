@@ -1,0 +1,146 @@
+export type QueryType = {
+  columns: QueryColumnType[];
+  defaultValue: string;
+  distinct: boolean;
+  error: string | null;
+  filterRows: number;
+  fromQuery: boolean;
+  id: number;
+  isDragAndDrop: boolean;
+  joins: JoinType[];
+  lastColumnId: number;
+  lastTableId: number;
+  limit: boolean;
+  limitValue: number;
+  queryType: string;
+  queryValid: boolean;
+  querying: boolean;
+  queryName: string;
+  result: any;
+  returning: boolean;
+  rows: number;
+  sets: SetType[];
+  sql: string;
+  subqueryId: number;
+  subquerySql: string;
+  tables: QueryTableType[];
+  using: UsingType[];
+  withTies: boolean;
+};
+
+export type ResultType = {
+  command: string;
+  fields: {
+    name: string;
+    tableID: number;
+    columnID: number;
+    dataTypeID: number;
+    dataTypeSize: number;
+    dataTypeModifier: number;
+    format: string;
+  }[];
+  oid: number | null;
+  rowAsArray: boolean;
+  rowCount: number;
+  rows: any[];
+};
+
+export type SetType = {
+  id: number;
+  color: string;
+  subqueryId: number;
+  subquerySql: string;
+  type: string;
+};
+
+export type UsingType = {
+  id: number;
+  main_table: {
+    id: number;
+    table_name: string;
+    table_schema: string;
+    table_alias: string;
+  };
+  conditions: {
+    secondary_table: {
+      table_name: string;
+    };
+    secondary_column: string;
+    main_column: string;
+  }[];
+};
+
+export type JoinType = {
+  id: number;
+  color: string;
+  type: string;
+  main_table: any;
+  conditions: JoinConditionType[];
+};
+
+export type QueryTableType = {
+  id: number;
+  table_alias: string;
+  table_name: string;
+  table_schema: string;
+  table_type: string;
+  columns: QueryColumnType[];
+};
+
+export type JoinConditionType = {
+  id: number;
+  main_column: string;
+  main_table: QueryTableType;
+  secondary_column: string;
+  secondary_table: QueryTableType;
+};
+
+export type QueryColumnType = {
+  id: number;
+  column_name: string;
+  column_name_original: string;
+  column_alias: string;
+  column_filter: string;
+  column_filter_operand: string;
+  column_conditions: string[];
+  column_filters: {
+    id: number;
+    filter: string;
+  }[];
+  column_values: {
+    id: number;
+    value: string;
+  }[];
+  column_value: string;
+  column_aggregate: string;
+  column_single_line_function: string;
+  column_distinct_on: boolean;
+  column_sort_order: string;
+  column_order_dir: boolean;
+  column_order_nr: number | null;
+  column_group_by: boolean;
+  column_order: boolean;
+  display_in_query: boolean;
+  filter_as_having: boolean;
+  ordinal_position: number;
+  data_type: string;
+  constraints: {
+    column_name: string;
+    constraint_name: string;
+    constraint_type: string; // e.g. 'PRIMARY KEY', 'FOREIGN KEY', 'UNIQUE', etc.
+    foreign_column_name: string | null;
+    foreign_table_name: string | null;
+    foreign_table_schema: string | null;
+    table_name: string;
+    table_schema: string;
+  }[];
+  table_name: string;
+  table_schema: string;
+  table_alias: string;
+  table_id: number;
+  subquerySql: string;
+  subqueryId: number;
+  returning: boolean;
+  returningOnly: boolean;
+  value_enabled: boolean;
+};

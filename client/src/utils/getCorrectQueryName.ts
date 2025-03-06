@@ -1,6 +1,7 @@
 import { translations } from './translations';
+import { LanguageType } from '../types/settingsType';
 
-export const getCorrectQueryName = (language, queryName, queryId) => {
+export const getCorrectQueryName = (language: LanguageType, queryName: string, queryId: number) => {
   if (queryName) {
     return queryName;
   }

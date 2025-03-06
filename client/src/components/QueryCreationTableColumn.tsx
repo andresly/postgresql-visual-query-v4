@@ -1,15 +1,18 @@
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { useDispatch, useSelector } from 'react-redux';
 import _ from 'lodash';
 import { Button, Input } from 'reactstrap';
 import { removeColumn, updateColumn } from '../actions/queryActions';
-import { translations } from '../utils/translations';
 import { bannedWords } from '../utils/bannedWords';
+import { useAppDispatch, useAppSelector } from '../hooks';
+import { QueryColumnType } from '../types/queryTypes';
 
-const QueryCreationTableColumn = ({ data, id, index }) => {
-  const dispatch = useDispatch();
-  const { distinct, language, queries, columns } = useSelector((store) => ({
+const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; index: number }> = ({
+  data,
+  id,
+  index,
+}) => {
+  const dispatch = useAppDispatch();
+  const { distinct, columns } = useAppSelector((store) => ({
     distinct: store.query.distinct,
     language: store.settings.language,
     queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
@@ -18,18 +21,22 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
   const maxConditions = Math.max(...columns.map((col) => col.column_conditions.length), data.column_conditions.length);
   const [filterValid, setFilterValid] = useState(true);
 
-  const [columnData, setColumnData] = useState({
+  const scalarFunctions = (process.env.REACT_APP_SCALAR_FUNCTIONS || '').split(',');
+  const singleLineFunctions = (process.env.REACT_APP_SINGE_LINE_FUNCTIONS || '').split(',');
+
+  const [columnData, setColumnData] = useState<{
+    column_alias: string;
+    filter_valid: boolean;
+    column_name: string;
+  }>({
     column_alias: data.column_alias,
     filter_valid: true,
     column_name: data.column_name,
   });
 
-  const scalarFunctions = process.env.REACT_APP_SCALAR_FUNCTIONS.split(',');
-  const singleLineFunctions = process.env.REACT_APP_SINGE_LINE_FUNCTIONS.split(',');
+  const [conditionsData, setConditionsData] = useState<string[]>(data.column_conditions);
 
-  const [conditionsData, setConditionsData] = useState(data.column_conditions);
-
-  const updateFilterValue = (index, value) => {
+  const updateFilterValue = (index: number, value: string) => {
     setConditionsData((prevConditionsData) => {
       const newConditionsData = [...prevConditionsData];
       newConditionsData[index] = value;
@@ -37,7 +44,7 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
     });
   };
 
-  const changeColumnOrder = (e) => {
+  const changeColumnOrder = (e: React.ChangeEvent<HTMLSelectElement>) => {
     let column = _.cloneDeep(data);
     const isOrdering = e.target.value !== '';
 
@@ -50,17 +57,16 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
     dispatch(updateColumn(column));
   };
 
-  const handleSwitch = (e) => {
+  const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
     let column = _.cloneDeep(data);
     column = {
       ...column,
-      [e.target.name]: !column[e.target.name],
+      [e.target.name]: !column[e.target.name as keyof QueryColumnType],
     };
     dispatch(updateColumn(column));
   };
 
-  const handleFilterChange = (index) => {
-    console.log('siin');
+  const handleFilterChange = (index: number) => {
     // First, create a deep copy of the original data
     const column = _.cloneDeep(data);
     const filterValue = conditionsData[index];
@@ -100,25 +106,17 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
     }
   };
 
-  const handleOnChange = (e) => {
+  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.name;
     const value = e.target.value;
 
-    setColumnData((prevColumnData) => {
-      console.log({ prevColumnData });
-      const newData = {
-        ...prevColumnData,
-        [name]: value,
-      };
-      console.log({ newData });
-      return {
-        ...prevColumnData,
-        [name]: value,
-      };
-    });
+    setColumnData((prevColumnData) => ({
+      ...prevColumnData,
+      [name]: value,
+    }));
   };
 
-  const handleOnSave = (e) => {
+  const handleOnSave = (e: React.FocusEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
     let column = _.cloneDeep(data);
     const name = e.target.name;
     const value = e.target.value;
@@ -142,10 +140,8 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
       }));
     }
 
-    console.log('alias', column.column_alias);
     // remove double quotes from column_alias
     column.column_alias = column.column_alias.replace(/"/g, '');
-    console.log('alias2', column.column_alias);
 
     dispatch(updateColumn(column));
   };
@@ -300,20 +296,6 @@ const QueryCreationTableColumn = ({ data, id, index }) => {
       </table>
     </td>
   );
-};
-
-QueryCreationTableColumn.propTypes = {
-  data: PropTypes.shape({
-    column: PropTypes.string,
-    table: PropTypes.string,
-    aggregate: PropTypes.string,
-    sort: PropTypes.string,
-    show: PropTypes.bool,
-    removeDuplicates: PropTypes.bool,
-    criteria: PropTypes.string,
-    or1: PropTypes.string,
-    or2: PropTypes.string,
-  }),
 };
 
 export default QueryCreationTableColumn;

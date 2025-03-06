@@ -1,3 +1,4 @@
+import { Reducer } from 'redux';
 import {
   UPDATE_HOST,
   DELETE_HOST,
@@ -9,8 +10,10 @@ import {
   DISCONNECT_FROM_DATABASE,
   PSQL_VERSION,
 } from '../actions/hostActions';
+import { Host } from '../types/hostTypes';
+import { HostActions } from '../types/actions/hostActionTypes';
 
-export const INITIAL_STATE = {
+export const INITIAL_STATE: Host = {
   database: '',
   user: '',
   password: '',
@@ -21,7 +24,7 @@ export const INITIAL_STATE = {
   psqlVersion: '',
 };
 
-export const hostReducer = (state = INITIAL_STATE, action = {}) => {
+export const hostReducer: Reducer<Host, HostActions> = (state = INITIAL_STATE, action) => {
   switch (action.type) {
     case UPDATE_HOST: {
       return {
