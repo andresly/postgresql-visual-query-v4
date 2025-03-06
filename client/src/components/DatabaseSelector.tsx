@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
 import { Button, Input } from 'reactstrap';
 import { Redirect } from 'react-router-dom';
 import { connectToDatabase, fetchAvailableDatabases } from '../actions/databaseActions';
@@ -7,39 +6,34 @@ import { logout, getDatabaseVersion } from '../actions/hostActions';
 import { translations } from '../utils/translations';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
-const DatabaseSelector = () => {
+const DatabaseSelector: React.FC = () => {
   const dispatch = useAppDispatch();
-  const [searchTerm, setSearchTerm] = useState('');
-  const { availableDatabases, connected, user, password, language, psqlVersion } = useAppSelector((state) => ({
-    availableDatabases: state.database.availableDatabases,
-    connected: state.host.connected,
-    user: state.host.user,
-    password: state.host.password,
-    language: state.settings.language,
-    psqlVersion: state.host.psqlVersion,
-  }));
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const availableDatabases = useAppSelector((state) => state.database.availableDatabases);
+  const { user, password, psqlVersion, connected } = useAppSelector((state) => state.host);
+  const language = useAppSelector((state) => state.settings.language);
 
   useEffect(() => {
     dispatch(fetchAvailableDatabases({ user, password }));
     dispatch(getDatabaseVersion({ user, password }));
   }, [dispatch, user, password]);
 
-  const handleDatabaseClick = (database) => {
+  const handleDatabaseClick = (database: string) => {
     const params = {
-      user: user,
-      password: password,
-      database: database,
+      user,
+      password,
+      database,
     };
 
     dispatch(connectToDatabase(params));
   };
 
   const filteredDatabases = Array.isArray(availableDatabases)
-    ? availableDatabases.filter((db) => db.toLowerCase().includes(searchTerm.toLowerCase()))
+    ? availableDatabases.filter((db: string) => db.toLowerCase().includes(searchTerm.toLowerCase()))
     : [];
 
   if (connected) {
-    return <Redirect to="/query" replace />;
+    return <Redirect to="/query" />;
   }
 
   return (
@@ -57,7 +51,7 @@ const DatabaseSelector = () => {
         className="mb-3"
       />
       <div className="d-flex flex-column gap-3">
-        {filteredDatabases.map((db, index) => (
+        {filteredDatabases.map((db: string, index: number) => (
           <Button key={index} onClick={() => handleDatabaseClick(db)} className="mb-2">
             {db}
           </Button>

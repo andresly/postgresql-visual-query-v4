@@ -28,11 +28,11 @@ interface HostInfo {
 }
 
 export const connectToDatabase =
-  (state: DatabaseState) =>
+  (state: { database?: string; user: string; password: string }) =>
   async (dispatch: Dispatch): Promise<void> => {
     dispatch({ type: CONNECTING });
 
-    const hostInfo: HostInfo = {
+    const hostInfo = {
       database: state.database || '',
       user: state.user,
       password: state.password,
@@ -70,7 +70,7 @@ export const search = (expr: string) => ({
 });
 
 export const fetchAvailableDatabases =
-  (state: DatabaseState) =>
+  (state: { user: string; password: string }) =>
   async (dispatch: Dispatch): Promise<any> => {
     try {
       const data = {
@@ -95,7 +95,7 @@ export const fetchAvailableDatabases =
   };
 
 export const logIn =
-  (state: DatabaseState) =>
+  (state: { user: string; password: string }) =>
   async (dispatch: Dispatch): Promise<any> => {
     try {
       const data = {

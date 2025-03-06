@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Alert, Button, Container, Form, FormGroup, Input, Label } from 'reactstrap';
-import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
-import { fetchAvailableDatabases, logIn } from '../actions/databaseActions';
+import { logIn } from '../actions/databaseActions';
 import { translations } from '../utils/translations';
 
 const LoginForm = (props) => {
