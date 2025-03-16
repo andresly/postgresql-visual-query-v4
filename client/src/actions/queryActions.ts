@@ -197,7 +197,7 @@ export const query = (state: any) => async (dispatch: Dispatch<QueryActions>) =>
 };
 
 export const addJoin =
-  (join: JoinType, isDragAndDrop = false) =>
+  (join?: JoinType, isDragAndDrop = false) =>
   (dispatch: Dispatch<QueryActions>) => {
     dispatch({
       type: ADD_JOIN,

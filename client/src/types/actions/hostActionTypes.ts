@@ -56,7 +56,7 @@ export interface LoggedOutAction {
 
 export interface PsqlVersionAction {
   type: typeof PSQL_VERSION;
-  payload: string; // Could be version string
+  payload: string;
 }
 
 export type HostActions =

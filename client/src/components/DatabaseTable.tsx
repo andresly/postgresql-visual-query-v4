@@ -1,23 +1,34 @@
 import React from 'react';
 import { Button, Tooltip } from 'reactstrap';
-import { connect } from 'react-redux';
 import _ from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
-import * as PropTypes from 'prop-types';
-import { addColumn, addTable, removeTable, resetQuery } from '../actions/queryActions';
+import { addTable, resetQuery } from '../actions/queryActions';
+import { useAppDispatch } from '../hooks';
 import { withToggle } from '../hocs/withToggle';
+import { QueryTableType } from '../types/queryTypes';
 
-export const DatabaseTable = ({ data, checked, id, addTableProp, toggle, toggleStatus, queryType, resetQuery }) => {
+interface DatabaseTableProps {
+  data: QueryTableType;
+  checked: boolean;
+  id: string;
+  toggle: () => void;
+  toggleStatus: boolean;
+  queryType: string;
+}
+
+export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id, toggle, toggleStatus, queryType }) => {
+  const dispatch = useAppDispatch();
+
   const handleOnClick = () => {
     if (queryType === 'INSERT') {
-      resetQuery(queryType);
+      dispatch(resetQuery(queryType));
     }
 
-    addTableProp(data);
+    dispatch(addTable(data));
   };
 
-  const handleOpenNewTab = (e) => {
+  const handleOpenNewTab = (e: React.MouseEvent) => {
     e.preventDefault();
     window.open(data.table_name, '_blank');
   };
@@ -80,21 +91,4 @@ export const DatabaseTable = ({ data, checked, id, addTableProp, toggle, toggleS
   );
 };
 
-DatabaseTable.propTypes = {
-  data: PropTypes.shape({ table_type: PropTypes.string, table_name: PropTypes.string }),
-  checked: PropTypes.bool,
-  id: PropTypes.string,
-  addTableProp: PropTypes.func,
-  toggle: PropTypes.func,
-  toggleStatus: PropTypes.bool,
-  queryType: PropTypes.string,
-};
-
-const mapDispatchToProps = {
-  addColumn,
-  addTableProp: (data) => addTable(data),
-  removeTable,
-  resetQuery,
-};
-
-export default withToggle(connect(null, mapDispatchToProps)(DatabaseTable));
+export default withToggle(DatabaseTable);

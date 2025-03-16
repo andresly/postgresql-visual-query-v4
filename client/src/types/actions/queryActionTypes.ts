@@ -116,7 +116,7 @@ export interface UpdateTableAction {
 export interface AddJoinAction {
   type: typeof ADD_JOIN;
   payload: {
-    join: JoinType;
+    join?: JoinType;
     isDragAndDrop: boolean;
   };
 }
@@ -285,7 +285,6 @@ export interface UpdateColumnFilterAction {
   };
 }
 
-// Host-related action types from hostActions.js
 export interface ConnectingAction {
   type: typeof CONNECTING;
 }
