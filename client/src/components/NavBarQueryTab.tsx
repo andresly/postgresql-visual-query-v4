@@ -1,7 +1,7 @@
 import { Button, NavLink } from 'reactstrap';
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { setActiveQuery } from '../actions/queryActions';
+import { regenerateSql, setActiveQuery } from '../actions/queryActions';
 import { updateQueries } from '../actions/queriesActions';
 import DeleteQueryButton from './DeleteQueryButton';
 import { useAppDispatch, useAppSelector } from '../hooks';
@@ -28,6 +28,7 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
       dispatch(setActiveQuery(queryTabContent));
       dispatch(updateQueries(lastActiveQuery, queryTabContent.id));
     }
+    dispatch(regenerateSql());
   };
 
   const showDeleteBtn = () => activeQueryId === queryTabContent.id;

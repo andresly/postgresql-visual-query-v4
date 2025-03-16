@@ -682,7 +682,9 @@ export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryT
     query.distinct();
   }
 
-  addColumnsToQuery(data, query, queries);
+  if (queries) {
+    addColumnsToQuery(data, query, queries);
+  }
   addTablesToQuery(data, query);
 
   const setQueryString = buildSetQuery(data);

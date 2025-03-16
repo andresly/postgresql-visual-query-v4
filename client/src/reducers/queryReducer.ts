@@ -271,7 +271,7 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
     }
     case UPDATE_COLUMN: {
       const columns = _.cloneDeep(state.columns);
-      const updatedColumn = action.payload.column;
+      const updatedColumn = action.payload;
       const columnIndex = state.columns.findIndex((column) => _.isEqual(column.id, updatedColumn.id));
 
       if (columnIndex > -1) {
@@ -667,9 +667,7 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
     }
     case GENERATE_SQL: {
       if (state.queryType === 'SELECT') {
-        if (!action.payload?.queries) return state;
-
-        const query = buildQuery({ data: state, queries: action.payload?.queries });
+        const query = buildQuery({ data: state, queries: action.payload.queries });
 
         return {
           ...state,

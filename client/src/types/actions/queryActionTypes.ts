@@ -79,10 +79,7 @@ export interface RemoveColumnAction {
 
 export interface UpdateColumnAction {
   type: typeof UPDATE_COLUMN;
-  payload: {
-    column: QueryColumnType;
-    queries: QueryType[];
-  };
+  payload: QueryColumnType;
 }
 
 export interface UpdateColumnOperandAction {
@@ -201,8 +198,8 @@ export interface SwitchTiesAction {
 
 export interface GenerateSqlAction {
   type: typeof GENERATE_SQL;
-  payload?: {
-    queries?: QueryType[];
+  payload: {
+    queries: QueryType[];
   };
 }
 

@@ -1,6 +1,7 @@
 import axiosClient from '../utils/axiosClient';
 import { JoinType } from '../types/queryTypes';
 import { Dispatch } from 'redux';
+import { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import {
   AddColumnAction,
   AddResultAction,
@@ -76,99 +77,126 @@ export const ADD_FILTER_ROW = 'ADD_FILTER_ROW';
 export const REMOVE_FILTER_ROW = 'REMOVE_FILTER_ROW';
 export const UPDATE_COLUMN_FILTER = 'UPDATE_COLUMN_FILTER';
 
-export const addColumn = (data: AddColumnAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: ADD_COLUMN, payload: data });
-  dispatch({ type: GENERATE_SQL });
+type RootState = any; // Ideally replace 'any' with your actual root state type
+
+export const generateSql = (): ThunkAction<void, RootState, unknown, QueryActions> => (dispatch, getState) => {
+  // Get access to both query and queries state
+  const state = getState();
+  const queries = state.queries || [];
+
+  dispatch({
+    type: GENERATE_SQL,
+    payload: { queries },
+  });
 };
 
-export const addRows = () => (dispatch: Dispatch<QueryActions>) => {
+export const regenerateSql = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+  dispatch(generateSql());
+};
+export const addColumn =
+  (data: AddColumnAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: ADD_COLUMN, payload: data });
+    dispatch(generateSql());
+  };
+
+export const addRows = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: ADD_ROWS });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const removeRows = () => (dispatch: Dispatch<QueryActions>) => {
+export const removeRows = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: REMOVE_ROWS });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const addFilterRow = () => (dispatch: Dispatch<QueryActions>) => {
+export const addFilterRow = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: ADD_FILTER_ROW });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const removeFilterRow = () => (dispatch: Dispatch<QueryActions>) => {
+export const removeFilterRow = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: REMOVE_FILTER_ROW });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const updateColumnFilter = (data: UpdateColumnFilterAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_COLUMN_FILTER, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateColumnFilter =
+  (data: UpdateColumnFilterAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_COLUMN_FILTER, payload: data });
+    dispatch(generateSql());
+  };
 
-export const switchDistinct = () => (dispatch: Dispatch<QueryActions>) => {
+export const switchDistinct = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: SWITCH_DISTINCT });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const switchReturning = () => (dispatch: Dispatch<QueryActions>) => {
+export const switchReturning = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: SWITCH_RETURNING });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const switchFromQuery = () => (dispatch: Dispatch<QueryActions>) => {
+export const switchFromQuery = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: SWITCH_FROM_QUERY });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const updateFromQuery = (data: UpdateFromQueryAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_FROM_QUERY, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateFromQuery =
+  (data: UpdateFromQueryAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_FROM_QUERY, payload: data });
+    dispatch(generateSql());
+  };
 
 export const changeQueryType = (data: ChangeQueryTypeAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
   dispatch({ type: CHANGE_QUERY_TYPE, payload: data });
 };
 
-export const changeDefaultValue = (data: ChangeDefaultValueAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: CHANGE_DEFAULT_VALUE, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const changeDefaultValue =
+  (data: ChangeDefaultValueAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: CHANGE_DEFAULT_VALUE, payload: data });
+    dispatch(generateSql());
+  };
 
-export const addTable = (data: AddTableAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: ADD_TABLE, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const addTable =
+  (data: AddTableAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: ADD_TABLE, payload: data });
+    dispatch(generateSql());
+  };
 
-export const removeTable = (data: RemoveTableAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: REMOVE_TABLE, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const removeTable =
+  (data: RemoveTableAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: REMOVE_TABLE, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateColumn = (data: UpdateColumnAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_COLUMN, payload: data });
-  dispatch({ type: GENERATE_SQL, payload: { queries: data.queries } });
-};
+export const updateColumn =
+  (data: UpdateColumnAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_COLUMN, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateColumnOperand = (operand: string, id: number) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_COLUMN_OPERAND, payload: { operand, id } });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateColumnOperand =
+  (operand: string, id: number) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_COLUMN_OPERAND, payload: { operand, id } });
+    dispatch(generateSql());
+  };
 
-export const updateColumnsOrder = (data: UpdateColumnsOrderAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_COLUMNS_ORDER, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateColumnsOrder =
+  (data: UpdateColumnsOrderAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_COLUMNS_ORDER, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateTable = (data: UpdateTableAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_TABLE, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateTable =
+  (data: UpdateTableAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_TABLE, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateJoinsOrder = (data: UpdateJoinsOrderAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_JOINS_ORDER, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateJoinsOrder =
+  (data: UpdateJoinsOrderAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_JOINS_ORDER, payload: data });
+    dispatch(generateSql());
+  };
 
 export const queryAction = (state: any) => ({
   type: ADD_RESULT,
@@ -198,7 +226,7 @@ export const query = (state: any) => async (dispatch: Dispatch<QueryActions>) =>
 
 export const addJoin =
   (join?: JoinType, isDragAndDrop = false) =>
-  (dispatch: Dispatch<QueryActions>) => {
+  (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
     dispatch({
       type: ADD_JOIN,
       payload: {
@@ -206,40 +234,46 @@ export const addJoin =
         isDragAndDrop,
       },
     });
-    dispatch({ type: GENERATE_SQL });
+    dispatch(generateSql());
   };
 
-export const updateJoin = (data: UpdateJoinAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_JOIN, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateJoin =
+  (data: UpdateJoinAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_JOIN, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateJoinNewTable = (data: UpdateJoinNewTableAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_JOIN_NEW_TABLE, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateJoinNewTable =
+  (data: UpdateJoinNewTableAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_JOIN_NEW_TABLE, payload: data });
+    dispatch(generateSql());
+  };
 
-export const removeJoin = (data: RemoveJoinAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: REMOVE_JOIN, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const removeJoin =
+  (data: RemoveJoinAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: REMOVE_JOIN, payload: data });
+    dispatch(generateSql());
+  };
 
 export const addUsing = () => ({ type: ADD_USING });
 
-export const updateUsing = (data: UpdateUsingAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_USING, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateUsing =
+  (data: UpdateUsingAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_USING, payload: data });
+    dispatch(generateSql());
+  };
 
-export const removeUsing = (data: RemoveUsingAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: REMOVE_USING, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const removeUsing =
+  (data: RemoveUsingAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: REMOVE_USING, payload: data });
+    dispatch(generateSql());
+  };
 
-export const removeColumn = (data: RemoveColumnAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: REMOVE_COLUMN, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const removeColumn =
+  (data: RemoveColumnAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: REMOVE_COLUMN, payload: data });
+    dispatch(generateSql());
+  };
 
 export const deleteQuery = () => ({ type: DELETE_QUERY });
 
@@ -251,20 +285,21 @@ export const updateSql = (sqlString: UpdateSqlAction['payload']) => ({ type: UPD
 
 export const setActiveQuery = (data: SetActiveQueryAction['payload']) => ({ type: SET_ACTIVE_QUERY, payload: data });
 
-export const switchLimit = () => (dispatch: Dispatch<QueryActions>) => {
+export const switchLimit = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: SWITCH_LIMIT });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const switchTies = () => (dispatch: Dispatch<QueryActions>) => {
+export const switchTies = () => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
   dispatch({ type: SWITCH_TIES });
-  dispatch({ type: GENERATE_SQL });
+  dispatch(generateSql());
 };
 
-export const setLimitValue = (limitValue: SetLimitValueAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: SET_LIMIT_VALUE, payload: limitValue });
-  dispatch({ type: GENERATE_SQL });
-};
+export const setLimitValue =
+  (limitValue: SetLimitValueAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: SET_LIMIT_VALUE, payload: limitValue });
+    dispatch(generateSql());
+  };
 
 export const updateValidity = (isValid: UpdateValidityAction['payload']) => ({
   type: UPDATE_VALIDITY,
@@ -273,17 +308,20 @@ export const updateValidity = (isValid: UpdateValidityAction['payload']) => ({
 
 export const addSet = () => ({ type: ADD_SET });
 
-export const updateSet = (data: UpdateSetAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_SET, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateSet =
+  (data: UpdateSetAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_SET, payload: data });
+    dispatch(generateSql());
+  };
 
-export const removeSet = (data: RemoveSetAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: REMOVE_SET, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const removeSet =
+  (data: RemoveSetAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: REMOVE_SET, payload: data });
+    dispatch(generateSql());
+  };
 
-export const updateSetsOrder = (data: UpdateSetsOrderAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
-  dispatch({ type: UPDATE_SETS_ORDER, payload: data });
-  dispatch({ type: GENERATE_SQL });
-};
+export const updateSetsOrder =
+  (data: UpdateSetsOrderAction['payload']) => (dispatch: ThunkDispatch<RootState, unknown, QueryActions>) => {
+    dispatch({ type: UPDATE_SETS_ORDER, payload: data });
+    dispatch(generateSql());
+  };
