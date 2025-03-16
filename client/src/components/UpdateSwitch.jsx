@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import {
-  CustomInput,
-} from 'reactstrap';
+import { CustomInput } from 'reactstrap';
 import { updateColumn } from '../actions/queryActions';
 
 export const UpdateSwitch = (props) => {
@@ -11,8 +9,8 @@ export const UpdateSwitch = (props) => {
 
   const handleChange = () => {
     column.value_enabled = !column.value_enabled;
-    setEnabled(current => !current);
-    props.updateColumn(column);
+    setEnabled((current) => !current);
+    props.updateColumn({ column });
   };
 
   return (

@@ -147,7 +147,7 @@ export const removeTable = (data: RemoveTableAction['payload']) => (dispatch: Di
 
 export const updateColumn = (data: UpdateColumnAction['payload']) => (dispatch: Dispatch<QueryActions>) => {
   dispatch({ type: UPDATE_COLUMN, payload: data });
-  dispatch({ type: GENERATE_SQL });
+  dispatch({ type: GENERATE_SQL, payload: { queries: data.queries } });
 };
 
 export const updateColumnOperand = (operand: string, id: number) => (dispatch: Dispatch<QueryActions>) => {

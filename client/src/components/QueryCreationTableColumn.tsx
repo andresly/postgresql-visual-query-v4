@@ -12,9 +12,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   index,
 }) => {
   const dispatch = useAppDispatch();
-  const { distinct, columns } = useAppSelector((store) => ({
+  const { distinct, columns, queries } = useAppSelector((store) => ({
     distinct: store.query.distinct,
-    language: store.settings.language,
     queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
     columns: store.query.columns,
   }));
@@ -54,7 +53,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       column_order_dir: e.target.value === 'ASC',
     };
 
-    dispatch(updateColumn(column));
+    dispatch(updateColumn({ column, queries }));
   };
 
   const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,7 +62,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       ...column,
       [e.target.name]: !column[e.target.name as keyof QueryColumnType],
     };
-    dispatch(updateColumn(column));
+    dispatch(updateColumn({ column, queries }));
   };
 
   const handleFilterChange = (index: number) => {
@@ -102,7 +101,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       setFilterValid(false);
     } else {
       setFilterValid(true);
-      dispatch(updateColumn(column));
+      dispatch(updateColumn({ column, queries }));
     }
   };
 
@@ -143,7 +142,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
     // remove double quotes from column_alias
     column.column_alias = column.column_alias.replace(/"/g, '');
 
-    dispatch(updateColumn(column));
+    dispatch(updateColumn({ column, queries }));
   };
 
   const handleRemoveColumn = () => {

@@ -1,8 +1,6 @@
 import React from 'react';
 import { connect } from 'react-redux';
-import {
-  Input,
-} from 'reactstrap';
+import { Input } from 'reactstrap';
 import { updateColumn } from '../actions/queryActions';
 
 export const ValueInput = (props) => {
@@ -18,7 +16,7 @@ export const ValueInput = (props) => {
   };
 
   const handleSave = () => {
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   return (

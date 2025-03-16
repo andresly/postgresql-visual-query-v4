@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import {
-  CustomInput,
-} from 'reactstrap';
+import { CustomInput } from 'reactstrap';
 import { updateColumn } from '../actions/queryActions';
 
 export const FilterSwitch = (props) => {
@@ -14,23 +12,23 @@ export const FilterSwitch = (props) => {
   const handleChange = () => {
     if (props.only) {
       column.returningOnly = !column.returningOnly;
-      setReturningOnly(current => !current);
-      props.updateColumn(column);
+      setReturningOnly((current) => !current);
+      props.updateColumn({ column });
     } else {
       column.returning = !column.returning;
-      setReturning(current => !current);
-      props.updateColumn(column);
+      setReturning((current) => !current);
+      props.updateColumn({ column });
     }
   };
 
   return (
     <CustomInput
       id={`column-${props.only ? 'returningOnly' : 'returning'}-${column.id}`}
-      name={(props.only ? 'returningOnly' : 'returning')}
+      name={props.only ? 'returningOnly' : 'returning'}
       key={column.id}
       type="switch"
-      defaultValue={(props.only ? returningOnly : returning)}
-      checked={(props.only ? returningOnly : returning)}
+      defaultValue={props.only ? returningOnly : returning}
+      checked={props.only ? returningOnly : returning}
       disabled={props.only ? false : props.returningAll}
       onChange={handleChange}
     />

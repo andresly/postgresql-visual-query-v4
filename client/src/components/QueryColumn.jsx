@@ -90,7 +90,7 @@ export class QueryColumn extends Component {
         subquerySql,
       };
 
-      this.props.updateColumn(column);
+      this.props.updateColumn({ column });
     }
   }
 
@@ -133,7 +133,7 @@ export class QueryColumn extends Component {
       });
     }
 
-    this.props.updateColumn(column);
+    this.props.updateColumn({ column });
   }
 
   handleSave(e) {

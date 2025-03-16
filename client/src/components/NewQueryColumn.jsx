@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import {
-  Button,
-  CustomInput,
-  Col,
-  Form,
-  Input,
-  InputGroup,
-  Row,
-} from 'reactstrap';
+import { Button, CustomInput, Col, Form, Input, InputGroup, Row } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { updateColumn, removeColumn } from '../actions/queryActions';
 
@@ -27,7 +19,7 @@ export const NewQueryColumn = (props) => {
   };
 
   const handleSave = () => {
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   const handleRemoveColumn = () => {
@@ -36,9 +28,9 @@ export const NewQueryColumn = (props) => {
 
   const handleSwitch = () => {
     column.returning = !column.returning;
-    setReturning(current => !current);
+    setReturning((current) => !current);
 
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   return (
@@ -46,9 +38,7 @@ export const NewQueryColumn = (props) => {
       <Form className="border border-secondary rounded mt-2 mb-2 p-3">
         <Row>
           <div className="col-sm-1 d-flex">
-            <h6>
-              {column.column_name}
-            </h6>
+            <h6>{column.column_name}</h6>
           </div>
           <div>
             <InputGroup size="sm">
@@ -74,19 +64,13 @@ export const NewQueryColumn = (props) => {
                     defaultValue={filter.filter}
                     onBlur={handleSave}
                     onChange={handleChange}
-                  >
-                  </Input>
+                  ></Input>
                 </Col>
               ))}
             </InputGroup>
           </div>
           <div>
-            <Button
-              className="ml-3"
-              size="sm"
-              color="danger"
-              onClick={handleRemoveColumn}
-            >
+            <Button className="ml-3" size="sm" color="danger" onClick={handleRemoveColumn}>
               <FontAwesomeIcon icon="times" />
             </Button>
           </div>

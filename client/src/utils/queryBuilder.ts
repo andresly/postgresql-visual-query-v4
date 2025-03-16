@@ -617,7 +617,9 @@ const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   }
 };
 
-export const buildQuery = (data: QueryType) => {
+export const buildQuery = ({ data, queries }: { data: QueryType; queries?: QueryType[] }) => {
+  console.log({ queries });
+  console.log({ data });
   const query = squelPostgres.select({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',

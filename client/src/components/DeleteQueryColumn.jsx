@@ -1,13 +1,6 @@
 import React, { useState } from 'react';
 import { connect } from 'react-redux';
-import {
-  Button,
-  CustomInput,
-  Col,
-  Input,
-  InputGroup,
-  Row,
-} from 'reactstrap';
+import { Button, CustomInput, Col, Input, InputGroup, Row } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { updateColumn, removeColumn } from '../actions/queryActions';
 
@@ -27,7 +20,7 @@ export const DeleteQueryColumn = (props) => {
   };
 
   const handleSave = () => {
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   const handleRemoveColumn = () => {
@@ -36,32 +29,25 @@ export const DeleteQueryColumn = (props) => {
 
   const handleReturningSwitch = () => {
     column.returning = !column.returning;
-    setReturning(current => !current);
+    setReturning((current) => !current);
 
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   const handleReturningOnlySwitch = () => {
     column.returningOnly = !column.returningOnly;
-    setReturningOnly(current => !current);
+    setReturningOnly((current) => !current);
 
-    props.updateColumn(column);
+    props.updateColumn({ column });
   };
 
   return (
     <div>
       <div className="border-bottom border-right pr-2 pl-1 border-dark">
         <h6 className="d-inline">
-          {column.table_name}
-          .
-          {column.column_name}
+          {column.table_name}.{column.column_name}
         </h6>
-        <Button
-          className="mr-2 float-right"
-          size="sm"
-          color="danger"
-          onClick={handleRemoveColumn}
-        >
+        <Button className="mr-2 float-right" size="sm" color="danger" onClick={handleRemoveColumn}>
           <FontAwesomeIcon icon="times" />
         </Button>
         <InputGroup size="sm">
