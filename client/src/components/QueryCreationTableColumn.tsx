@@ -26,21 +26,106 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const singleLineFunctions = (process.env.REACT_APP_SINGE_LINE_FUNCTIONS || '').split(',');
 
   const [conditionsData, setConditionsData] = useState<string[]>(data.column_conditions);
+  const [showQuerySuggestions, setShowQuerySuggestions] = useState<boolean>(false);
+  const [cursorPosition, setCursorPosition] = useState<number>(0);
+  const [activeInputIndex, setActiveInputIndex] = useState<number>(-1);
+  const [currentFilter, setCurrentFilter] = useState<string>('');
+  const textareaRefs = React.useRef<(HTMLTextAreaElement | HTMLInputElement | null)[]>([]);
 
   // Reset conditions data when query ID changes
   useEffect(() => {
     setConditionsData(data.column_conditions);
   }, [query.id, data.column_conditions]);
 
+  // Get filtered query suggestions based on what user has typed after '{'
+  const getFilteredQuerySuggestions = () => {
+    if (!showQuerySuggestions || activeInputIndex === -1) return [];
+
+    const filterValue = conditionsData[activeInputIndex] || '';
+    const lastOpenBraceIndex = filterValue.lastIndexOf('{', cursorPosition);
+
+    console.log({ lastOpenBraceIndex });
+    if (lastOpenBraceIndex === -1) return [];
+
+    const closeBraceIndex = filterValue.indexOf('}', lastOpenBraceIndex);
+
+    // Check if cursor is between braces
+    if (closeBraceIndex !== -1 && cursorPosition > closeBraceIndex) return [];
+
+    const endIndex = closeBraceIndex !== -1 && closeBraceIndex < cursorPosition ? closeBraceIndex : cursorPosition;
+
+    const partialQuery = filterValue
+      .substring(lastOpenBraceIndex + 1, endIndex)
+      .trim()
+      .toLowerCase();
+
+    console.log({ partialQuery });
+    if (partialQuery === '') {
+      const results = queries.map((query) => query.queryName);
+      console.log({ results });
+      return queries.map((query) => query.queryName);
+    }
+    return queries.filter((q) => q.queryName.toLowerCase().includes(partialQuery)).map((q) => q.queryName);
+  };
+
+  // Handle selecting a query from suggestions
+  const handleSelectQuery = (queryName: string) => {
+    if (activeInputIndex === -1) return;
+
+    const filterValue = conditionsData[activeInputIndex] || '';
+    const lastOpenBraceIndex = filterValue.lastIndexOf('{', cursorPosition);
+
+    if (lastOpenBraceIndex === -1) return;
+
+    const closeBraceIndex = filterValue.indexOf('}', lastOpenBraceIndex);
+
+    let newValue = '';
+    if (closeBraceIndex !== -1 && closeBraceIndex > lastOpenBraceIndex) {
+      // Replace existing query name between braces
+      newValue = filterValue.substring(0, lastOpenBraceIndex + 1) + queryName + filterValue.substring(closeBraceIndex);
+    } else {
+      // Insert query name and add closing brace if needed
+      newValue =
+        filterValue.substring(0, lastOpenBraceIndex + 1) + queryName + '}' + filterValue.substring(cursorPosition);
+    }
+
+    setConditionsData((prevData) => {
+      const newData = [...prevData];
+      newData[activeInputIndex] = newValue;
+      return newData;
+    });
+
+    setShowQuerySuggestions(false);
+
+    // Focus back on textarea and position cursor after the inserted query name
+    setTimeout(() => {
+      const textarea = textareaRefs.current[activeInputIndex];
+      if (textarea) {
+        textarea.focus();
+        const newPosition = lastOpenBraceIndex + queryName.length + 2; // +2 for { and }
+        textarea.selectionStart = newPosition;
+        textarea.selectionEnd = newPosition;
+      }
+    }, 0);
+  };
+
   const updateFilterValue = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
     const target = e.target;
     const value = target.value;
-    const cursorPosition = target.selectionStart || 0;
+    const cursorPos = target.selectionStart || 0;
+    setCursorPosition(cursorPos);
+    setActiveInputIndex(index);
+    setCurrentFilter(value);
 
     // Check if the user just typed an opening brace
-    if (value[cursorPosition - 1] === '{') {
+    if (value[cursorPos - 1] === '{') {
+      // Show query suggestions if there are any available queries
+      if (queries.length > 0) {
+        setShowQuerySuggestions(true);
+      }
+
       // Create a new value with closing brace
-      const newValue = value.substring(0, cursorPosition) + '}' + value.substring(cursorPosition);
+      const newValue = value.substring(0, cursorPos) + '}' + value.substring(cursorPos);
 
       // Update the state
       setConditionsData((prevConditionsData) => {
@@ -52,12 +137,27 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       // Position cursor between braces
       setTimeout(() => {
         if (target) {
-          target.selectionStart = cursorPosition;
-          target.selectionEnd = cursorPosition;
+          target.selectionStart = cursorPos;
+          target.selectionEnd = cursorPos;
           target.focus();
         }
       }, 0);
     } else {
+      // Check if we should show suggestions (we're between { and })
+      const lastOpenBraceIndex = value.lastIndexOf('{', cursorPos - 1);
+      const nextCloseBraceIndex = value.indexOf('}', lastOpenBraceIndex);
+
+      if (
+        lastOpenBraceIndex !== -1 &&
+        cursorPos > lastOpenBraceIndex &&
+        (nextCloseBraceIndex === -1 || cursorPos <= nextCloseBraceIndex) &&
+        queries.length > 0
+      ) {
+        setShowQuerySuggestions(true);
+      } else {
+        setShowQuerySuggestions(false);
+      }
+
       // Normal update without adding closing brace
       setConditionsData((prevConditionsData) => {
         const newConditionsData = [...prevConditionsData];
@@ -65,28 +165,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
         return newConditionsData;
       });
     }
-  };
-
-  const changeColumnOrder = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    let column = _.cloneDeep(data);
-    const isOrdering = e.target.value !== '';
-
-    column = {
-      ...column,
-      column_order: isOrdering,
-      column_order_dir: e.target.value === 'ASC',
-    };
-
-    dispatch(updateColumn({ column, queries }));
-  };
-
-  const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let column = _.cloneDeep(data);
-    column = {
-      ...column,
-      [e.target.name]: !column[e.target.name as keyof QueryColumnType],
-    };
-    dispatch(updateColumn({ column, queries }));
   };
 
   const handleFilterChange = (index: number) => {
@@ -127,6 +205,28 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       setFilterValid(true);
       dispatch(updateColumn({ column, queries }));
     }
+  };
+
+  const changeColumnOrder = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    let column = _.cloneDeep(data);
+    const isOrdering = e.target.value !== '';
+
+    column = {
+      ...column,
+      column_order: isOrdering,
+      column_order_dir: e.target.value === 'ASC',
+    };
+
+    dispatch(updateColumn({ column, queries }));
+  };
+
+  const handleSwitch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let column = _.cloneDeep(data);
+    column = {
+      ...column,
+      [e.target.name]: !column[e.target.name as keyof QueryColumnType],
+    };
+    dispatch(updateColumn({ column, queries }));
   };
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -298,16 +398,69 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           {[...Array(maxConditions)].map((_, index) => (
             <tr key={index} style={{ height: '56px' }}>
               <td className="p-2">
-                <Input
-                  type="textarea"
-                  rows={1}
-                  name={`column_filter_${data.id}_${index}`}
-                  id={`column-filter-${data.id}-${index}`}
-                  className={filterValid ? '' : 'is-invalid'}
-                  onBlur={() => handleFilterChange(index)}
-                  onChange={(e) => updateFilterValue(e, index)}
-                  value={conditionsData[index] || ''}
-                />
+                <div style={{ position: 'relative' }}>
+                  <Input
+                    type="textarea"
+                    rows={1}
+                    name={`column_filter_${data.id}_${index}`}
+                    id={`column-filter-${data.id}-${index}`}
+                    className={filterValid ? '' : 'is-invalid'}
+                    onBlur={() => handleFilterChange(index)}
+                    onChange={(e) => updateFilterValue(e, index)}
+                    value={conditionsData[index] || ''}
+                    innerRef={(el) => {
+                      textareaRefs.current[index] = el;
+                    }}
+                    onFocus={(e) => {
+                      setActiveInputIndex(index);
+                      setCursorPosition(e.target.selectionStart || 0);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setShowQuerySuggestions(false);
+                      }
+                    }}
+                  />
+
+                  {showQuerySuggestions && activeInputIndex === index && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '100%',
+                        left: 0,
+                        zIndex: 1000,
+                        backgroundColor: 'white',
+                        border: '1px solid #ced4da',
+                        borderRadius: '0.25rem',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                        width: '100%',
+                      }}
+                    >
+                      {getFilteredQuerySuggestions().length > 0 ? (
+                        getFilteredQuerySuggestions().map((queryName, i) => (
+                          <div
+                            key={i}
+                            style={{
+                              padding: '8px 12px',
+                              cursor: 'pointer',
+                              backgroundColor: i === 0 ? '#f0f0f0' : 'transparent',
+                            }}
+                            onMouseDown={(e) => {
+                              e.preventDefault(); // Prevent blur
+                              handleSelectQuery(queryName);
+                            }}
+                          >
+                            {queryName}
+                          </div>
+                        ))
+                      ) : (
+                        <div style={{ padding: '8px 12px', color: '#6c757d' }}>No matching queries</div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </td>
             </tr>
           ))}

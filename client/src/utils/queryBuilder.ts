@@ -186,7 +186,8 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
           if (referencedQuery) {
             // Build the referenced query (removing trailing semicolon)
             const subquerySql = buildQuery({ data: referencedQuery, queries }).slice(0, -1);
-            return `(${subquerySql})`;
+            // Don't add extra parentheses if the subquery already has them
+            return subquerySql.startsWith('(') && subquerySql.endsWith(')') ? subquerySql : `(${subquerySql})`;
           }
 
           // If query not found, keep the original reference
@@ -210,12 +211,18 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
           }
         } else {
           // Query reference was found and processed
-          if (modifiedText.startsWith('=')) {
-            result += `${columnName} ${modifiedText}`;
-          } else if (!modifiedText.includes(columnName)) {
-            result += `${columnName} ${modifiedText}`;
+          // If text starts with '{', default operator is '='
+          if (textVal.startsWith('{')) {
+            result += `${columnName} = ${modifiedText}`;
           } else {
-            result += modifiedText;
+            // Extract everything before the first '{' as the operator
+            const parts = textVal.split('{');
+            const operator = parts[0].trim();
+
+            // Rebuild the modifiedText without the operator
+            const rightSide = modifiedText.substring(operator.length);
+
+            result += `${columnName} ${operator} ${rightSide}`;
           }
         }
       } else if (token.type === 'OPERATOR') {
@@ -225,7 +232,8 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     }
 
     // Only wrap in parentheses if we found an OR or AND token
-    if (hasOperator) {
+    // and the result isn't already wrapped in parentheses
+    if (hasOperator && !(result.startsWith('(') && result.endsWith(')'))) {
       result = `(${result.trim()})`;
     } else {
       result = result.trim();
@@ -296,15 +304,20 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
       // Join conditions in the same row with AND
       if (rowWhere.length > 0) {
-        whereClauses.push(`(${rowWhere.join(' AND ')})`);
+        // Only add parentheses if there's more than one condition
+        const whereClause = rowWhere.length > 1 ? `(${rowWhere.join(' AND ')})` : rowWhere[0];
+        whereClauses.push(whereClause);
       }
       if (rowHaving.length > 0) {
-        havingClauses.push(`(${rowHaving.join(' AND ')})`);
+        // Only add parentheses if there's more than one condition
+        const havingClause = rowHaving.length > 1 ? `(${rowHaving.join(' AND ')})` : rowHaving[0];
+        havingClauses.push(havingClause);
       }
     }
 
-    const where = whereClauses.join(' OR ');
-    const having = havingClauses.join(' OR ');
+    // Only add outer parentheses if there's more than one clause
+    const where = whereClauses.length > 1 ? whereClauses.join(' OR ') : whereClauses.join('');
+    const having = havingClauses.length > 1 ? havingClauses.join(' OR ') : havingClauses.join('');
 
     return { where, having };
   };
@@ -657,7 +670,6 @@ const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
 };
 
 export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryType[] }) => {
-  console.log({ queries });
   const query = squelPostgres.select({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
