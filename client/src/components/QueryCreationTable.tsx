@@ -8,12 +8,6 @@ export const QueryCreationTable = () => {
   // Retrieve state using selectors
   const { columns } = useAppSelector((store) => ({
     columns: _.orderBy(store.query.columns, ['filter_as_having'], ['asc']),
-    distinct: store.query.distinct,
-    limit: store.query.limit,
-    limitValue: store.query.limitValue.toString(),
-    withTies: store.query.withTies,
-    language: store.settings.language,
-    queryId: store.query.id,
   }));
 
   // Calculate maxConditions from all columns

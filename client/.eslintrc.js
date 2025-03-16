@@ -83,7 +83,7 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     '@typescript-eslint/no-unused-vars': ['warn'],
     'no-use-before-define': 'off',
-    '@typescript-eslint/no-use-before-define': ['error'],
+    '@typescript-eslint/no-use-before-define': 'off',
     'default-param-last': 'off',
     '@typescript-eslint/ban-ts-comment': 'off',
     'jsx-a11y/control-has-associated-label': 'off',

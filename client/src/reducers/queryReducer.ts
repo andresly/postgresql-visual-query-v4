@@ -68,7 +68,7 @@ export const INITIAL_STATE: QueryType = {
   lastColumnId: 0,
   lastTableId: 0,
   querying: false,
-  queryName: '',
+  queryName: 'Main',
   queryValid: true,
   sets: [],
   rows: 1,
@@ -667,6 +667,8 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
     }
     case GENERATE_SQL: {
       if (state.queryType === 'SELECT') {
+        if (!action.payload?.queries) return state;
+
         const query = buildQuery({ data: state, queries: action.payload?.queries });
 
         return {

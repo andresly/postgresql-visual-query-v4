@@ -24,6 +24,7 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
       const query = {
         ...INIT_QUERIES_STATE,
         id,
+        queryName: id === 0 ? 'Main' : `Query ${id}`,
       };
 
       return [...state, query];

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import _ from 'lodash';
 import { Button, Input } from 'reactstrap';
 import { removeColumn, updateColumn } from '../actions/queryActions';
@@ -11,11 +11,13 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   id,
   index,
 }) => {
+  console.log({ data });
   const dispatch = useAppDispatch();
-  const { distinct, columns, queries } = useAppSelector((store) => ({
+  const { distinct, columns, queries, query } = useAppSelector((store) => ({
     distinct: store.query.distinct,
     queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
     columns: store.query.columns,
+    query: store.query,
   }));
   const maxConditions = Math.max(...columns.map((col) => col.column_conditions.length), data.column_conditions.length);
   const [filterValid, setFilterValid] = useState(true);
@@ -23,24 +25,46 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const scalarFunctions = (process.env.REACT_APP_SCALAR_FUNCTIONS || '').split(',');
   const singleLineFunctions = (process.env.REACT_APP_SINGE_LINE_FUNCTIONS || '').split(',');
 
-  const [columnData, setColumnData] = useState<{
-    column_alias: string;
-    filter_valid: boolean;
-    column_name: string;
-  }>({
-    column_alias: data.column_alias,
-    filter_valid: true,
-    column_name: data.column_name,
-  });
-
   const [conditionsData, setConditionsData] = useState<string[]>(data.column_conditions);
 
-  const updateFilterValue = (index: number, value: string) => {
-    setConditionsData((prevConditionsData) => {
-      const newConditionsData = [...prevConditionsData];
-      newConditionsData[index] = value;
-      return newConditionsData;
-    });
+  // Reset conditions data when query ID changes
+  useEffect(() => {
+    setConditionsData(data.column_conditions);
+  }, [query.id, data.column_conditions]);
+
+  const updateFilterValue = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, index: number) => {
+    const target = e.target;
+    const value = target.value;
+    const cursorPosition = target.selectionStart || 0;
+
+    // Check if the user just typed an opening brace
+    if (value[cursorPosition - 1] === '{') {
+      // Create a new value with closing brace
+      const newValue = value.substring(0, cursorPosition) + '}' + value.substring(cursorPosition);
+
+      // Update the state
+      setConditionsData((prevConditionsData) => {
+        const newConditionsData = [...prevConditionsData];
+        newConditionsData[index] = newValue;
+        return newConditionsData;
+      });
+
+      // Position cursor between braces
+      setTimeout(() => {
+        if (target) {
+          target.selectionStart = cursorPosition;
+          target.selectionEnd = cursorPosition;
+          target.focus();
+        }
+      }, 0);
+    } else {
+      // Normal update without adding closing brace
+      setConditionsData((prevConditionsData) => {
+        const newConditionsData = [...prevConditionsData];
+        newConditionsData[index] = value;
+        return newConditionsData;
+      });
+    }
   };
 
   const changeColumnOrder = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -109,10 +133,14 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
     const name = e.target.name;
     const value = e.target.value;
 
-    setColumnData((prevColumnData) => ({
-      ...prevColumnData,
+    // Create a new column object based on the current data
+    const column = {
+      ..._.cloneDeep(data),
       [name]: value,
-    }));
+    };
+
+    // Update the column in Redux
+    dispatch(updateColumn({ column, queries }));
   };
 
   const handleOnSave = (e: React.FocusEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
@@ -132,11 +160,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       } else if (!value) {
         column.column_alias = '';
       }
-
-      setColumnData((prevColumnData) => ({
-        ...prevColumnData,
-        column_alias: column.column_alias,
-      }));
     }
 
     // remove double quotes from column_alias
@@ -154,14 +177,12 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
         <tbody>
           <tr style={{ height: '56px' }}>
             <td className="p-2 text-center d-flex align-items-center justify-content-center gap-2 h-100">
-              {/* {data.column_name} */}
               <Input
                 type="text"
                 name={`column_name`}
                 id={`column-name-${data.id}`}
-                onBlur={(e) => handleOnSave(e)}
                 onChange={(e) => handleOnChange(e)}
-                value={columnData.column_name}
+                value={data.column_name}
               />
               <Button size={'sm'} className={'ml-4'} onClick={handleRemoveColumn}>
                 X
@@ -174,9 +195,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
                 type="text"
                 name={`column_alias`}
                 id={`column-alias-${data.id}`}
-                onBlur={(e) => handleOnSave(e)}
                 onChange={(e) => handleOnChange(e)}
-                value={columnData.column_alias}
+                value={data.column_alias}
               />
             </td>
           </tr>
@@ -285,7 +305,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
                   id={`column-filter-${data.id}-${index}`}
                   className={filterValid ? '' : 'is-invalid'}
                   onBlur={() => handleFilterChange(index)}
-                  onChange={(e) => updateFilterValue(index, e.target.value)}
+                  onChange={(e) => updateFilterValue(e, index)}
                   value={conditionsData[index] || ''}
                 />
               </td>

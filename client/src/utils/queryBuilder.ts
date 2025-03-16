@@ -5,7 +5,7 @@ import { QueryColumnType, JoinType, QueryTableType, QueryType } from '../types/q
 
 const squelPostgres = squel.useFlavour('postgres');
 
-const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
+const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries: QueryType[]) => {
   const columns = _.cloneDeep(data.columns);
 
   const addOrder = (column: QueryColumnType) => {
@@ -23,7 +23,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
 
     // 2) Handle single-line functions (ALWAYS wrap in the function if present)
     if (column.column_single_line_function && column.column_single_line_function.length > 0) {
-      // Determine the “base” for the function:
+      // Determine the "base" for the function:
       //   - If there's an alias, use that alias
       //   - Otherwise, use table_alias or table_name + the column name
       const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
@@ -157,7 +157,11 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
    *      if there's an '=' present (with optional spaces).
    *    - Joins OPERATOR tokens ("OR"/"AND") in between.
    */
-  const buildConditionString = (tokens: { type: string; value: string }[], columnName: string) => {
+  const buildConditionString = (
+    tokens: { type: string; value: string }[],
+    columnName: string,
+    queries: QueryType[],
+  ) => {
     let result = '';
     let hasOperator = false; // track if we've seen an OR/AND
 
@@ -167,17 +171,51 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
       if (token.type === 'TEXT') {
         const textVal = token.value.trim();
 
-        // If it starts with '=', handle "colName = <stuff>"
-        const eqMatch = textVal.match(/^=+\s*(.*)/);
-        if (eqMatch) {
-          const rightSide = eqMatch[1];
-          result += `${columnName} = ${rightSide}`;
-        } else {
-          // If text doesn't already have columnName, insert it
-          if (!textVal.includes(columnName)) {
-            result += `${columnName} ${textVal}`;
+        // Check for query references like {Query Name}
+        const queryRefRegex = /\{([^{}]+)\}/g;
+        let modifiedText = textVal;
+        let foundQueryRef = false;
+
+        // Process any query references in the text value
+        modifiedText = textVal.replace(queryRefRegex, (match, queryName) => {
+          foundQueryRef = true;
+
+          // Find the referenced query (case insensitive)
+          const referencedQuery = queries.find((q) => q.queryName.toLowerCase() === queryName.trim().toLowerCase());
+
+          if (referencedQuery) {
+            // Build the referenced query (removing trailing semicolon)
+            const subquerySql = buildQuery({ data: referencedQuery, queries }).slice(0, -1);
+            return `(${subquerySql})`;
+          }
+
+          // If query not found, keep the original reference
+          return match;
+        });
+
+        // If no query references were found, process as normal
+        if (!foundQueryRef) {
+          // If it starts with '=', handle "colName = <stuff>"
+          const eqMatch = textVal.match(/^=+\s*(.*)/);
+          if (eqMatch) {
+            const rightSide = eqMatch[1];
+            result += `${columnName} = ${rightSide}`;
           } else {
-            result += textVal;
+            // If text doesn't already have columnName, insert it
+            if (!textVal.includes(columnName)) {
+              result += `${columnName} ${textVal}`;
+            } else {
+              result += textVal;
+            }
+          }
+        } else {
+          // Query reference was found and processed
+          if (modifiedText.startsWith('=')) {
+            result += `${columnName} ${modifiedText}`;
+          } else if (!modifiedText.includes(columnName)) {
+            result += `${columnName} ${modifiedText}`;
+          } else {
+            result += modifiedText;
           }
         }
       } else if (token.type === 'OPERATOR') {
@@ -200,10 +238,11 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
    * 4) parseFilterCondition
    *    - The main function that combines tokenizeConditionString + buildConditionString.
    *    - For a raw condition like "= 'test' OR ='lala'", it returns "table.col = 'test' OR table.col = 'lala'".
+   *    - Now also supports query references like "IN {Query Name}" which get replaced with subqueries.
    */
-  const parseFilterCondition = (condition: string, columnName: string) => {
+  const parseFilterCondition = (condition: string, columnName: string, queries: QueryType[]) => {
     const tokens = tokenizeConditionString(condition);
-    return buildConditionString(tokens, columnName);
+    return buildConditionString(tokens, columnName, queries);
   };
 
   /**
@@ -212,7 +251,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
    *    - Then join each row with "OR".
    *    - Aggregate columns go to HAVING, otherwise WHERE.
    */
-  const buildFilters = (columns: QueryColumnType[] = []) => {
+  const buildFilters = (columns: QueryColumnType[] = [], queries: QueryType[] = []) => {
     if (!Array.isArray(columns)) {
       return { where: '', having: '' };
     }
@@ -247,10 +286,10 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
           // If we have an aggregate, that belongs to HAVING
           if (column_aggregate) {
             const aggRef = `${column_aggregate}(${colRef})`;
-            rowHaving.push(parseFilterCondition(condition, aggRef));
+            rowHaving.push(parseFilterCondition(condition, aggRef, queries));
           } else {
             // Otherwise, normal WHERE
-            rowWhere.push(parseFilterCondition(condition, colRef));
+            rowWhere.push(parseFilterCondition(condition, colRef, queries));
           }
         }
       });
@@ -410,7 +449,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
     });
 
   // Build and apply the WHERE and HAVING clauses
-  const { where, having } = buildFilters(columns);
+  const { where, having } = buildFilters(columns, queries);
   if (where) {
     query.where(where);
   }
@@ -617,9 +656,8 @@ const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   }
 };
 
-export const buildQuery = ({ data, queries }: { data: QueryType; queries?: QueryType[] }) => {
+export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryType[] }) => {
   console.log({ queries });
-  console.log({ data });
   const query = squelPostgres.select({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -632,7 +670,7 @@ export const buildQuery = ({ data, queries }: { data: QueryType; queries?: Query
     query.distinct();
   }
 
-  addColumnsToQuery(data, query);
+  addColumnsToQuery(data, query, queries);
   addTablesToQuery(data, query);
 
   const setQueryString = buildSetQuery(data);
