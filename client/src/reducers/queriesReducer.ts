@@ -31,10 +31,12 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
     }
     case UPDATE_QUERIES: {
       const lastActiveQuery = _.cloneDeep(action.payload.lastQuery);
-      const queries = [...state, lastActiveQuery];
-      const newQueriesState = queries.filter((query) => query.id !== action.payload.activeQueryId);
+      const filteredState = state.filter((query) => query.id !== lastActiveQuery.id);
+      const newQueriesState = [...filteredState, lastActiveQuery].filter(
+        (query) => query.id !== action.payload.activeQueryId,
+      );
 
-      return [...newQueriesState];
+      return newQueriesState;
     }
     case REMOVE_MAIN_FROM_QUERIES: {
       const queriesState = _.cloneDeep(state);

@@ -22,6 +22,7 @@ export const NavBarQueryTabs = () => {
   // Get table tabs from tableView reducer
   const { tables, activeTableId } = useAppSelector((state) => state.tableView);
 
+  console.log({ queries });
   return (
     <>
       {/* Query Tabs */}

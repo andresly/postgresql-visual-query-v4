@@ -26,9 +26,9 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
     const lastActiveQuery = queries.find((query) => query.id === activeQuery.id);
 
     if (lastActiveQuery) {
+      dispatch(setActiveTableView(null));
       dispatch(setActiveQuery(queryTabContent));
       dispatch(updateQueries(lastActiveQuery, queryTabContent.id));
-      dispatch(setActiveTableView(null));
     }
     dispatch(regenerateSql());
   };
