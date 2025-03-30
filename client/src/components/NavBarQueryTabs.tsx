@@ -1,5 +1,6 @@
 import React, { Fragment } from 'react';
 import { NavBarQueryTab } from './NavBarQueryTab';
+import NavBarTableTab from './NavBarTableTab';
 import { getCorrectQueryName } from '../utils/getCorrectQueryName';
 import { useAppSelector } from '../hooks';
 import { QueryType } from '../types/queryTypes';
@@ -18,16 +19,26 @@ export const NavBarQueryTabs = () => {
     };
   });
 
+  // Get table tabs from tableView reducer
+  const { tables, activeTableId } = useAppSelector((state) => state.tableView);
+
   return (
     <>
+      {/* Query Tabs */}
       {queries.map((query: QueryType, index: number) => (
         <Fragment key={`query-${query.id}`}>
           <NavBarQueryTab
-            key={`query-${query.id}`}
             queryTabContent={query}
             queryName={getCorrectQueryName(language, query.queryName, query.id)}
-            active={index === activeIndex}
+            active={index === activeIndex && activeTableId === null}
           />
+        </Fragment>
+      ))}
+
+      {/* Table Tabs */}
+      {tables.map((table) => (
+        <Fragment key={`table-${table.id}`}>
+          <NavBarTableTab table={table} active={table.id === activeTableId} />
         </Fragment>
       ))}
     </>

@@ -4,6 +4,7 @@ import _ from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { addTable, resetQuery } from '../actions/queryActions';
+import { openTableView, setActiveTableView } from '../actions/tableViewActions';
 import { useAppDispatch } from '../hooks';
 import { withToggle } from '../hocs/withToggle';
 import { QueryTableType } from '../types/queryTypes';
@@ -26,11 +27,12 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
     }
 
     dispatch(addTable(data));
+    dispatch(setActiveTableView(null));
   };
 
   const handleOpenNewTab = (e: React.MouseEvent) => {
     e.preventDefault();
-    window.open(data.table_name, '_blank');
+    dispatch(openTableView(data));
   };
 
   let tableTypeColor = 'primary';

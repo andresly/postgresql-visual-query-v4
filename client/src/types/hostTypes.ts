@@ -1,4 +1,4 @@
-export type Host = {
+export type HostType = {
   database: string;
   user: string;
   password: string;

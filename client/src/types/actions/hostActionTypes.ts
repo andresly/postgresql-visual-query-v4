@@ -4,6 +4,7 @@ import {
   CONNECTING,
   DELETE_HOST,
   DISCONNECT_FROM_DATABASE,
+  CONNECT_TO_DATABASE,
   LOGGED_IN,
   LOGGED_OUT,
   PSQL_VERSION,
@@ -15,6 +16,13 @@ export interface UpdateHostAction {
   payload: {
     user: string;
     password: string;
+    database: string;
+  };
+}
+
+export interface ConnectToDatabaseAction {
+  type: typeof CONNECT_TO_DATABASE;
+  payload: {
     database: string;
   };
 }
@@ -68,4 +76,5 @@ export type HostActions =
   | ConnectingAction
   | LoggedInAction
   | LoggedOutAction
+  | ConnectToDatabaseAction
   | PsqlVersionAction;

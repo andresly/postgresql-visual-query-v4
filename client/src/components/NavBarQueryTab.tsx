@@ -6,6 +6,7 @@ import { updateQueries } from '../actions/queriesActions';
 import DeleteQueryButton from './DeleteQueryButton';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryType } from '../types/queryTypes';
+import { setActiveTableView } from '../actions/tableViewActions';
 
 interface NavBarQueryTabProps {
   queryTabContent: QueryType;
@@ -19,7 +20,7 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
   const queries = useAppSelector((state) => [...state.queries, state.query]);
   const activeQueryId = useAppSelector((state) => state.query.id);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent> | React.MouseEvent<any, MouseEvent>) => {
     e.preventDefault();
 
     const lastActiveQuery = queries.find((query) => query.id === activeQuery.id);
@@ -27,6 +28,7 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
     if (lastActiveQuery) {
       dispatch(setActiveQuery(queryTabContent));
       dispatch(updateQueries(lastActiveQuery, queryTabContent.id));
+      dispatch(setActiveTableView(null));
     }
     dispatch(regenerateSql());
   };
@@ -44,7 +46,9 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
         {queryTabContent.id === 0 && (
           <FontAwesomeIcon icon="home" size="1x" className="pr-2" style={{ width: '1.6rem' }} />
         )}
-        <NavLink className="p-0 d-inline">{queryName}</NavLink>
+        <NavLink className="p-0 d-inline" style={{ color: active ? 'white' : '' }} onClick={handleClick}>
+          {queryName}
+        </NavLink>
       </Button>
       {showDeleteBtn() && <DeleteQueryButton />}
     </div>

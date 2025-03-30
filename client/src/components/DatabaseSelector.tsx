@@ -10,11 +10,12 @@ const DatabaseSelector: React.FC = () => {
   const dispatch = useAppDispatch();
   const [searchTerm, setSearchTerm] = useState<string>('');
   const availableDatabases = useAppSelector((state) => state.database.availableDatabases);
+  const { database } = useAppSelector((state) => state.host);
   const { user, password, psqlVersion, connected } = useAppSelector((state) => state.host);
   const language = useAppSelector((state) => state.settings.language);
 
   useEffect(() => {
-    dispatch(fetchAvailableDatabases({ user, password }));
+    dispatch(fetchAvailableDatabases({ user, password, database: database }));
     dispatch(getDatabaseVersion({ user, password }));
   }, [dispatch, user, password]);
 

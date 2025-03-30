@@ -11,7 +11,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   id,
   index,
 }) => {
-  console.log({ data });
   const dispatch = useAppDispatch();
   const { distinct, columns, queries, query } = useAppSelector((store) => ({
     distinct: store.query.distinct,

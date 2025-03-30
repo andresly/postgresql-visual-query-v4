@@ -30,12 +30,14 @@ interface QueryWithSubqueries extends QueryType {
 
 const NavBar: React.FC<NavBarProps> = ({ language, queryType }) => {
   const [showNavBarMenu, setShowNavBarMenu] = useState(true);
-  const [isNavbarHidden, setIsNavbarHidden] = useState(false);
   const [dropdownOpen, setOpen] = useState(false);
-  const [treeElementOpen, setTreeElementOpen] = useState<Record<string, boolean>>({});
+  const [treeElementOpen, setTreeElementOpen] = useState<{ [key: string]: boolean }>({});
+  const { activeTableId } = useAppSelector((state) => state.tableView);
 
   const queries = useAppSelector((state) => {
-    return [...state.queries, state.query].slice().sort((query1: QueryType, query2: QueryType) => query1.id - query2.id);
+    return [...state.queries, state.query]
+      .slice()
+      .sort((query1: QueryType, query2: QueryType) => query1.id - query2.id);
   });
 
   const toggleDropdown = () => setOpen(!dropdownOpen);
@@ -43,14 +45,6 @@ const NavBar: React.FC<NavBarProps> = ({ language, queryType }) => {
   const handleVisibility = () => {
     setShowNavBarMenu(!showNavBarMenu);
   };
-
-  useEffect(() => {
-    if (queryType === 'TABLE_PREVIEW') {
-      setIsNavbarHidden(true);
-    } else {
-      setIsNavbarHidden(false);
-    }
-  }, [queryType]);
 
   const mapper = (queriesObj: QueryWithSubqueries[], parentId?: string, lvl = 0) =>
     queriesObj.map((query) => {
@@ -133,7 +127,7 @@ const NavBar: React.FC<NavBarProps> = ({ language, queryType }) => {
           </Button>
         </div>
       </Navbar>
-      {showNavBarMenu && !isNavbarHidden && <NavBarMenu language={language} />}
+      {showNavBarMenu && !activeTableId && <NavBarMenu language={language} />}
     </div>
   );
 };

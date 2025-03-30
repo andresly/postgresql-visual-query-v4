@@ -16,12 +16,12 @@ export const CONNECTING = 'CONNECTING';
 export const ADD_DATABASES = 'ADD_DATABASES';
 
 export const connectToDatabase =
-  (state: { database?: string; user: string; password: string }) =>
+  (state: { database: string; user: string; password: string }) =>
   async (dispatch: Dispatch): Promise<void> => {
     dispatch({ type: CONNECTING });
 
     const hostInfo = {
-      database: state.database || '',
+      database: state.database,
       user: state.user,
       password: state.password,
     };
@@ -58,12 +58,13 @@ export const search = (expr: string) => ({
 });
 
 export const fetchAvailableDatabases =
-  (state: { user: string; password: string }) =>
+  (state: { user: string; password: string; database: string }) =>
   async (dispatch: Dispatch): Promise<any> => {
     try {
       const data = {
         user: state.user,
         password: state.password,
+        database: state.database,
       };
       const response = await axiosClient.post('/database/databases', data);
       if (response.data.rows.length > 0) {
@@ -89,6 +90,7 @@ export const logIn =
       const data = {
         user: state.user,
         password: state.password,
+        database: '',
       };
       const response = await axiosClient.post('/database/login', data);
       if (response.data.connected) {
