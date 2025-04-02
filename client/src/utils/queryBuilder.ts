@@ -427,14 +427,6 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
       }
     }
 
-    if (!column.display_in_query && column.column_aggregate) {
-      if (!column.column_alias) {
-        query.field(`${column.column_aggregate}(*)`);
-      } else {
-        query.field(`${column.column_aggregate}(*) AS ${format.ident(column.column_alias)}`);
-      }
-    }
-
     // If we have aggregates, automatically add group by for non-aggregated displayed columns
     if (
       hasAggregates &&
