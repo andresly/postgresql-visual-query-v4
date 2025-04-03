@@ -360,7 +360,18 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       const removableTable = action.payload;
       const filteredTables = state.tables.filter((table) => !_.isEqual(table.id, removableTable.id));
       const filteredColumns = state.columns.filter((column) => !_.isEqual(column.table_id, removableTable.id));
-      const filteredJoins = state.joins.filter((join) => !_.isEqual(join.main_table.id, removableTable.id));
+
+      // Remove any joins where this table is either the main table or referenced in any condition as secondary table
+      const filteredJoins = state.joins.filter((join) => {
+        // Filter out if this is the main table
+        if (_.isEqual(join.main_table.id, removableTable.id)) {
+          return false;
+        }
+
+        // Filter out if this table is referenced in any condition as secondary table
+        return !join.conditions.some((condition) => _.isEqual(condition.secondary_table.id, removableTable.id));
+      });
+
       const filteredUsing = state.using.filter((using) => !_.isEqual(using.main_table.id, removableTable.id));
 
       return {
@@ -380,30 +391,51 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
         tables[tableIndex] = updatedTable;
       }
 
+      // Create immutable copies of columns with updated table_alias
       const updatedColumns = state.columns.map((column) => {
-        const col = column;
-
-        if (_.isEqual(col.table_id, updatedTable.id)) {
-          col.table_alias = updatedTable.table_alias;
+        if (_.isEqual(column.table_id, updatedTable.id)) {
+          return {
+            ...column,
+            table_alias: updatedTable.table_alias,
+          };
         }
-
-        return col;
+        return column;
       });
 
+      // Create immutable copies of joins with updated table_alias
       const updatedJoins = state.joins.map((join) => {
-        const joinCopy = join;
+        const joinCopy = { ...join };
+        let needsUpdate = false;
 
-        if (_.isEqual(joinCopy.main_table.id, updatedTable.id)) {
-          joinCopy.main_table.table_alias = updatedTable.table_alias;
+        // If this join's main table is being updated
+        if (_.isEqual(join.main_table.id, updatedTable.id)) {
+          joinCopy.main_table = {
+            ...join.main_table,
+            table_alias: updatedTable.table_alias,
+          };
+          needsUpdate = true;
         }
 
-        join.conditions.forEach((condition) => {
-          const conditionCopy = condition;
-
-          if (_.isEqual(conditionCopy.secondary_table.id, updatedTable.id)) {
-            conditionCopy.secondary_table.table_alias = updatedTable.table_alias;
+        // Check all conditions for secondary table references
+        const updatedConditions = join.conditions.map((condition) => {
+          if (_.isEqual(condition.secondary_table.id, updatedTable.id)) {
+            needsUpdate = true;
+            return {
+              ...condition,
+              secondary_table: {
+                ...condition.secondary_table,
+                table_alias: updatedTable.table_alias,
+              },
+            };
           }
+          return condition;
         });
+
+        // Only create a new object if needed
+        if (needsUpdate) {
+          joinCopy.conditions = updatedConditions;
+          return joinCopy;
+        }
 
         return join;
       });

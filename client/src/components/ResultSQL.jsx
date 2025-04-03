@@ -24,6 +24,7 @@ export const ResultSQL = ({ sql, updateSqlProp }) => (
           lineNumbers: true,
           matchBrackets: true,
           readOnly: false,
+          minLines: 10,
         }}
       />
     </div>
@@ -35,12 +36,12 @@ ResultSQL.propTypes = {
   updateSqlProp: PropTypes.func,
 };
 
-const mapStateToProps = store => ({
+const mapStateToProps = (store) => ({
   sql: store.query.sql,
 });
 
 const mapDispatchToProps = {
-  updateSqlProp: sql => updateSql(sql),
+  updateSqlProp: (sql) => updateSql(sql),
 };
 
 export default connect(mapStateToProps, mapDispatchToProps)(ResultSQL);
