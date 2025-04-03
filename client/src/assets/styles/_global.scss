@@ -1,3 +1,51 @@
 .join-controls .dropdown-menu {
   top: -100px !important;
 }
+
+.archer-container {
+  svg {
+    pointer-events: none;
+  }
+
+  .arrow {
+    stroke-width: 1.5;
+    stroke: #000;
+  }
+
+  // Arrow marker at end of line
+  .arrow-marker {
+    fill: #000;
+    stroke: none;
+  }
+
+  // For left joins - solid line with arrow pointing from main to secondary
+  .left-join-arrow {
+    stroke: #3399ff;
+    stroke-width: 2;
+  }
+
+  // For right joins - dashed line with arrow pointing from main to secondary
+  // (visually distinct to indicate reversed logical direction)
+  .right-join-arrow {
+    stroke: #ff9933;
+    stroke-width: 2;
+  }
+
+  // For inner joins - solid line with arrow
+  .inner-join-arrow {
+    stroke: #339933;
+    stroke-width: 2.5;
+  }
+
+  // For outer joins - dashed line with arrow
+  .outer-join-arrow {
+    stroke: #9933cc;
+    stroke-width: 2;
+  }
+
+  // For cross joins - dotted line with arrow
+  .cross-join-arrow {
+    stroke: #cc3333;
+    stroke-width: 1.5;
+  }
+}
