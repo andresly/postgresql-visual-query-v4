@@ -5,6 +5,8 @@ import { removeColumn, updateColumn } from '../actions/queryActions';
 import { bannedWords } from '../utils/bannedWords';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryColumnType } from '../types/queryTypes';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faGripVertical } from '@fortawesome/free-solid-svg-icons';
 
 const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; index: number }> = ({
   data,
