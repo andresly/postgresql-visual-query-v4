@@ -77,11 +77,12 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
         <div style={{ minHeight: '40vh' }}>
           <ArcherContainer
             startMarker={false}
-            endMarker={false}
+            endMarker
             strokeColor="rgba(0,0,0)"
             strokeWidth={1}
             svgContainerStyle={{ zIndex: 100 }}
             noCurves
+            offset={15}
             className={'archer-container'}
           >
             {tables.map((table, index) => {
