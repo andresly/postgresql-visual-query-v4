@@ -12,12 +12,14 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     // 1) Handle aggregates first
     if (column.column_aggregate && column.column_aggregate.length > 0) {
       // If there is an aggregate, we order by its alias (or auto-generated alias).
-      const autoAlias =
-        column.column_alias.length > 0
-          ? column.column_alias
-          : `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
-
-      query.order(format.ident(autoAlias), column.column_order_dir);
+      // Use explicit column_alias if provided, otherwise generate an alias
+      if (column.column_alias.length > 0) {
+        query.order(format.ident(column.column_alias), column.column_order_dir);
+      } else {
+        // Generate auto alias based on current table reference (not any previous alias)
+        const autoAlias = `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
+        query.order(format.ident(autoAlias), column.column_order_dir);
+      }
       return;
     }
 
