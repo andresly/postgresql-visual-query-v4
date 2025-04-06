@@ -312,7 +312,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               value={data.column_name}
               onChange={handleOnChange}
               onBlur={handleOnSave}
-              readOnly
             />
           </div>
 
@@ -433,6 +432,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           {Array.from({ length: maxConditions }).map((_, i) => (
             <div key={i} style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
               <textarea
+                rows={1}
                 ref={(el) => {
                   textareaRefs.current[i] = el;
                 }}
@@ -449,7 +449,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
                     zIndex: 1000,
                     maxHeight: '200px',
                     overflowY: 'auto',
-                    width: '100%',
+                    width: '200px',
                     background: 'white',
                     border: '1px solid #ccc',
                     borderRadius: '4px',
