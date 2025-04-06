@@ -1,10 +1,11 @@
 import React from 'react';
 import _ from 'lodash';
 import { CustomInput, FormGroup, Input, InputGroup, UncontrolledTooltip } from 'reactstrap';
+import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
 import QueryCreationTableColumn from './QueryCreationTableColumn';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { switchDistinct, switchLimit, switchTies, setLimitValue } from '../actions/queryActions';
+import { switchDistinct, switchLimit, switchTies, setLimitValue, updateColumnsOrder } from '../actions/queryActions';
 
 export const QueryCreationTable = () => {
   const dispatch = useAppDispatch();
@@ -38,22 +39,60 @@ export const QueryCreationTable = () => {
     ...Array(maxConditions - 1).fill('Or'), // Add "Or" labels for remaining conditions
   ];
 
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    if (!destination) {
+      return;
+    }
+
+    if (destination.droppableId === source.droppableId && destination.index === source.index) {
+      return;
+    }
+
+    const movedColumn = columns.find((column) => _.isEqual(draggableId, `query-column-${column.id}`));
+
+    if (!movedColumn) {
+      return;
+    }
+
+    const newColumns = Array.from(columns);
+    newColumns.splice(source.index, 1);
+    newColumns.splice(destination.index, 0, movedColumn);
+
+    dispatch(updateColumnsOrder(newColumns));
+  };
+
   return (
     <div>
-      <table className="table table-bordered query-creation-table" style={{ width: 'auto' }}>
-        <td>
-          <table style={{ background: '#D9D9D9' }}>
-            {tableLabels.map((label, index) => (
-              <tr key={index} style={{ height: '56px' }}>
-                <td style={{ minWidth: '200px' }}>{label}</td>
-              </tr>
-            ))}
-          </table>
-        </td>
-        {columns.map((column, index) => (
-          <QueryCreationTableColumn key={index} data={column} id={`query-column-${column.id}`} index={index} />
-        ))}
-      </table>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <table className="table table-bordered query-creation-table" style={{ width: 'auto' }}>
+          <td>
+            <table style={{ background: '#D9D9D9' }}>
+              {tableLabels.map((label, index) => (
+                <tr key={index} style={{ height: '56px' }}>
+                  <td style={{ minWidth: '200px' }}>{label}</td>
+                </tr>
+              ))}
+            </table>
+          </td>
+          <Droppable droppableId="droppable-columns" direction="horizontal">
+            {(provided) => (
+              <td ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
+                {columns.map((column, index) => (
+                  <QueryCreationTableColumn
+                    key={column.id}
+                    data={column}
+                    id={`query-column-${column.id}`}
+                    index={index}
+                  />
+                ))}
+                {provided.placeholder}
+              </td>
+            )}
+          </Droppable>
+        </table>
+      </DragDropContext>
       <div className="mt-3">
         <FormGroup className="d-flex align-items-center">
           <CustomInput
