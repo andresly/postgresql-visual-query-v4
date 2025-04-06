@@ -8,6 +8,7 @@ import { QueryColumnType } from '../types/queryTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { Draggable } from 'react-beautiful-dnd';
+import { getScalarFunctions, getAggregateFunctions } from '../utils/functionUtils';
 
 const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; index: number }> = ({
   data,
@@ -24,8 +25,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const maxConditions = Math.max(...columns.map((col) => col.column_conditions.length), data.column_conditions.length);
   const [filterValid, setFilterValid] = useState(true);
 
-  const scalarFunctions = (process.env.REACT_APP_SCALAR_FUNCTIONS || '').split(',');
-  const singleLineFunctions = (process.env.REACT_APP_SINGE_LINE_FUNCTIONS || '').split(',');
+  const scalarFunctions = getScalarFunctions();
+  const singleLineFunctions = getAggregateFunctions();
 
   const [conditionsData, setConditionsData] = useState<string[]>(data.column_conditions);
   const [showQuerySuggestions, setShowQuerySuggestions] = useState<boolean>(false);
@@ -348,11 +349,11 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               className="form-control"
             >
               <option value="">None</option>
-              <option value="COUNT">COUNT</option>
-              <option value="SUM">SUM</option>
-              <option value="AVG">AVG</option>
-              <option value="MIN">MIN</option>
-              <option value="MAX">MAX</option>
+              {scalarFunctions.map((func) => (
+                <option key={func} value={func}>
+                  {func}
+                </option>
+              ))}
             </select>
           </div>
 

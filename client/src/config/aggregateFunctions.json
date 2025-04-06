@@ -1,0 +1,11 @@
+[
+  "AVG",
+  "BIT_AND",
+  "BIT_OR",
+  "BOOL_AND",
+  "BOOL_OR",
+  "COUNT",
+  "MAX",
+  "MIN",
+  "SUM"
+]
