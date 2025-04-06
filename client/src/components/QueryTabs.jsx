@@ -29,16 +29,16 @@ export const QueryTabs = (props) => {
               {translations[props.language.code].queryBuilder.columnsH}
             </NavLink>
           </NavItem>
-          <NavItem>
-            <NavLink
-              className={activeTab === '2' ? 'active' : ''}
-              onClick={() => {
-                setActiveTab('2');
-              }}
-            >
-              {translations[props.language.code].queryBuilder.joinsH}
-            </NavLink>
-          </NavItem>
+          {/*<NavItem>*/}
+          {/*  <NavLink*/}
+          {/*    className={activeTab === '2' ? 'active' : ''}*/}
+          {/*    onClick={() => {*/}
+          {/*      setActiveTab('2');*/}
+          {/*    }}*/}
+          {/*  >*/}
+          {/*    {translations[props.language.code].queryBuilder.joinsH}*/}
+          {/*  </NavLink>*/}
+          {/*</NavItem>*/}
           <NavItem>
             <NavLink
               className={activeTab === '3' ? 'active' : ''}
@@ -135,15 +135,15 @@ export const QueryTabs = (props) => {
               </Row>
             </Container>
           </TabPane>
-          <TabPane tabId="2">
-            <Container fluid>
-              <Row>
-                <Col sm="12" className="p-1">
-                  <JoinList />
-                </Col>
-              </Row>
-            </Container>
-          </TabPane>
+          {/*<TabPane tabId="2">*/}
+          {/*  <Container fluid>*/}
+          {/*    <Row>*/}
+          {/*      <Col sm="12" className="p-1">*/}
+          {/*        <JoinList />*/}
+          {/*      </Col>*/}
+          {/*    </Row>*/}
+          {/*  </Container>*/}
+          {/*</TabPane>*/}
           <TabPane tabId="3">
             <Container fluid>
               <Row>

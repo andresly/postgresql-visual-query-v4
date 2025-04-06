@@ -9,6 +9,13 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
   const columns = _.cloneDeep(data.columns);
 
   const addOrder = (column: QueryColumnType) => {
+    // Helper function to check if a string is an expression (contains operators)
+    const isExpression = (str: string) => {
+      // Check for common SQL operators
+      const operators = ['||', '+', '-', '*', '/', 'AND', 'OR', 'IN', 'LIKE', 'IS', 'NOT', 'NULL'];
+      return operators.some((op) => str.includes(op));
+    };
+
     // 1) Handle aggregates first
     if (column.column_aggregate && column.column_aggregate.length > 0) {
       // If there is an aggregate, we order by its alias (or auto-generated alias).
@@ -23,31 +30,44 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
       return;
     }
 
-    // 2) Handle single-line functions (ALWAYS wrap in the function if present)
+    // 2) Handle single-line functions
     if (column.column_single_line_function && column.column_single_line_function.length > 0) {
-      // Determine the "base" for the function:
-      //   - If there's an alias, use that alias
-      //   - Otherwise, use table_alias or table_name + the column name
+      // If there's an alias, use it directly without wrapping in the function
+      if (column.column_alias.length > 0) {
+        query.order(format.ident(column.column_alias), column.column_order_dir);
+        return;
+      }
+
+      // Otherwise, use table_alias or table_name + the column name and wrap in the function
       const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
 
-      const baseExpression =
-        column.column_alias.length > 0
-          ? format.ident(column.column_alias)
-          : `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
-
-      // Wrap in the function
-      const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
-      query.order(wrappedField, column.column_order_dir);
+      // Check if column_name is an expression
+      if (isExpression(column.column_name)) {
+        // For expressions, don't use format.ident on the column part and don't prepend table name
+        const wrappedField = `${column.column_single_line_function}(${column.column_name})`;
+        query.order(wrappedField, column.column_order_dir);
+      } else {
+        // For regular column names, use format.ident
+        const baseExpression = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+        const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
+        query.order(wrappedField, column.column_order_dir);
+      }
       return;
     }
 
     // 3) No aggregate, no single-line function → fallback to alias or table.column
     if (_.isEmpty(column.column_alias)) {
-      // Use table alias if present, else table_name
-      const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-
-      const orderColumn = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
-      query.order(orderColumn, column.column_order_dir);
+      // Check if column_name is an expression
+      if (isExpression(column.column_name)) {
+        // For expressions, don't prepend table name
+        query.order(column.column_name, column.column_order_dir);
+      } else {
+        // Use table alias if present, else table_name
+        const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+        // For regular column names, use format.ident
+        const orderColumn = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+        query.order(orderColumn, column.column_order_dir);
+      }
     } else {
       query.order(format.ident(column.column_alias), column.column_order_dir);
     }
@@ -465,36 +485,6 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
   }
 };
 
-const buildJoinOn = (join: JoinType) => {
-  let mainTable = join.main_table.table_name;
-
-  if (!_.isEmpty(join.main_table.table_alias)) {
-    mainTable = join.main_table.table_alias;
-  }
-
-  const conditionArray: string[] = [];
-  const conditions = _.cloneDeep(join.conditions);
-
-  conditions.forEach((condition) => {
-    if (
-      !_.isEmpty(condition.main_column) &&
-      !_.isEmpty(condition.secondary_column) &&
-      !_.isEmpty(condition.secondary_table.table_name)
-    ) {
-      let secondaryTable = condition.secondary_table.table_name;
-
-      if (!_.isEmpty(condition.secondary_table.table_alias)) {
-        secondaryTable = condition.secondary_table.table_alias;
-      }
-
-      const conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} =
-             ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
-      conditionArray.push(conditionString);
-    }
-  });
-  return conditionArray.join(' AND ');
-};
-
 const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
 
@@ -514,33 +504,90 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
     }
   };
 
-  joins.forEach((joinObj) => {
-    const on = buildJoinOn(joinObj);
+  // Group joins by their main table and secondary table
+  const groupedJoins: { [key: string]: JoinType[] } = {};
 
-    if (!_.isEmpty(joinObj.main_table.table_name) && !_.isEmpty(on)) {
-      switch (joinObj.type) {
-        case 'inner': {
-          addJoin(joinObj, on, query.join);
-          break;
+  joins.forEach((joinObj) => {
+    if (!_.isEmpty(joinObj.main_table.table_name)) {
+      // Create a unique key for each main_table + secondary_table combination
+      const conditions = joinObj.conditions || [];
+      conditions.forEach((condition) => {
+        if (!_.isEmpty(condition.secondary_table.table_name)) {
+          const key = `${joinObj.main_table.table_name}_${condition.secondary_table.table_name}`;
+          if (!groupedJoins[key]) {
+            groupedJoins[key] = [];
+          }
+          groupedJoins[key].push(joinObj);
         }
-        case 'right': {
-          addJoin(joinObj, on, query.right_join);
-          break;
+      });
+    }
+  });
+
+  // Process each group of joins
+  Object.keys(groupedJoins).forEach((key) => {
+    const joinGroup = groupedJoins[key];
+    if (joinGroup.length > 0) {
+      // Use the first join in the group as the template
+      const templateJoin = joinGroup[0];
+
+      // Collect all conditions from all joins in this group
+      const allConditions: string[] = [];
+
+      joinGroup.forEach((joinObj) => {
+        const conditions = joinObj.conditions || [];
+        conditions.forEach((condition) => {
+          if (
+            !_.isEmpty(condition.main_column) &&
+            !_.isEmpty(condition.secondary_column) &&
+            !_.isEmpty(condition.secondary_table.table_name) &&
+            condition.secondary_table.table_name === templateJoin.conditions[0].secondary_table.table_name
+          ) {
+            let mainTable = joinObj.main_table.table_name;
+            if (!_.isEmpty(joinObj.main_table.table_alias)) {
+              mainTable = joinObj.main_table.table_alias;
+            }
+
+            let secondaryTable = condition.secondary_table.table_name;
+            if (!_.isEmpty(condition.secondary_table.table_alias)) {
+              secondaryTable = condition.secondary_table.table_alias;
+            }
+
+            const conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} =
+                   ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
+            allConditions.push(conditionString);
+          }
+        });
+      });
+
+      // Combine all conditions with AND
+      const combinedOn = allConditions.join(' AND ');
+
+      if (!_.isEmpty(combinedOn)) {
+        // Apply the join with the combined conditions
+        switch (templateJoin.type) {
+          case 'inner': {
+            addJoin(templateJoin, combinedOn, query.join);
+            break;
+          }
+          case 'right': {
+            addJoin(templateJoin, combinedOn, query.right_join);
+            break;
+          }
+          case 'left': {
+            addJoin(templateJoin, combinedOn, query.left_join);
+            break;
+          }
+          case 'outer': {
+            addJoin(templateJoin, combinedOn, query.outer_join);
+            break;
+          }
+          case 'cross': {
+            addJoin(templateJoin, combinedOn, query.cross_join);
+            break;
+          }
+          default:
+            break;
         }
-        case 'left': {
-          addJoin(joinObj, on, query.left_join);
-          break;
-        }
-        case 'outer': {
-          addJoin(joinObj, on, query.outer_join);
-          break;
-        }
-        case 'cross': {
-          addJoin(joinObj, on, query.cross_join);
-          break;
-        }
-        default:
-          break;
       }
     }
   });
@@ -565,33 +612,90 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     }
   };
 
-  joins.forEach((joinObj) => {
-    const on = buildJoinOn(joinObj);
+  // Group joins by their main table and secondary table
+  const groupedJoins: { [key: string]: JoinType[] } = {};
 
-    if (!_.isEmpty(joinObj.main_table.table_name) && !_.isEmpty(on)) {
-      switch (joinObj.type) {
-        case 'inner': {
-          addJoin(joinObj, on, query.join);
-          break;
+  joins.forEach((joinObj) => {
+    if (!_.isEmpty(joinObj.main_table.table_name)) {
+      // Create a unique key for each main_table + secondary_table combination
+      const conditions = joinObj.conditions || [];
+      conditions.forEach((condition) => {
+        if (!_.isEmpty(condition.secondary_table.table_name)) {
+          const key = `${joinObj.main_table.table_name}_${condition.secondary_table.table_name}`;
+          if (!groupedJoins[key]) {
+            groupedJoins[key] = [];
+          }
+          groupedJoins[key].push(joinObj);
         }
-        case 'right': {
-          addJoin(joinObj, on, query.right_join);
-          break;
+      });
+    }
+  });
+
+  // Process each group of joins
+  Object.keys(groupedJoins).forEach((key) => {
+    const joinGroup = groupedJoins[key];
+    if (joinGroup.length > 0) {
+      // Use the first join in the group as the template
+      const templateJoin = joinGroup[0];
+
+      // Collect all conditions from all joins in this group
+      const allConditions: string[] = [];
+
+      joinGroup.forEach((joinObj) => {
+        const conditions = joinObj.conditions || [];
+        conditions.forEach((condition) => {
+          if (
+            !_.isEmpty(condition.main_column) &&
+            !_.isEmpty(condition.secondary_column) &&
+            !_.isEmpty(condition.secondary_table.table_name) &&
+            condition.secondary_table.table_name === templateJoin.conditions[0].secondary_table.table_name
+          ) {
+            let mainTable = joinObj.main_table.table_name;
+            if (!_.isEmpty(joinObj.main_table.table_alias)) {
+              mainTable = joinObj.main_table.table_alias;
+            }
+
+            let secondaryTable = condition.secondary_table.table_name;
+            if (!_.isEmpty(condition.secondary_table.table_alias)) {
+              secondaryTable = condition.secondary_table.table_alias;
+            }
+
+            const conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} =
+                   ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
+            allConditions.push(conditionString);
+          }
+        });
+      });
+
+      // Combine all conditions with AND
+      const combinedOn = allConditions.join(' AND ');
+
+      if (!_.isEmpty(combinedOn)) {
+        // Apply the join with the combined conditions
+        switch (templateJoin.type) {
+          case 'inner': {
+            addJoin(templateJoin, combinedOn, query.join);
+            break;
+          }
+          case 'right': {
+            addJoin(templateJoin, combinedOn, query.right_join);
+            break;
+          }
+          case 'left': {
+            addJoin(templateJoin, combinedOn, query.left_join);
+            break;
+          }
+          case 'outer': {
+            addJoin(templateJoin, combinedOn, query.outer_join);
+            break;
+          }
+          case 'cross': {
+            addJoin(templateJoin, combinedOn, query.cross_join);
+            break;
+          }
+          default:
+            break;
         }
-        case 'left': {
-          addJoin(joinObj, on, query.left_join);
-          break;
-        }
-        case 'outer': {
-          addJoin(joinObj, on, query.outer_join);
-          break;
-        }
-        case 'cross': {
-          addJoin(joinObj, on, query.cross_join);
-          break;
-        }
-        default:
-          break;
       }
     }
   });

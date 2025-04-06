@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Button,
   ButtonGroup,
@@ -107,20 +107,31 @@ interface QueryTableBodyProps {
   joins?: JoinType[] | false;
 }
 
-const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData, joins }) => {
+const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, constructData, joins }) => {
   const dispatch = useAppDispatch();
-  const handleRemove = (join: JoinType) => {
-    dispatch(removeJoin(join));
-  };
+
+  const handleRemove = useCallback(
+    (join: JoinType) => {
+      dispatch(removeJoin(join));
+    },
+    [dispatch],
+  );
+
+  const debouncedResize = useCallback(
+    _.debounce(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100),
+    [],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedResize.cancel();
+    };
+  }, [debouncedResize]);
+
   return (
-    <Scrollbars
-      autoHeight
-      autoHeightMax={400}
-      onScroll={() => {
-        // Force ArcherContainer to recalculate positions
-        window.dispatchEvent(new Event('resize'));
-      }}
-    >
+    <Scrollbars autoHeight autoHeightMax={400} onScroll={debouncedResize}>
       <CardBody className="py-0 mt-2 mx-2 px-0 position-relative" style={{ zIndex: 1, backgroundColor: 'white' }}>
         {data.columns.map((column) => {
           const columnJoins = (joins || [])?.flatMap((join) => {
@@ -129,22 +140,18 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData
                 (condition.main_column === column.column_name && condition.main_table?.id === data?.id) ||
                 (condition.secondary_column === column.column_name && condition.secondary_table?.id === data?.id),
             );
-            // Only return results if there are matching conditions
             return conditions.length ? conditions.map((condition) => ({ condition, join })) : [];
           });
 
           return (
             <ArcherElement
-              key={`table-column-${_.uniqueId()}`}
+              key={`${data.id}-column-${column.column_name}`}
               id={`${data.id}-column-${column.column_name}`}
               relations={
                 columnJoins
-                  ?.map((join, index) => {
+                  ?.map((join) => {
                     const condition = join.condition;
                     const joinObj = join.join;
-                    const mainTable = joinObj.conditions[0].main_table.table_name;
-                    const secondaryTable = joinObj.conditions[0].secondary_table.table_name;
-                    // Only create arrows from main table to secondary table
                     if (
                       joinObj.main_table?.id === data?.id &&
                       condition.main_column === column.column_name &&
@@ -156,71 +163,12 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData
                         targetAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'left' : 'right',
                         sourceAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'right' : 'left',
                         label: (
-                          <div className="join-controls">
-                            <UncontrolledDropdown>
-                              <DropdownToggle
-                                color="light"
-                                size="sm"
-                                className="join-type-button"
-                                style={{ padding: 0, top: '70px' }}
-                              >
-                                {joinObj.type === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
-                                {joinObj.type === 'right' && (
-                                  <RightJoinIcon style={{ width: '20px', height: '20px' }} />
-                                )}
-                                {joinObj.type === 'inner' && (
-                                  <InnerJoinIcon style={{ width: '20px', height: '20px' }} />
-                                )}
-                                {joinObj.type === 'outer' && (
-                                  <OuterJoinIcon style={{ width: '20px', height: '20px' }} />
-                                )}
-                                {joinObj.type === 'cross' && (
-                                  <CorssJoinIcon style={{ width: '20px', height: '20px' }} />
-                                )}
-                              </DropdownToggle>
-                              <DropdownMenu>
-                                <DropdownItem
-                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'inner' }))}
-                                  active={joinObj.type === 'inner'}
-                                >
-                                  Select only matching rows from <strong>{mainTable}</strong> and{' '}
-                                  <strong>{secondaryTable}</strong> (Inner Join)
-                                </DropdownItem>
-                                <DropdownItem
-                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'left' }))}
-                                  active={joinObj.type === 'left'}
-                                >
-                                  Select all rows from <strong>{mainTable}</strong>, matching rows from{' '}
-                                  <strong>{secondaryTable}</strong> (Left Join)
-                                </DropdownItem>
-                                <DropdownItem
-                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'right' }))}
-                                  active={joinObj.type === 'right'}
-                                >
-                                  Select all rows from <strong>{secondaryTable}</strong>, matching rows from{' '}
-                                  <strong>{mainTable}</strong> (Right Join)
-                                </DropdownItem>
-                                <DropdownItem
-                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'outer' }))}
-                                  active={joinObj.type === 'outer'}
-                                >
-                                  Select all rows from both <strong>{mainTable}</strong> and{' '}
-                                  <strong>{secondaryTable}</strong> (Full join)
-                                </DropdownItem>
-                                <DropdownItem
-                                  onClick={() => dispatch(updateJoin({ ...joinObj, type: 'cross' }))}
-                                  active={joinObj.type === 'cross'}
-                                >
-                                  Combine every row from <strong>{mainTable}</strong> with every row from{' '}
-                                  <strong>{secondaryTable}</strong> (Cross Join)
-                                </DropdownItem>
-                                <DropdownItem divider />
-                                <DropdownItem className="text-danger" onClick={() => handleRemove(joinObj)}>
-                                  Delete Join
-                                </DropdownItem>
-                              </DropdownMenu>
-                            </UncontrolledDropdown>
-                          </div>
+                          <JoinLabel
+                            join={joinObj}
+                            mainTable={joinObj.conditions[0].main_table.table_name}
+                            secondaryTable={joinObj.conditions[0].secondary_table.table_name}
+                            onRemove={handleRemove}
+                          />
                         ),
                       };
                     }
@@ -231,7 +179,7 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData
             >
               <div>
                 <TableColumn
-                  id={`${id}-table-column-${_.uniqueId()}`}
+                  id={`${id}-table-column-${column.column_name}`}
                   data={constructData(column)}
                   joins={columnJoins}
                 />
@@ -242,46 +190,117 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = ({ data, id, constructData
       </CardBody>
     </Scrollbars>
   );
-};
+});
+
+// Create a separate component for the join label to prevent unnecessary re-renders
+const JoinLabel: React.FC<{
+  join: JoinType;
+  mainTable: string;
+  secondaryTable: string;
+  onRemove: (join: JoinType) => void;
+}> = React.memo(({ join: joinObj, mainTable, secondaryTable, onRemove }) => {
+  const dispatch = useAppDispatch();
+
+  return (
+    <div className="join-controls">
+      <UncontrolledDropdown>
+        <DropdownToggle color="light" size="sm" className="join-type-button" style={{ padding: 0, top: '70px' }}>
+          {joinObj.type === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
+          {joinObj.type === 'right' && <RightJoinIcon style={{ width: '20px', height: '20px' }} />}
+          {joinObj.type === 'inner' && <InnerJoinIcon style={{ width: '20px', height: '20px' }} />}
+          {joinObj.type === 'outer' && <OuterJoinIcon style={{ width: '20px', height: '20px' }} />}
+          {joinObj.type === 'cross' && <CorssJoinIcon style={{ width: '20px', height: '20px' }} />}
+        </DropdownToggle>
+        <DropdownMenu>
+          <DropdownItem
+            onClick={() => dispatch(updateJoin({ ...joinObj, type: 'inner' }))}
+            active={joinObj.type === 'inner'}
+          >
+            Select only matching rows from <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Inner
+            Join)
+          </DropdownItem>
+          <DropdownItem
+            onClick={() => dispatch(updateJoin({ ...joinObj, type: 'left' }))}
+            active={joinObj.type === 'left'}
+          >
+            Select all rows from <strong>{mainTable}</strong>, matching rows from <strong>{secondaryTable}</strong>{' '}
+            (Left Join)
+          </DropdownItem>
+          <DropdownItem
+            onClick={() => dispatch(updateJoin({ ...joinObj, type: 'right' }))}
+            active={joinObj.type === 'right'}
+          >
+            Select all rows from <strong>{secondaryTable}</strong>, matching rows from <strong>{mainTable}</strong>{' '}
+            (Right Join)
+          </DropdownItem>
+          <DropdownItem
+            onClick={() => dispatch(updateJoin({ ...joinObj, type: 'outer' }))}
+            active={joinObj.type === 'outer'}
+          >
+            Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full join)
+          </DropdownItem>
+          <DropdownItem
+            onClick={() => dispatch(updateJoin({ ...joinObj, type: 'cross' }))}
+            active={joinObj.type === 'cross'}
+          >
+            Combine every row from <strong>{mainTable}</strong> with every row from <strong>{secondaryTable}</strong>{' '}
+            (Cross Join)
+          </DropdownItem>
+          <DropdownItem divider />
+          <DropdownItem className="text-danger" onClick={() => onRemove(joinObj)}>
+            Delete Join
+          </DropdownItem>
+        </DropdownMenu>
+      </UncontrolledDropdown>
+    </div>
+  );
+});
 
 interface QueryTableProps {
   data: QueryTableType;
   id: string;
 }
 
-const QueryTable: React.FC<QueryTableProps> = ({ data, id }) => {
+const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id }) => {
   const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.settings.language);
   const queryType = useAppSelector((state) => state.query.queryType);
   const joins = useAppSelector((state) => state.query.joins);
   const firstTableId = useAppSelector((state) => state.query.tables[0]?.id);
 
-  const handleRemoveTable = () => {
+  const handleRemoveTable = useCallback(() => {
     if (['DELETE', 'UPDATE'].includes(queryType) && data.id === firstTableId) {
       dispatch(resetQuery(queryType));
     } else {
       dispatch(removeTable(data));
     }
-  };
+  }, [dispatch, queryType, data, firstTableId]);
 
-  const handleCopy = () => {
+  const handleCopy = useCallback(() => {
     dispatch(addTable(data));
-  };
+  }, [dispatch, data]);
 
-  const constructData = (column: QueryColumnType) => ({
-    ...column,
-    table_name: data.table_name,
-    table_schema: data.table_schema,
-    table_alias: data.table_alias,
-    table_id: data.id,
-  });
+  const constructData = useCallback(
+    (column: QueryColumnType) => ({
+      ...column,
+      table_name: data.table_name,
+      table_schema: data.table_schema,
+      table_alias: data.table_alias,
+      table_id: data.id,
+    }),
+    [data],
+  );
 
-  const tableJoins =
-    joins.length > 0 &&
-    joins.filter(
-      (join) =>
-        join.main_table.id === data.id || join.conditions.some((condition) => condition.secondary_table.id === data.id),
-    );
+  const tableJoins = useMemo(
+    () =>
+      joins.length > 0 &&
+      joins.filter(
+        (join) =>
+          join.main_table.id === data.id ||
+          join.conditions.some((condition) => condition.secondary_table.id === data.id),
+      ),
+    [joins, data.id],
+  );
 
   return (
     <Card className="d-inline-flex m-2 pb-2 mr-4 position-relative">
@@ -295,6 +314,6 @@ const QueryTable: React.FC<QueryTableProps> = ({ data, id }) => {
       <QueryTableBody data={data} id={id} constructData={constructData} joins={tableJoins} />
     </Card>
   );
-};
+});
 
 export default QueryTable;

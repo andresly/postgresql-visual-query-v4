@@ -100,10 +100,41 @@
   font-size: 0.9rem;
 }
 
+/* Table header buttons */
 .grid-item .card-title {
-  padding: 0.2rem 0.4rem;
-  margin-bottom: 0;
-  font-size: 0.95rem;
+  padding: 8px;
+  margin: 0;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  flex-shrink: 0; /* Prevent title from shrinking */
+  min-height: 40px; /* Ensure consistent height */
+}
+
+/* Fix table title button width */
+.grid-item .card-title .flex-fill {
+  min-width: 0; /* Allow text truncation */
+  margin-right: 8px; /* Space between title and buttons */
+}
+
+.grid-item .card-title .flex-fill button {
+  max-width: calc(100% - 8px); /* Allow button to shrink but leave space for margin */
+  min-width: 100px; /* Minimum width to ensure readability */
+}
+
+/* Keep buttons visible and properly sized */
+.grid-item .card-title .btn-group {
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+  display: flex;
+  margin-left: auto;
+}
+
+.grid-item .card-title .btn-group button {
+  padding: 2px 8px;
+  min-width: 28px; /* Ensure minimum width for icon buttons */
+  height: 24px; /* Fixed height for consistency */
 }
 
 /* Adjust button sizes in the table header */

@@ -89,16 +89,29 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // Configuration options for table sizes
   const gridConfig = {
-    defaultWidth: 2, // Default table width (in grid units) - smaller to fit more tables
     defaultHeight: 3, // Default table height (in grid units) - smaller to match width
-    columnsPerRow: 6, // Increased from 4 to 6 tables per row
-    horizontalSpacing: 2, // Reduced spacing to fit more tables
     verticalSpacing: 2, // Reduced vertical spacing to match horizontal
-    maxWidth: 300, // Maximum width in pixels for a table
+  };
+
+  // Calculate how many columns can fit based on container width
+  const calculateCols = (width: number) => {
+    const margin = 10; // margin between items
+    const containerPadding = 15; // padding on container edges
+    const minColWidth = 260; // desired fixed width for each column
+
+    // Calculate available width accounting for container padding
+    const availableWidth = width - 2 * containerPadding;
+
+    // Calculate how many columns can fit
+    const possibleCols = Math.floor((availableWidth + margin) / (minColWidth + margin));
+
+    // Return at least 1 column, but no more than 12
+    return Math.max(1, Math.min(12, possibleCols));
   };
 
   // State to store the layout of the grid items
   const [layout, setLayout] = useState<GridItemData[]>([]);
+  const [cols, setCols] = useState(12);
 
   // Helper function to refresh arrows with a slight delay
   const refreshArrows = (delay = 100) => {
@@ -139,23 +152,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       if (containerRef.current) {
         const newWidth = containerRef.current.offsetWidth;
         setContainerWidth(newWidth);
-
-        // Calculate maximum table width in grid units
-        // to ensure no table exceeds maxWidth pixels
-        if (newWidth > 0) {
-          // Calculate column width based on the GridLayout properties
-          const colWidth = (newWidth - 11 * 10) / 12; // (containerWidth - (cols-1)*margin) / cols
-          const maxGridUnits = Math.floor(gridConfig.maxWidth / colWidth);
-
-          // If tables are too wide, update their width in the layout
-          if (layout.length > 0 && maxGridUnits < gridConfig.defaultWidth) {
-            const updatedLayout = layout.map((item) => ({
-              ...item,
-              w: Math.min(item.w, maxGridUnits),
-            }));
-            setLayout(updatedLayout);
-          }
-        }
+        setCols(calculateCols(newWidth));
       }
     };
 
@@ -168,7 +165,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     return () => {
       window.removeEventListener('resize', updateWidth);
     };
-  }, [layout]);
+  }, []);
 
   // Calculate initial grid layout based on tables
   useEffect(() => {
@@ -189,16 +186,16 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       // Create a new grid item for this table with smaller width
       return {
         i: `table-${table.id}`,
-        x: (index % gridConfig.columnsPerRow) * gridConfig.horizontalSpacing,
-        y: Math.floor(index / gridConfig.columnsPerRow) * gridConfig.verticalSpacing,
-        w: gridConfig.defaultWidth,
+        x: index % cols,
+        y: Math.floor(index / cols) * gridConfig.verticalSpacing,
+        w: 1, // Each table takes exactly one column
         h: gridConfig.defaultHeight,
         tableId: table.id,
       };
     });
 
     setLayout(newLayout);
-  }, [tables.length]);
+  }, [tables.length, cols]);
 
   // Handle when the grid layout changes (due to dragging)
   const handleLayoutChange = (newLayout: GridItemData[]) => {
@@ -254,10 +251,10 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             <GridLayout
               className="layout"
               layout={layout}
-              cols={12}
+              cols={cols}
               rowHeight={100}
               width={containerWidth}
-              margin={[10, 10]}
+              margin={[80, 30]}
               compactType="vertical"
               preventCollision={false}
               maxRows={20}
@@ -269,30 +266,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
                 refreshArrows(100);
                 removeDraggingClass();
               }}
-              onResizeStop={(layoutParam, oldItem, newItem) => {
-                // If a table exceeds max width, constrain it
-                if (containerWidth > 0) {
-                  const colWidth = (containerWidth - gridConfig.columnsPerRow * 2 * 10) / 12;
-                  const maxGridUnits = Math.floor(gridConfig.maxWidth / colWidth);
-
-                  if (newItem.w > maxGridUnits) {
-                    // Find the corresponding item in our state
-                    const currentLayout = [...layout];
-                    const itemIndex = currentLayout.findIndex((item) => item.i === newItem.i);
-
-                    if (itemIndex !== -1) {
-                      // Update just this item's width
-                      currentLayout[itemIndex] = {
-                        ...currentLayout[itemIndex],
-                        w: maxGridUnits,
-                      };
-
-                      // Set the updated layout
-                      setLayout(currentLayout);
-                    }
-                  }
-                }
-
+              onResizeStop={() => {
                 // Force refresh arrows when resizing stops
                 refreshArrows(100);
               }}
