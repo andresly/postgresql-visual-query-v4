@@ -284,6 +284,9 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             flexDirection: 'column',
             minWidth: '200px',
             opacity: snapshot.isDragging ? 0.8 : 1,
+            border: '1px solid #dee2e6',
+            borderLeft: 'none',
+            borderTop: 'none',
           }}
         >
           <div
@@ -300,194 +303,181 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           >
             <FontAwesomeIcon icon={faGripVertical} />
           </div>
-          <table style={{ width: '100%' }}>
-            {/* Column name */}
-            <tr>
-              <td>
-                <Input
-                  type="text"
-                  name="column_name"
-                  value={data.column_name}
-                  onChange={handleOnChange}
-                  onBlur={handleOnSave}
-                  readOnly
-                />
-              </td>
-            </tr>
-            {/* Alias */}
-            <tr>
-              <td>
-                <Input
-                  type="text"
-                  name="column_alias"
-                  value={data.column_alias}
-                  onChange={handleOnChange}
-                  onBlur={handleOnSave}
-                  placeholder="Alias"
-                />
-              </td>
-            </tr>
-            {/* Table */}
-            <tr>
-              <td>
-                <Input
-                  type="text"
-                  name="table_name"
-                  value={data.table_name}
-                  onChange={handleOnChange}
-                  onBlur={handleOnSave}
-                  readOnly
-                />
-              </td>
-            </tr>
-            {/* Aggregate */}
-            <tr>
-              <td>
-                <select
-                  name="column_aggregate"
-                  value={data.column_aggregate}
-                  onChange={handleOnSave}
-                  className="form-control"
+
+          {/* Column name */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <Input
+              type="text"
+              name="column_name"
+              value={data.column_name}
+              onChange={handleOnChange}
+              onBlur={handleOnSave}
+              readOnly
+            />
+          </div>
+
+          {/* Alias */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <Input
+              type="text"
+              name="column_alias"
+              value={data.column_alias}
+              onChange={handleOnChange}
+              onBlur={handleOnSave}
+              placeholder="Alias"
+            />
+          </div>
+
+          {/* Table */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <Input
+              type="text"
+              name="table_name"
+              value={data.table_name}
+              onChange={handleOnChange}
+              onBlur={handleOnSave}
+              readOnly
+            />
+          </div>
+
+          {/* Aggregate */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <select
+              name="column_aggregate"
+              value={data.column_aggregate}
+              onChange={handleOnSave}
+              className="form-control"
+            >
+              <option value="">None</option>
+              <option value="COUNT">COUNT</option>
+              <option value="SUM">SUM</option>
+              <option value="AVG">AVG</option>
+              <option value="MIN">MIN</option>
+              <option value="MAX">MAX</option>
+            </select>
+          </div>
+
+          {/* Scalar function */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <select
+              name="column_single_line_function"
+              value={data.column_single_line_function}
+              onChange={handleOnSave}
+              className="form-control"
+            >
+              <option value="">None</option>
+              {singleLineFunctions.map((func) => (
+                <option key={func} value={func}>
+                  {func}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <select
+              name="column_order"
+              value={data.column_order ? (data.column_order_dir ? 'ASC' : 'DESC') : ''}
+              onChange={changeColumnOrder}
+              className="form-control"
+            >
+              <option value="">None</option>
+              <option value="ASC">Ascending</option>
+              <option value="DESC">Descending</option>
+            </select>
+          </div>
+
+          {/* Sort order */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <select
+              name="column_order_nr"
+              value={data.column_order_nr || ''}
+              onChange={handleOnSave}
+              className="form-control"
+            >
+              <option value="">None</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </div>
+
+          {/* Show */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <CustomInput
+              type="checkbox"
+              id={`show-${id}`}
+              label="Show"
+              checked={data.display_in_query}
+              onChange={handleSwitch}
+              name="display_in_query"
+            />
+          </div>
+
+          {/* Remove Duplicates */}
+          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <CustomInput
+              type="checkbox"
+              id={`distinct-${id}`}
+              label="Remove Duplicates"
+              checked={data.column_distinct_on}
+              onChange={handleSwitch}
+              name="column_distinct_on"
+            />
+          </div>
+
+          {/* Criteria */}
+          {Array.from({ length: maxConditions }).map((_, i) => (
+            <div key={i} style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+              <textarea
+                ref={(el) => {
+                  textareaRefs.current[i] = el;
+                }}
+                value={conditionsData[i] || ''}
+                onChange={(e) => updateFilterValue(e, i)}
+                onBlur={() => handleFilterChange(i)}
+                className={`form-control ${!filterValid && i === activeInputIndex ? 'is-invalid' : ''}`}
+                style={{ height: '38px' }}
+              />
+              {showQuerySuggestions && i === activeInputIndex && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    zIndex: 1000,
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                    width: '100%',
+                    background: 'white',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                  }}
                 >
-                  <option value="">None</option>
-                  <option value="COUNT">COUNT</option>
-                  <option value="SUM">SUM</option>
-                  <option value="AVG">AVG</option>
-                  <option value="MIN">MIN</option>
-                  <option value="MAX">MAX</option>
-                </select>
-              </td>
-            </tr>
-            {/* Scalar function */}
-            <tr>
-              <td>
-                <select
-                  name="column_single_line_function"
-                  value={data.column_single_line_function}
-                  onChange={handleOnSave}
-                  className="form-control"
-                >
-                  <option value="">None</option>
-                  {singleLineFunctions.map((func) => (
-                    <option key={func} value={func}>
-                      {func}
-                    </option>
-                  ))}
-                </select>
-              </td>
-            </tr>
-            {/* Sort */}
-            <tr>
-              <td>
-                <select
-                  name="column_order"
-                  value={data.column_order ? (data.column_order_dir ? 'ASC' : 'DESC') : ''}
-                  onChange={changeColumnOrder}
-                  className="form-control"
-                >
-                  <option value="">None</option>
-                  <option value="ASC">Ascending</option>
-                  <option value="DESC">Descending</option>
-                </select>
-              </td>
-            </tr>
-            {/* Sort order */}
-            <tr>
-              <td>
-                <select
-                  name="column_order_nr"
-                  value={data.column_order_nr || ''}
-                  onChange={handleOnSave}
-                  className="form-control"
-                  disabled={!data.column_order}
-                >
-                  <option value="">None</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
-                  <option value="5">5</option>
-                </select>
-              </td>
-            </tr>
-            {/* Show */}
-            <tr>
-              <td>
-                <CustomInput
-                  type="checkbox"
-                  id={`show-${id}`}
-                  label="Show"
-                  checked={data.display_in_query}
-                  onChange={handleSwitch}
-                  name="display_in_query"
-                />
-              </td>
-            </tr>
-            {/* Remove Duplicates */}
-            <tr>
-              <td>
-                <CustomInput
-                  type="checkbox"
-                  id={`distinct-${id}`}
-                  label="Remove Duplicates"
-                  checked={data.column_distinct_on}
-                  onChange={handleSwitch}
-                  name="column_distinct_on"
-                />
-              </td>
-            </tr>
-            {/* Criteria */}
-            {Array.from({ length: maxConditions }).map((_, i) => (
-              <tr key={i}>
-                <td>
-                  <textarea
-                    ref={(el) => {
-                      textareaRefs.current[i] = el;
-                    }}
-                    value={conditionsData[i] || ''}
-                    onChange={(e) => updateFilterValue(e, i)}
-                    onBlur={() => handleFilterChange(i)}
-                    className={`form-control ${!filterValid && i === activeInputIndex ? 'is-invalid' : ''}`}
-                    style={{ height: '56px' }}
-                  />
-                  {showQuerySuggestions && i === activeInputIndex && (
+                  {getFilteredQuerySuggestions().map((queryName) => (
                     <div
+                      key={queryName}
+                      onClick={() => handleSelectQuery(queryName)}
                       style={{
-                        position: 'absolute',
-                        zIndex: 1000,
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                        width: '100%',
-                        background: 'white',
-                        border: '1px solid #ccc',
-                        borderRadius: '4px',
+                        padding: '8px',
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #eee',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f0f0f0';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'white';
                       }}
                     >
-                      {getFilteredQuerySuggestions().map((queryName) => (
-                        <div
-                          key={queryName}
-                          onClick={() => handleSelectQuery(queryName)}
-                          style={{
-                            padding: '8px',
-                            cursor: 'pointer',
-                            borderBottom: '1px solid #eee',
-                          }}
-                          onMouseEnter={(e) => {
-                            e.currentTarget.style.backgroundColor = '#f0f0f0';
-                          }}
-                          onMouseLeave={(e) => {
-                            e.currentTarget.style.backgroundColor = 'white';
-                          }}
-                        >
-                          {queryName}
-                        </div>
-                      ))}
+                      {queryName}
                     </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </table>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       )}
     </Draggable>

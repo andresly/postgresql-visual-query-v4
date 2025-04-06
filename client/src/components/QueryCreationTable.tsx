@@ -66,19 +66,42 @@ export const QueryCreationTable = () => {
   return (
     <div>
       <DragDropContext onDragEnd={onDragEnd}>
-        <table className="table table-bordered query-creation-table" style={{ width: 'auto' }}>
-          <td>
-            <table style={{ background: '#D9D9D9' }}>
-              {tableLabels.map((label, index) => (
-                <tr key={index} style={{ height: '56px' }}>
-                  <td style={{ minWidth: '200px' }}>{label}</td>
-                </tr>
-              ))}
-            </table>
-          </td>
+        <div className="query-table-container" style={{ display: 'flex', overflowX: 'auto' }}>
+          {/* Labels column */}
+          <div className="labels-column" style={{ background: '#D9D9D9', minWidth: '200px', flexShrink: 0 }}>
+            {/* Add empty space to align with drag handle */}
+            <div style={{ height: '30px', borderBottom: '1px solid #ddd' }} />
+
+            {/* Labels */}
+            {tableLabels.map((label, index) => (
+              <div
+                key={index}
+                style={{
+                  height: '56px',
+                  padding: '0.75rem',
+                  borderBottom: '1px solid #ddd',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {label}
+              </div>
+            ))}
+          </div>
+
+          {/* Droppable area for columns */}
           <Droppable droppableId="droppable-columns" direction="horizontal">
             {(provided) => (
-              <td ref={provided.innerRef} {...provided.droppableProps} style={{ display: 'flex' }}>
+              <div
+                ref={provided.innerRef}
+                {...provided.droppableProps}
+                style={{
+                  display: 'flex',
+                  flexGrow: 1,
+                  border: '1px solid #dee2e6',
+                  borderLeft: 'none',
+                }}
+              >
                 {columns.map((column, index) => (
                   <QueryCreationTableColumn
                     key={column.id}
@@ -88,10 +111,10 @@ export const QueryCreationTable = () => {
                   />
                 ))}
                 {provided.placeholder}
-              </td>
+              </div>
             )}
           </Droppable>
-        </table>
+        </div>
       </DragDropContext>
       <div className="mt-3">
         <FormGroup className="d-flex align-items-center">
