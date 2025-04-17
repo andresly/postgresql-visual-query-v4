@@ -1,13 +1,40 @@
 import React from 'react';
-import PropTypes from 'prop-types';
 import { Col, Container, Nav, NavItem, NavLink, Row, TabContent, TabPane } from 'reactstrap';
-import { connect } from 'react-redux';
 import ResultTable from './ResultTable';
-import { withTabSwitcher } from '../hocs/withTabSwitcher';
+import { useAppSelector, useAppDispatch } from '../hooks';
 import { translations } from '../utils/translations';
 import ResultSQL from './ResultSQL';
+import { generateSql } from '../actions/queryActions';
+import { LanguageType } from '../types/settingsType';
+import { QueryType, ResultType } from '../types/queryTypes';
+import { withTabSwitcher } from '../hocs/withTabSwitcher';
 
-export const ResultTabs = ({ activeTab, toggle, language, result, query }) => {
+// Component props without the HOC added props
+type OwnProps = Record<string, never>;
+
+// Props that come from the HOC
+type TabSwitcherProps = {
+  activeTab: string;
+  toggle: (tabId: string) => void;
+};
+
+// Combined props type
+type ResultTabsProps = OwnProps & TabSwitcherProps;
+
+export const ResultTabs: React.FC<ResultTabsProps> = ({ activeTab, toggle }) => {
+  const dispatch = useAppDispatch();
+  const { language, result, query } = useAppSelector((state) => ({
+    language: state.settings.language,
+    result: state.query.result,
+    query: state.query,
+  }));
+
+  const handleTabSwitch = (tabId: string) => {
+    dispatch(generateSql());
+
+    toggle(tabId);
+  };
+
   return (
     <div>
       <Nav tabs>
@@ -15,7 +42,7 @@ export const ResultTabs = ({ activeTab, toggle, language, result, query }) => {
           <NavLink
             className={`${activeTab === '1' ? 'active' : ''}`}
             onClick={() => {
-              toggle('1');
+              handleTabSwitch('1');
             }}
           >
             SQL
@@ -25,7 +52,7 @@ export const ResultTabs = ({ activeTab, toggle, language, result, query }) => {
           <NavLink
             className={`${activeTab === '2' ? 'active' : ''} ${query.error ? 'text-danger' : ''}`}
             onClick={() => {
-              toggle('2');
+              handleTabSwitch('2');
             }}
           >
             {`${translations[language.code].queryBuilder.resultH}${result ? ` (${result.rowCount || 0})` : ''}`}
@@ -56,22 +83,4 @@ export const ResultTabs = ({ activeTab, toggle, language, result, query }) => {
   );
 };
 
-ResultTabs.propTypes = {
-  activeTab: PropTypes.string,
-  toggle: PropTypes.func,
-  language: PropTypes.shape({
-    code: PropTypes.string,
-  }),
-  result: PropTypes.shape({
-    rowCount: PropTypes.number,
-  }),
-  query: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-};
-
-const mapStateToProps = (store) => ({
-  result: store.query.result,
-  language: store.settings.language,
-  query: store.query,
-});
-
-export default withTabSwitcher(connect(mapStateToProps)(ResultTabs));
+export default withTabSwitcher(ResultTabs);

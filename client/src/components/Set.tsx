@@ -5,9 +5,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import _ from 'lodash';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { removeSet, updateSet } from '../actions/queryActions';
-import { useTranslation } from '../hooks/useTranslation';
 import { getCorrectQueryName } from '../utils/getCorrectQueryName';
 import { SetType, QueryType } from '../types/queryTypes';
+import { translations } from '../utils/translations';
 
 interface SetProps {
   id: string;
@@ -19,7 +19,6 @@ interface SetProps {
 
 export const Set: React.FC<SetProps> = ({ id, set, index, queryName, queryId }) => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation();
   const { language, queries } = useAppSelector((state) => ({
     language: state.settings.language,
     queries: state.queries
@@ -103,7 +102,7 @@ export const Set: React.FC<SetProps> = ({ id, set, index, queryName, queryId }) 
                         <div className="col-auto">
                           {index === 0
                             ? getCorrectQueryName(language, queryName, queryId)
-                            : t('queryBuilder.setResult')}
+                            : translations[language.code].queryBuilder.setResult}
                         </div>
                         <div className="col-auto">
                           <FormGroup className="m-0">
@@ -127,7 +126,7 @@ export const Set: React.FC<SetProps> = ({ id, set, index, queryName, queryId }) 
                               delay={{ show: 500, hide: 0 }}
                               target={`${id}-set-type`}
                             >
-                              {t('tooltips.setType')}
+                              {translations[language.code].tooltips.setType}
                             </UncontrolledTooltip>
                           </FormGroup>
                         </div>
@@ -142,7 +141,7 @@ export const Set: React.FC<SetProps> = ({ id, set, index, queryName, queryId }) 
                               value={selectedQueryId}
                               onChange={handleQueryChange}
                             >
-                              <option value="">{t('queryBuilder.setQuery')}</option>
+                              <option value="">{translations[language.code].queryBuilder.setQuery}</option>
                               {queries.map((query: QueryType) => (
                                 <option key={`set-${id}-query-${query.id}`} value={query.id}>
                                   {getCorrectQueryName(language, query.queryName, query.id)}

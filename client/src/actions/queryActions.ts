@@ -211,11 +211,15 @@ export const queryAction = (state: any) => ({
 export const query = (state: any) => async (dispatch: Dispatch<QueryActions>) => {
   try {
     dispatch({ type: QUERYING });
+
+    // Send the SQL as-is, don't modify it on the client side
+    // This avoids syntax errors with LIMIT clause
     const response = await axiosClient.post('/query/query', {
       database: state.database,
       user: state.user,
       password: state.password,
       sql: state.sql,
+      maxRows: 10000, // Server should respect this parameter to limit large result sets
     });
 
     dispatch({ type: ADD_RESULT_FULFILLED, payload: response.data });

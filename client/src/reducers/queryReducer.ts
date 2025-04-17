@@ -674,9 +674,31 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
     }
 
     case ADD_RESULT_FULFILLED: {
+      // Limit number of rows kept in Redux state to prevent performance issues
+      // Store only the first 1000 rows in state, but keep the total count
+      const result = action.payload;
+
+      if (result && result.rows && result.rows.length > 1000) {
+        // Create a copy with limited rows but preserve metadata
+        const limitedResult = {
+          ...result,
+          fullRowCount: result.rowCount, // Store the actual total count
+          rows: result.rows.slice(0, 1000), // Keep only first 1000 rows in Redux state
+          rowCount: result.rows.length, // Original row count
+          hasMoreRows: true, // Flag indicating there are more rows
+        };
+
+        return {
+          ...state,
+          result: limitedResult,
+          error: null,
+          querying: false,
+        };
+      }
+
       return {
         ...state,
-        result: action.payload,
+        result: result,
         error: null,
         querying: false,
       };

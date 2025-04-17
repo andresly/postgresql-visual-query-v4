@@ -374,7 +374,14 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             <select
               name="column_aggregate"
               value={data.column_aggregate}
-              onChange={handleOnSave}
+              onChange={(e) => {
+                // Create a deep copy of the column data
+                const column = _.cloneDeep(data);
+                // Update the aggregate function
+                column.column_aggregate = e.target.value;
+                // Immediately dispatch the update to Redux
+                dispatch(updateColumn(column));
+              }}
               className="form-control"
             >
               <option value="">None</option>
@@ -391,7 +398,14 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             <select
               name="column_single_line_function"
               value={data.column_single_line_function}
-              onChange={handleOnSave}
+              onChange={(e) => {
+                // Create a deep copy of the column data
+                const column = _.cloneDeep(data);
+                // Update the scalar function
+                column.column_single_line_function = e.target.value;
+                // Immediately dispatch the update to Redux
+                dispatch(updateColumn(column));
+              }}
               className="form-control"
             >
               <option value="">None</option>

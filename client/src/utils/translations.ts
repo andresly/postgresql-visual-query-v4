@@ -127,9 +127,9 @@ export const translations = {
         'Use the DISTINCT clause to eliminate duplicate rows from the result. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       limit:
         'Restrict the number of rows returned by the query. More info: https://www.postgresql.org/docs/current/queries-limit.html',
-      'limit-value':
+      limitValueD:
         'Maximum number of rows to return. More info: https://www.postgresql.org/docs/current/queries-limit.html',
-      'with-ties':
+      withTies:
         'Include additional rows that tie with the last row, when using ORDER BY. More info: https://www.postgresql.org/docs/current/queries-limit.html',
     },
   },
@@ -260,9 +260,9 @@ export const translations = {
         'Kasuta DISTINCT klauslit, et eemaldada duplikaatread tulemusest. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       limit:
         'Piira päringu poolt tagastatavate ridade arvu. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
-      'limit-value':
+      limitValueD:
         'Maksimaalne tagastatavate ridade arv. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
-      'with-ties':
+      withTies:
         'Kaasa täiendavad read, mis on seotud viimase reaga, kui kasutatakse ORDER BY. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
     },
   },

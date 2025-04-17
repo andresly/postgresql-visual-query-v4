@@ -4,12 +4,11 @@ import { CustomInput, FormGroup, Input, InputGroup } from 'reactstrap';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { translations } from '../utils/translations';
 
 import QueryCreationTableColumn from './QueryCreationTableColumn';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { switchDistinct, switchLimit, switchTies, setLimitValue, updateColumnsOrder } from '../actions/queryActions';
-import { useTranslation } from '../hooks/useTranslation';
-
 // Custom tooltip styles
 const tooltipStyle = {
   backgroundColor: '#f8f9fa',
@@ -133,16 +132,16 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
 
 export const QueryCreationTable = () => {
   const dispatch = useAppDispatch();
-  const { t } = useTranslation();
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 
   // Retrieve state using selectors
-  const { columns, distinct, limit, limitValue, withTies } = useAppSelector((store) => ({
+  const { columns, distinct, limit, limitValue, withTies, language } = useAppSelector((store) => ({
     columns: _.orderBy(store.query.columns, ['filter_as_having'], ['asc']),
     distinct: store.query.distinct,
     limit: store.query.limit,
     limitValue: store.query.limitValue,
     withTies: store.query.withTies,
+    language: store.settings.language,
   }));
 
   // Toggle tooltip visibility
@@ -155,16 +154,16 @@ export const QueryCreationTable = () => {
 
   // Create dynamic table labels array
   const baseLabels = [
-    { id: 'column', label: t('queryBuilder.columnLabel') },
-    { id: 'alias', label: t('queryBuilder.aliasLabel') },
-    { id: 'table', label: t('queryBuilder.tableLabel') },
-    { id: 'aggregate', label: t('queryBuilder.aggregateLabel') },
-    { id: 'scalar', label: t('queryBuilder.scalarLabel') },
-    { id: 'sort', label: t('queryBuilder.sortLabel') },
-    { id: 'sort-order', label: t('queryBuilder.sortOrderLabel') },
-    { id: 'show', label: t('queryBuilder.showLabel') },
-    { id: 'remove-duplicates', label: t('queryBuilder.removeDuplicatesLabel') },
-    { id: 'criteria', label: t('queryBuilder.criteriaLabel') },
+    { id: 'column', label: translations[language.code].queryBuilder.columnLabel },
+    { id: 'alias', label: translations[language.code].queryBuilder.aliasLabel },
+    { id: 'table', label: translations[language.code].queryBuilder.tableLabel },
+    { id: 'aggregate', label: translations[language.code].queryBuilder.aggregateLabel },
+    { id: 'scalar', label: translations[language.code].queryBuilder.scalarLabel },
+    { id: 'sort', label: translations[language.code].queryBuilder.sortLabel },
+    { id: 'sort-order', label: translations[language.code].queryBuilder.sortOrderLabel },
+    { id: 'show', label: translations[language.code].queryBuilder.showLabel },
+    { id: 'remove-duplicates', label: translations[language.code].queryBuilder.removeDuplicatesLabel },
+    { id: 'criteria', label: translations[language.code].queryBuilder.criteriaLabel },
   ];
 
   // Add "Or" labels for remaining conditions
@@ -174,7 +173,7 @@ export const QueryCreationTable = () => {
       .fill(null)
       .map((_, i) => ({
         id: `or-${i + 1}`,
-        label: t('queryBuilder.orLabel'),
+        label: translations[language.code].queryBuilder.orLabel,
       })),
   ];
 
@@ -229,7 +228,11 @@ export const QueryCreationTable = () => {
               >
                 <span>{label.label}</span>
                 <CustomTooltip id={label.id} activeTooltip={activeTooltip} toggleTooltip={toggleTooltip}>
-                  {formatTooltipContent(t(`tooltips.${label.id}`))}
+                  {formatTooltipContent(
+                    translations[language.code].tooltips[
+                      label.id as keyof (typeof translations)[typeof language.code]['tooltips']
+                    ],
+                  )}
                 </CustomTooltip>
               </div>
             ))}
@@ -268,7 +271,7 @@ export const QueryCreationTable = () => {
             <CustomInput
               type="switch"
               id="distinct"
-              label={t('queryBuilder.distinctL')}
+              label={translations[language.code].queryBuilder.distinctL}
               checked={distinct}
               onChange={() => dispatch(switchDistinct())}
             />
@@ -278,7 +281,7 @@ export const QueryCreationTable = () => {
               toggleTooltip={toggleTooltip}
               position="top"
             >
-              {formatTooltipContent(t('tooltips.distinct'))}
+              {formatTooltipContent(translations[language.code].tooltips.distinct)}
             </CustomTooltip>
           </div>
 
@@ -286,12 +289,12 @@ export const QueryCreationTable = () => {
             <CustomInput
               type="switch"
               id="limit_switch"
-              label={t('queryBuilder.limitL')}
+              label={translations[language.code].queryBuilder.limitL}
               checked={limit}
               onChange={() => dispatch(switchLimit())}
             />
             <CustomTooltip id="limit-switch" activeTooltip={activeTooltip} toggleTooltip={toggleTooltip} position="top">
-              {formatTooltipContent(t('tooltips.limit'))}
+              {formatTooltipContent(translations[language.code].tooltips.limit)}
             </CustomTooltip>
           </div>
 
@@ -313,14 +316,14 @@ export const QueryCreationTable = () => {
                 toggleTooltip={toggleTooltip}
                 position="top"
               >
-                {formatTooltipContent(t('tooltips.limit-value'))}
+                {formatTooltipContent(translations[language.code].tooltips.limitValueD)}
               </CustomTooltip>
 
               <div className="d-flex align-items-center ml-2" style={{ position: 'relative' }}>
                 <CustomInput
                   type="switch"
                   id="ties_switch"
-                  label={t('queryBuilder.withTiesL')}
+                  label={translations[language.code].queryBuilder.withTiesL}
                   checked={withTies}
                   onChange={() => dispatch(switchTies())}
                 />
@@ -330,7 +333,7 @@ export const QueryCreationTable = () => {
                   toggleTooltip={toggleTooltip}
                   position="top"
                 >
-                  {formatTooltipContent(t('tooltips.with-ties'))}
+                  {formatTooltipContent(translations[language.code].tooltips.withTies)}
                 </CustomTooltip>
               </div>
             </InputGroup>
