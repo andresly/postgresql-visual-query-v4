@@ -1,6 +1,4 @@
 import React, { Component } from 'react';
-import { useDrag, useDrop, DragPreviewImage } from 'react-dnd';
-import {} from /* getEmptyImage */ 'react-dnd-html5-backend';
 import { connect } from 'react-redux';
 import { Button, ButtonGroup, Tooltip } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,45 +10,6 @@ import { withToggle } from '../hocs/withToggle';
 import { iconPicker } from '../utils/iconPicker';
 // Import Handle component from React Flow for connections
 import { Handle, Position } from '@xyflow/react';
-
-// Drag and Drop wrapper component
-const DraggableColumn = ({ children, data, onDrop }) => {
-  const [{ isDragging }, drag, preview] = useDrag({
-    type: 'COLUMN',
-    item: { ...data },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-  });
-
-  const [{ isOver }, drop] = useDrop({
-    accept: 'COLUMN',
-    drop: (item) => onDrop(item),
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
-  });
-
-  // Removing this so you can see the default drag preview
-  // React.useEffect(() => {
-  //   preview(getEmptyImage(), { captureDraggingState: true });
-  // }, [preview]);
-
-  return (
-    <div
-      ref={(node) => drag(drop(node))}
-      style={{
-        opacity: isDragging ? 0.5 : 1,
-        backgroundColor: isOver ? 'rgba(0,0,0,0.1)' : undefined,
-      }}
-      className="d-flex align-items-center position-relative"
-      data-column-id={`${data.table_id}-${data.column_name}`}
-      id={`${data.table_id}-column-${data.column_name}`}
-    >
-      {children}
-    </div>
-  );
-};
 
 export class TableColumn extends Component {
   constructor(props) {
@@ -64,7 +23,6 @@ export class TableColumn extends Component {
     this.handleRemove = this.handleRemove.bind(this);
     this.handleOnChange = this.handleOnChange.bind(this);
     this.findForeignKeys = this.findForeignKeys.bind(this);
-    this.handleDrop = this.handleDrop.bind(this);
   }
 
   handleRemove(data) {
@@ -73,89 +31,6 @@ export class TableColumn extends Component {
 
   handleOnChange() {
     this.props.addColumn(this.props.data);
-  }
-
-  handleDrop(sourceColumn) {
-    if (sourceColumn.table_id === this.props.data.table_id) {
-      return;
-    }
-    // First create a new join object
-    const newJoin = {
-      id: this.props.joins.length,
-      type: 'inner',
-      color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-      main_table: {
-        id: sourceColumn.table_id,
-        table_schema: sourceColumn.table_schema,
-        table_name: sourceColumn.table_name,
-        table_type: sourceColumn.table_type || 'BASE TABLE',
-        table_alias: sourceColumn.table_alias || '',
-        columns: this.props.databaseColumns
-          .filter(
-            (column) =>
-              column.table_schema === sourceColumn.table_schema && column.table_name === sourceColumn.table_name,
-          )
-          .map((column) => ({
-            ...column,
-            table_id: sourceColumn.table_id,
-            table_alias: sourceColumn.table_alias || '',
-            constraints: this.props.constraints.filter(
-              (constraint) =>
-                constraint.table_schema === column.table_schema &&
-                constraint.table_name === column.table_name &&
-                constraint.column_name.includes(column.column_name),
-            ),
-          })),
-      },
-      conditions: [
-        {
-          id: 0,
-          main_column: sourceColumn.column_name,
-          main_table: {
-            id: sourceColumn.table_id,
-            table_schema: sourceColumn.table_schema,
-            table_name: sourceColumn.table_name,
-            table_alias: sourceColumn.table_alias || '',
-          },
-          secondary_table: {
-            id: this.props.data.table_id,
-            table_schema: this.props.data.table_schema,
-            table_name: this.props.data.table_name,
-            table_type: this.props.data.table_type || 'BASE TABLE',
-            table_alias: this.props.data.table_alias || '',
-            columns: this.props.databaseColumns
-              .filter(
-                (column) =>
-                  column.table_schema === this.props.data.table_schema &&
-                  column.table_name === this.props.data.table_name,
-              )
-              .map((column) => ({
-                ...column,
-                table_id: this.props.data.table_id,
-                table_alias: this.props.data.table_alias || '',
-                constraints: this.props.constraints.filter(
-                  (constraint) =>
-                    constraint.table_schema === column.table_schema &&
-                    constraint.table_name === column.table_name &&
-                    constraint.column_name.includes(column.column_name),
-                ),
-              })),
-          },
-          secondary_column: this.props.data.column_name,
-        },
-      ],
-    };
-
-    // Clone the join object before updating
-    const join = _.cloneDeep(newJoin);
-
-    // Add the join first only if it is not already present
-    if (!this.props.joins.some((existingJoin) => existingJoin.id === join.id)) {
-      this.props.addJoin(join, true);
-    }
-
-    // Then update it
-    this.props.updateJoin(join);
   }
 
   findForeignKeys() {
@@ -203,7 +78,11 @@ export class TableColumn extends Component {
     const columnId = `${this.props.data.table_id}-${this.props.data.column_name}`;
 
     return (
-      <DraggableColumn data={this.props.data} onDrop={this.handleDrop}>
+      <div
+        className="d-flex align-items-center position-relative"
+        data-column-id={`${this.props.data.table_id}-${this.props.data.column_name}`}
+        id={`${this.props.data.table_id}-column-${this.props.data.column_name}`}
+      >
         {/* Add React Flow connection handles */}
         <Handle
           type="source"
@@ -288,7 +167,7 @@ export class TableColumn extends Component {
             </Button>
           )}
         </ButtonGroup>
-      </DraggableColumn>
+      </div>
     );
   }
 }

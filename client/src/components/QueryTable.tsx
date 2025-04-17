@@ -273,7 +273,7 @@ const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id, isFlowNode
   );
 
   return (
-    <Card className="d-inline-flex m-2 pb-2 mr-4 position-relative">
+    <Card className="d-inline-flex pb-2  position-relative">
       <QueryTableHeader
         target={id}
         data={data}

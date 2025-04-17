@@ -22,11 +22,12 @@ import TableView from '../components/TableView';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { LanguageType } from '../types/settingsType';
 import { QueryTableType, QueryType, JoinType } from '../types/queryTypes';
-import { addJoin } from '../actions/queryActions';
+import { addJoin, updateJoin } from '../actions/queryActions';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
 import '../styles/grid-layout.css';
 import '../styles/reactflow.css';
+import _ from 'lodash';
 
 // XY Flow imports
 import {
@@ -106,6 +107,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // Get joins data from redux state
   const joins = useAppSelector((state) => state.query.joins);
+  // Get database columns and constraints from Redux store
+  const databaseColumns = useAppSelector((state) => state.database.columns);
+  const constraints = useAppSelector((state) => state.database.constraints);
 
   // Container dimensions
   const [containerWidth, setContainerWidth] = useState(1200);
@@ -195,14 +199,15 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     setNodes(newNodes);
   }, [tables, containerWidth, queryType, setNodes]);
 
-  // Create edges from joins
+  // Create edges from joins when page loads or joins update
   useEffect(() => {
     if (!joins || joins.length === 0) {
-      setEdges([]);
       return;
     }
 
-    // Create edges from column join relationships
+    console.log('Creating edges for existing joins:', joins);
+
+    // Create edges for all existing joins
     const newEdges = joins.flatMap((join: JoinType) => {
       return join.conditions.map((condition, condIndex) => {
         // Create source and target handles for the specific columns
@@ -221,6 +226,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           sourceHandle,
           targetHandle,
           type: 'joinEdge',
+          animated: true,
           data: {
             join,
             condition,
@@ -233,144 +239,160 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       });
     });
 
+    console.log('Created edges:', newEdges);
+
+    // Set the edges with the newly created ones
     // @ts-ignore - bypass TypeScript for edge type assignment
     setEdges(newEdges);
-  }, [joins, setEdges]);
+  }, [joins, setEdges, tables]);
 
   // Handle new connections
-  const onConnect = useCallback(
-    (params: Connection) => {
-      // Extract table and column IDs from the source and target handles
-      const sourceHandleId = params.sourceHandle;
-      const targetHandleId = params.targetHandle;
+  const onConnect = (params: Connection) => {
+    // Extract table and column IDs from the source and target handles
+    const sourceHandleId = params.sourceHandle;
+    const targetHandleId = params.targetHandle;
 
-      if (sourceHandleId && targetHandleId) {
-        // Extract table and column IDs from the handles
-        // Format is expected to be like "{tableId}-{columnName}-right" or "{tableId}-{columnName}-left"
-        const sourceHandleParts = sourceHandleId.split('-');
-        const targetHandleParts = targetHandleId.split('-');
+    if (sourceHandleId && targetHandleId) {
+      // Extract table and column IDs from the handles
+      // Format is expected to be like "{tableId}-{columnName}-right" or "{tableId}-{columnName}-left"
+      const sourceHandleParts = sourceHandleId.split('-');
+      const targetHandleParts = targetHandleId.split('-');
 
-        if (sourceHandleParts.length >= 2 && targetHandleParts.length >= 2) {
-          const sourceTableId = parseInt(sourceHandleParts[0], 10);
-          const sourceColumnName = sourceHandleParts[1];
-          const targetTableId = parseInt(targetHandleParts[0], 10);
-          const targetColumnName = targetHandleParts[1];
+      if (sourceHandleParts.length >= 2 && targetHandleParts.length >= 2) {
+        const sourceTableId = parseInt(sourceHandleParts[0], 10);
+        const sourceColumnName = sourceHandleParts[1];
+        const targetTableId = parseInt(targetHandleParts[0], 10);
+        const targetColumnName = targetHandleParts[1];
 
-          // Find source and target tables from the table list
-          const sourceTable = tables.find((table) => table.id === sourceTableId);
-          const targetTable = tables.find((table) => table.id === targetTableId);
+        // Find source and target tables from the table list
+        const sourceTable = tables.find((table) => table.id === sourceTableId);
+        const targetTable = tables.find((table) => table.id === targetTableId);
 
-          if (sourceTable && targetTable) {
-            // Create a new join between these columns
-            const newJoin = {
-              id: joins.length,
-              type: 'inner',
-              color: '#' + Math.floor(Math.random() * 16777215).toString(16),
-              main_table: {
-                id: sourceTable.id,
-                table_schema: sourceTable.table_schema,
-                table_name: sourceTable.table_name,
-                table_alias: sourceTable.table_alias,
-                table_type: sourceTable.table_type,
-                columns: sourceTable.columns || [],
-              },
-              conditions: [
-                {
-                  id: 0,
-                  main_column: sourceColumnName,
-                  main_table: {
-                    id: sourceTable.id,
-                    table_schema: sourceTable.table_schema,
-                    table_name: sourceTable.table_name,
-                    table_alias: sourceTable.table_alias,
-                    table_type: sourceTable.table_type,
-                    columns: sourceTable.columns || [],
-                  },
-                  secondary_table: {
-                    id: targetTable.id,
-                    table_schema: targetTable.table_schema,
-                    table_name: targetTable.table_name,
-                    table_alias: targetTable.table_alias,
-                    table_type: targetTable.table_type,
-                    columns: targetTable.columns || [],
-                  },
-                  secondary_column: targetColumnName,
+        if (sourceTable && targetTable) {
+          // Create a new join between these columns
+          const newJoin = {
+            id: joins.length,
+            type: 'inner',
+            color: '#' + Math.floor(Math.random() * 16777215).toString(16),
+            main_table: {
+              id: sourceTable.id,
+              table_schema: sourceTable.table_schema,
+              table_name: sourceTable.table_name,
+              table_alias: sourceTable.table_alias || '',
+              table_type: sourceTable.table_type || 'BASE TABLE',
+              columns: sourceTable.columns || [],
+            },
+            conditions: [
+              {
+                id: 0,
+                main_column: sourceColumnName,
+                main_table: {
+                  id: sourceTable.id,
+                  table_schema: sourceTable.table_schema,
+                  table_name: sourceTable.table_name,
+                  table_alias: sourceTable.table_alias || '',
+                  table_type: sourceTable.table_type || 'BASE TABLE',
+                  columns: sourceTable.columns || [],
                 },
-              ],
-            };
+                secondary_table: {
+                  id: targetTable.id,
+                  table_schema: targetTable.table_schema,
+                  table_name: targetTable.table_name,
+                  table_type: targetTable.table_type || 'BASE TABLE',
+                  table_alias: targetTable.table_alias || '',
+                  columns: targetTable.columns || [],
+                },
+                secondary_column: targetColumnName,
+              },
+            ],
+          };
 
-            // Dispatch action to add the join
-            dispatch(addJoin(newJoin));
-          }
+          // Clone the join object to avoid reference issues
+          const join = _.cloneDeep(newJoin);
+
+          // Add the edge to React Flow for visualization with the join data
+          // @ts-ignore - bypass TypeScript for edge type in addEdge
+          setEdges((eds) =>
+            addEdge(
+              {
+                ...params,
+                id: `join-${join.id}-0`,
+                type: 'joinEdge',
+                animated: true,
+                data: {
+                  join,
+                  condition: join.conditions[0],
+                  mainTable: sourceTable.table_name,
+                  secondaryTable: targetTable.table_name,
+                  sourceColumn: sourceColumnName,
+                  targetColumn: targetColumnName,
+                },
+              },
+              eds,
+            ),
+          );
+
+          // Add the join first
+          dispatch(addJoin(join, true));
+
+          // Then update it to ensure it's properly registered
+          dispatch(updateJoin(join));
         }
       }
+    }
 
-      // Add the edge to React Flow for visualization
-      // @ts-ignore - bypass TypeScript for edge type in addEdge
-      setEdges((eds) =>
-        addEdge(
-          {
-            ...params,
-            type: 'joinEdge',
-            animated: true,
-          },
-          eds,
-        ),
-      );
+    // Highlight edges after connection
+    highlightEdges();
+  };
 
-      // Highlight edges after connection
-      highlightEdges();
-    },
-    [tables, joins, dispatch, setEdges],
-  );
+  console.log({ nodes });
+  console.log({ edges });
 
   return (
     <div className="mt-0 pr-2">
       <NavBar language={language} queryType={queryType} />
       <div ref={containerRef} className="grid-container">
-        <DndIntegration>
-          <div style={{ width: '100%', height: containerHeight, border: '1px solid #ddd', borderRadius: '4px' }}>
-            {/* @ts-ignore - Ignore TypeScript error for ReactFlow component */}
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              edgeTypes={edgeTypes}
-              fitView
-              minZoom={0.2}
-              maxZoom={2}
-              defaultViewport={{ x: 0, y: 0, zoom: 1 }}
-              proOptions={{ hideAttribution: true }}
-              className="react-flow-container"
-            >
-              <Controls />
-              <Background gap={16} color="#f8f8f8" />
-              <MiniMap zoomable pannable />
+        <div style={{ width: '100%', height: containerHeight, border: '1px solid #ddd', borderRadius: '4px' }}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            fitView
+            zoomOnScroll={true}
+            minZoom={0.2}
+            maxZoom={1}
+            defaultViewport={{ x: 0, y: 0, zoom: 0.2 }}
+            proOptions={{ hideAttribution: true }}
+            className="react-flow-container"
+          >
+            <Controls />
+            <Background gap={16} color="#f8f8f8" />
+            <MiniMap zoomable pannable />
 
-              <Panel position="top-right">
-                <div className="p-2 bg-light border rounded">
-                  <small>Drag to connect tables | Scroll to zoom</small>
-                </div>
-              </Panel>
-            </ReactFlow>
+            <Panel position="top-right">
+              <div className="p-2 bg-light border rounded">
+                <small>Drag to connect tables | Scroll to zoom</small>
+              </div>
+            </Panel>
+          </ReactFlow>
+        </div>
+
+        {/* Display fixed tables for DELETE/UPDATE queries */}
+        {['DELETE', 'UPDATE'].includes(queryType) && (
+          <div className="fixed-tables mt-3">
+            {tables.map((table, index) => (
+              <div key={`fixed-table-${table.id}`}>
+                <TableTypeWrapper index={index}>
+                  <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />
+                </TableTypeWrapper>
+              </div>
+            ))}
           </div>
-
-          {/* Display fixed tables for DELETE/UPDATE queries */}
-          {['DELETE', 'UPDATE'].includes(queryType) && (
-            <div className="fixed-tables mt-3">
-              {tables.map((table, index) => (
-                <div key={`fixed-table-${table.id}`}>
-                  <TableTypeWrapper index={index}>
-                    <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />
-                  </TableTypeWrapper>
-                </div>
-              ))}
-            </div>
-          )}
-        </DndIntegration>
+        )}
       </div>
       <QueryTabs />
       <div className="my-2">

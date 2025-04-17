@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow } from '@xyflow/react';
+import React, { memo, useEffect, useState } from 'react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, Edge, EdgeProps, Position } from '@xyflow/react';
 import { DropdownItem, DropdownMenu, DropdownToggle, UncontrolledDropdown } from 'reactstrap';
 import { useAppDispatch } from '../hooks';
 import { removeJoin, updateJoin } from '../actions/queryActions';
@@ -8,62 +8,92 @@ import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg'
 import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
 import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg';
 import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
+import { JoinType, JoinConditionType } from '../types/queryTypes';
+import _ from 'lodash';
 
-// Simple JoinEdge component for displaying join relationships
-function JoinEdge(props: any) {
-  const { id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style = {}, markerEnd, data } = props;
+interface JoinEdgeData {
+  join: JoinType;
+  condition: JoinConditionType;
+  mainTable: string;
+  secondaryTable: string;
+  sourceColumn: string;
+  targetColumn: string;
+  joinId?: number;
+}
 
+// Enhanced JoinEdge component for displaying join relationships
+function JoinEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+  data,
+}: EdgeProps) {
   const dispatch = useAppDispatch();
   const { setEdges } = useReactFlow();
+  const [currentJoinType, setCurrentJoinType] = useState<string>('inner');
 
   // Generate path for the edge
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
-    sourcePosition,
+    sourcePosition: sourcePosition || Position.Bottom,
     targetX,
     targetY,
-    targetPosition,
+    targetPosition: targetPosition || Position.Top,
   });
 
   // Extract join data from the edge
-  const join = data?.join || { type: 'inner' };
-  const mainTable = data?.mainTable || 'Table';
-  const secondaryTable = data?.secondaryTable || 'Table';
+  const typedData = data as JoinEdgeData | undefined;
+  const join = typedData?.join || { type: 'inner', id: 0, color: '#000000', main_table: {}, conditions: [] };
+  const mainTable = typedData?.mainTable || 'Table';
+  const secondaryTable = typedData?.secondaryTable || 'Table';
+  const sourceColumn = typedData?.sourceColumn || 'column';
+  const targetColumn = typedData?.targetColumn || 'column';
 
-  // Get the appropriate icon based on join type
-  const getJoinIcon = () => {
-    const iconStyle = { width: '20px', height: '20px' };
-
-    switch (join?.type) {
-      case 'left':
-        return <LeftJoinIcon style={iconStyle} />;
-      case 'right':
-        return <RightJoinIcon style={iconStyle} />;
-      case 'outer':
-        return <OuterJoinIcon style={iconStyle} />;
-      case 'cross':
-        return <CorssJoinIcon style={iconStyle} />;
-      case 'inner':
-      default:
-        return <InnerJoinIcon style={iconStyle} />;
+  // Update the current join type when it changes
+  useEffect(() => {
+    if (join && join.type) {
+      setCurrentJoinType(join.type);
+      console.log('Current join type set to:', join.type);
     }
-  };
+  }, [join]);
 
   // Handle join type change
-  const handleJoinTypeChange = (type: string) => {
-    if (join && join.id) {
-      dispatch(updateJoin({ ...join, type }));
+  const handleUpdateJoinType = (type: string) => {
+    console.log('Changing join type to:', type);
+    console.log('Join before update:', join);
+
+    if (join && typeof join.id !== 'undefined') {
+      // Deep clone the join to avoid reference issues
+      const updatedJoin = _.cloneDeep(join);
+      // Update the type
+      updatedJoin.type = type;
+
+      // Update local state immediately for UI responsiveness
+      setCurrentJoinType(type);
+
+      console.log('Dispatching updated join:', updatedJoin);
+      dispatch(updateJoin(updatedJoin));
     }
   };
 
   // Handle join removal
   const handleRemoveJoin = () => {
-    if (join && join.id) {
-      dispatch(removeJoin(join));
+    console.log('Removing join:', join);
+
+    if (join && typeof join.id !== 'undefined') {
+      // Deep clone the join to avoid reference issues
+      const clonedJoin = _.cloneDeep(join);
+      dispatch(removeJoin(clonedJoin));
 
       // Remove the edge from React Flow
-      setEdges((edges: any) => edges.filter((edge: any) => edge.id !== id));
+      setEdges((edges) => edges.filter((edge) => edge.id !== id));
     }
   };
 
@@ -85,21 +115,32 @@ function JoinEdge(props: any) {
           className="join-controls"
         >
           <UncontrolledDropdown>
-            <DropdownToggle color="light" size="sm" className="join-type-button">
-              {getJoinIcon()}
+            <DropdownToggle color="light" size="sm" className="join-type-button" style={{ padding: 0 }}>
+              {currentJoinType === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
+              {currentJoinType === 'right' && <RightJoinIcon style={{ width: '20px', height: '20px' }} />}
+              {currentJoinType === 'inner' && <InnerJoinIcon style={{ width: '20px', height: '20px' }} />}
+              {currentJoinType === 'outer' && <OuterJoinIcon style={{ width: '20px', height: '20px' }} />}
+              {currentJoinType === 'cross' && <CorssJoinIcon style={{ width: '20px', height: '20px' }} />}
             </DropdownToggle>
             <DropdownMenu>
-              <DropdownItem onClick={() => handleJoinTypeChange('inner')} active={join?.type === 'inner'}>
-                Inner Join
+              <DropdownItem onClick={() => handleUpdateJoinType('inner')} active={currentJoinType === 'inner'}>
+                Select only matching rows from <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Inner
+                Join)
               </DropdownItem>
-              <DropdownItem onClick={() => handleJoinTypeChange('left')} active={join?.type === 'left'}>
-                Left Join
+              <DropdownItem onClick={() => handleUpdateJoinType('left')} active={currentJoinType === 'left'}>
+                Select all rows from <strong>{mainTable}</strong>, matching rows from <strong>{secondaryTable}</strong>{' '}
+                (Left Join)
               </DropdownItem>
-              <DropdownItem onClick={() => handleJoinTypeChange('right')} active={join?.type === 'right'}>
-                Right Join
+              <DropdownItem onClick={() => handleUpdateJoinType('right')} active={currentJoinType === 'right'}>
+                Select all rows from <strong>{secondaryTable}</strong>, matching rows from <strong>{mainTable}</strong>{' '}
+                (Right Join)
               </DropdownItem>
-              <DropdownItem onClick={() => handleJoinTypeChange('outer')} active={join?.type === 'outer'}>
-                Full Join
+              <DropdownItem onClick={() => handleUpdateJoinType('outer')} active={currentJoinType === 'outer'}>
+                Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full join)
+              </DropdownItem>
+              <DropdownItem onClick={() => handleUpdateJoinType('cross')} active={currentJoinType === 'cross'}>
+                Combine every row from <strong>{mainTable}</strong> with every row from{' '}
+                <strong>{secondaryTable}</strong> (Cross Join)
               </DropdownItem>
               <DropdownItem divider />
               <DropdownItem className="text-danger" onClick={handleRemoveJoin}>
