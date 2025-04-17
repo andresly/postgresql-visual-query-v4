@@ -1,19 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import ReactTable from 'react-table';
-import 'react-table/react-table.css';
+import React, { useEffect, useState, useMemo } from 'react';
+// @ts-ignore
+import { useTable, Column } from 'react-table';
 import _ from 'lodash';
 import { Button, ButtonGroup, Alert, Badge } from 'reactstrap';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { fetchTableData, fetchTableCount } from '../actions/tableViewActions';
+
+// Add this for TypeScript to recognize react-table
+declare module 'react-table' {}
 
 interface TableViewProps {
   tableId: number;
 }
 
 // Row number cell component defined outside of the render function
-const RowNumberCell = ({ row, page, pageSize }: { row: { index: number }; page: number; pageSize: number }) => (
-  <div>{page * pageSize + row.index + 1}</div>
+interface RowNumberCellProps {
+  value: number;
+  page: number;
+  pageSize: number;
+}
+
+const RowNumberCell: React.FC<RowNumberCellProps> = ({ value, page, pageSize }) => (
+  <div>{page * pageSize + value + 1}</div>
 );
+
+// A wrapper around RowNumberCell to use as a Cell renderer
+const RowNumberCellWrapper = (page: number, pageSize: number) => {
+  const CellRenderer = ({ row }: { row: { index: number } }) => (
+    <RowNumberCell value={row.index} page={page} pageSize={pageSize} />
+  );
+
+  return CellRenderer;
+};
 
 const TableView: React.FC<TableViewProps> = ({ tableId }) => {
   const dispatch = useAppDispatch();
@@ -25,6 +43,9 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
   // Add pagination state
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
+
+  // Create the cell renderer once
+  const rowNumberRenderer = useMemo(() => RowNumberCellWrapper(page, pageSize), [page, pageSize]);
 
   // Connection details from host reducer
   const connectionDetails = useAppSelector((state) => ({
@@ -97,32 +118,38 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
     return parsedRows;
   };
 
-  // Create the row number cell renderer with fixed values
-  const rowNumberCellRenderer = (props: any) => <RowNumberCell row={props} page={page} pageSize={pageSize} />;
-
-  const generateColumns = () => {
+  const columns = useMemo(() => {
     if (!tableData || !tableData.fields) return [];
 
-    const columns: any[] = [];
-
-    columns.push({
-      Header: '#',
-      id: 'row',
-      maxWidth: 50,
-      filterable: false,
-      resizable: false,
-      Cell: rowNumberCellRenderer,
-    });
+    const cols: any[] = [
+      {
+        Header: '#',
+        id: 'row',
+        maxWidth: 50,
+        disableFilters: true,
+        Cell: rowNumberRenderer,
+      },
+    ];
 
     tableData.fields.forEach((field: any) => {
-      columns.push({
+      cols.push({
         Header: field.name,
         accessor: field.name,
       });
     });
 
-    return columns;
-  };
+    return cols;
+  }, [tableData, rowNumberRenderer]);
+
+  // Create table instance
+  const data = useMemo(() => parseRows(), [tableData]);
+
+  const tableInstance = useTable({
+    columns,
+    data,
+  });
+
+  const { getTableProps, getTableBodyProps, headerGroups, rows, prepareRow } = tableInstance;
 
   // Retry fetching data
   const handleRetry = () => {
@@ -189,7 +216,6 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
     return <div>No data available</div>;
   }
 
-  const rowsData = parseRows();
   const totalPages = getTotalPages();
 
   return (
@@ -210,7 +236,7 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
           <span>
             Page: {page + 1} {totalPages > 0 && `of ${totalPages}`}
           </span>
-          <span className="ml-3">Showing {rowsData.length} rows per page</span>
+          <span className="ml-3">Showing {rows.length} rows per page</span>
         </div>
         <ButtonGroup>
           <Button color="secondary" onClick={handlePreviousPage} disabled={page === 0}>
@@ -219,23 +245,42 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
           <Button
             color="secondary"
             onClick={handleNextPage}
-            disabled={rowsData.length < pageSize || (rowCount !== null && (page + 1) * pageSize >= rowCount)}
+            disabled={rows.length < pageSize || (rowCount !== null && (page + 1) * pageSize >= rowCount)}
           >
             Next
           </Button>
         </ButtonGroup>
       </div>
 
-      <ReactTable
-        className="-striped -highlight"
-        data={rowsData}
-        columns={generateColumns()}
-        minRows={5}
-        pageSize={pageSize}
-        showPagination={false} // We're using our own pagination
-        noDataText="No rows found"
-        sortable={false}
-      />
+      <div className="table-responsive">
+        <table {...getTableProps()} className="table table-striped table-hover">
+          <thead>
+            {headerGroups.map((headerGroup: any) => (
+              <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
+                {headerGroup.headers.map((column: any) => (
+                  <th {...column.getHeaderProps()} key={column.id}>
+                    {column.render('Header')}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody {...getTableBodyProps()}>
+            {rows.map((row: any) => {
+              prepareRow(row);
+              return (
+                <tr {...row.getRowProps()} key={row.id}>
+                  {row.cells.map((cell: any) => (
+                    <td {...cell.getCellProps()} key={cell.column.id}>
+                      {cell.render('Cell')}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

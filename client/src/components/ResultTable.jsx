@@ -1,7 +1,6 @@
 import React, { useMemo } from 'react';
 import { connect } from 'react-redux';
-import ReactTable from 'react-table';
-import 'react-table/react-table.css';
+import { useTable, usePagination } from 'react-table';
 import * as PropTypes from 'prop-types';
 
 // Define the row number cell component outside the main component
@@ -9,6 +8,15 @@ const RowNumberCell = ({ index }) => <div>{index + 1}</div>;
 
 RowNumberCell.propTypes = {
   index: PropTypes.number.isRequired,
+};
+
+// Cell renderer for row numbers - defined outside component
+const CellRenderer = ({ row }) => <RowNumberCell index={row.index} />;
+
+CellRenderer.propTypes = {
+  row: PropTypes.shape({
+    index: PropTypes.number.isRequired,
+  }).isRequired,
 };
 
 export const ResultTable = (props) => {
@@ -44,9 +52,8 @@ export const ResultTable = (props) => {
         Header: '#',
         id: 'row',
         maxWidth: 50,
-        filterable: false,
-        resizable: false,
-        Cell: RowNumberCell,
+        disableFilters: true,
+        Cell: CellRenderer,
       },
     ];
 
@@ -60,13 +67,38 @@ export const ResultTable = (props) => {
     return cols;
   }, [props.result]);
 
+  const defaultPageSize = 20;
+
+  // Set up React Table with the useTable hook
+  const tableInstance = useTable(
+    {
+      columns,
+      data: parsedRows,
+      initialState: { pageSize: defaultPageSize },
+    },
+    usePagination,
+  );
+
+  const {
+    getTableProps,
+    getTableBodyProps,
+    headerGroups,
+    prepareRow,
+    page,
+    canPreviousPage,
+    canNextPage,
+    pageOptions,
+    pageCount,
+    nextPage,
+    previousPage,
+    state: { pageIndex },
+  } = tableInstance;
+
   let { error } = props;
 
   if (props.error && props.error.request && props.error.request.response) {
     error = JSON.parse(props.error.request.response);
   }
-
-  const defaultPageSize = 20;
 
   // Check if we have a large result set that's been limited
   const hasLimitedResults = props.result && props.result.hasMoreRows;
@@ -82,20 +114,66 @@ export const ResultTable = (props) => {
               performance. You can modify your query to include a LIMIT clause for more specific results.
             </div>
           )}
-          <ReactTable
-            className="-striped -highlight"
-            data={parsedRows}
-            columns={columns}
-            minRows={0}
-            defaultPageSize={defaultPageSize}
-            showPagination={parsedRows.length > defaultPageSize}
-            // Add these performance optimizations
-            loading={false}
-            resolveData={(data) => data}
-            multiSort={false}
-            // Only load rows for current page
-            pageSize={defaultPageSize}
-          />
+
+          <div className="table-responsive">
+            <table {...getTableProps()} className="table table-striped table-hover">
+              <thead>
+                {headerGroups.map((headerGroup) => (
+                  <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
+                    {headerGroup.headers.map((column) => (
+                      <th {...column.getHeaderProps()} key={column.id}>
+                        {column.render('Header')}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody {...getTableBodyProps()}>
+                {page.map((row) => {
+                  prepareRow(row);
+                  return (
+                    <tr {...row.getRowProps()} key={row.id}>
+                      {row.cells.map((cell) => (
+                        <td {...cell.getCellProps()} key={cell.column.id}>
+                          {cell.render('Cell')}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          {pageCount > 1 && (
+            <div className="pagination d-flex justify-content-between align-items-center mt-3">
+              <div>
+                <button
+                  type="button"
+                  onClick={() => previousPage()}
+                  disabled={!canPreviousPage}
+                  className="btn btn-sm btn-outline-secondary mr-2"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => nextPage()}
+                  disabled={!canNextPage}
+                  className="btn btn-sm btn-outline-secondary"
+                >
+                  Next
+                </button>
+              </div>
+              <span>
+                Page{' '}
+                <strong>
+                  {pageIndex + 1} of {pageOptions.length}
+                </strong>
+              </span>
+            </div>
+          )}
         </>
       )}
       {props.error && (

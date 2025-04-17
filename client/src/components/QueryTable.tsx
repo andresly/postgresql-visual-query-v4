@@ -12,7 +12,7 @@ import {
   UncontrolledTooltip,
 } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Scrollbars } from 'react-custom-scrollbars';
+import { Scrollbars } from 'react-custom-scrollbars-2';
 import _ from 'lodash';
 import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../actions/queryActions';
 import { translations } from '../utils/translations';

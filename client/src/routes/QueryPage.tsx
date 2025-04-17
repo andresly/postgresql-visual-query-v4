@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Alert, Col, Container, Row } from 'reactstrap';
-import { Scrollbars } from 'react-custom-scrollbars';
+import { Scrollbars } from 'react-custom-scrollbars-2';
 import { connect } from 'react-redux';
 import * as PropTypes from 'prop-types';
 import { translations } from '../utils/translations';
