@@ -34,10 +34,18 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const [activeInputIndex, setActiveInputIndex] = useState<number>(-1);
   const textareaRefs = React.useRef<(HTMLTextAreaElement | HTMLInputElement | null)[]>([]);
 
+  // Local state for input fields
+  const [columnName, setColumnName] = useState(data.column_name);
+  const [columnAlias, setColumnAlias] = useState(data.column_alias);
+  const [tableName, setTableName] = useState(data.table_name);
+
   // Reset conditions data when query ID changes
   useEffect(() => {
     setConditionsData(data.column_conditions);
-  }, [query.id, data.column_conditions]);
+    setColumnName(data.column_name);
+    setColumnAlias(data.column_alias);
+    setTableName(data.table_name);
+  }, [query.id, data.column_conditions, data.column_name, data.column_alias, data.table_name]);
 
   // Get filtered query suggestions based on what user has typed after '{'
   const getFilteredQuerySuggestions = () => {
@@ -239,21 +247,23 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
     dispatch(updateColumn(column));
   };
 
-  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const name = e.target.name;
     const value = e.target.value;
 
-    // Create a new column object based on the current data
-    const column = {
-      ..._.cloneDeep(data),
-      [name]: value,
-    };
-
-    // Update the state with the new column
-    dispatch(updateColumn(column));
+    // Only update local state based on field name
+    if (name === 'column_name') {
+      setColumnName(value);
+    } else if (name === 'column_alias') {
+      setColumnAlias(value);
+    } else if (name === 'table_name') {
+      setTableName(value);
+    }
   };
 
-  const handleOnSave = (e: React.FocusEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
+  const handleOnSave = (
+    e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement> | React.ChangeEvent<HTMLSelectElement>,
+  ) => {
     const name = e.target.name;
     const value = e.target.value;
 
@@ -315,41 +325,52 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Column name */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
-            <Input
-              type="text"
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <textarea
+              rows={1}
               name="column_name"
-              value={data.column_name}
+              value={columnName}
               onChange={handleOnChange}
-              onBlur={handleOnSave}
+              onBlur={(e) => {
+                const column = { ..._.cloneDeep(data), column_name: columnName };
+                dispatch(updateColumn(column));
+              }}
+              className="form-control"
+              style={{ resize: 'both' }}
             />
           </div>
 
           {/* Alias */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <Input
               type="text"
               name="column_alias"
-              value={data.column_alias}
+              value={columnAlias}
               onChange={handleOnChange}
-              onBlur={handleOnSave}
+              onBlur={(e) => {
+                const column = { ..._.cloneDeep(data), column_alias: columnAlias };
+                dispatch(updateColumn(column));
+              }}
               placeholder="Alias"
             />
           </div>
 
           {/* Table */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <Input
               type="text"
               name="table_name"
-              value={data.table_name}
+              value={tableName}
               onChange={handleOnChange}
-              onBlur={handleOnSave}
+              onBlur={(e) => {
+                const column = { ..._.cloneDeep(data), table_name: tableName };
+                dispatch(updateColumn(column));
+              }}
             />
           </div>
 
           {/* Aggregate */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <select
               name="column_aggregate"
               value={data.column_aggregate}
@@ -366,7 +387,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Scalar function */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <select
               name="column_single_line_function"
               value={data.column_single_line_function}
@@ -383,7 +404,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Sort */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <select
               name="column_order"
               value={data.column_order ? (data.column_order_dir ? 'ASC' : 'DESC') : ''}
@@ -397,7 +418,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Sort order */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <select
               name="column_order_nr"
               value={data.column_order_nr || ''}
@@ -414,7 +435,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Show */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <CustomInput
               type="checkbox"
               id={`show-${id}`}
@@ -426,7 +447,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
           </div>
 
           {/* Remove Duplicates */}
-          <div style={{ height: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
             <CustomInput
               type="checkbox"
               id={`distinct-${id}`}
@@ -449,7 +470,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
                 onChange={(e) => updateFilterValue(e, i)}
                 onBlur={() => handleFilterChange(i)}
                 className={`form-control ${!filterValid && i === activeInputIndex ? 'is-invalid' : ''}`}
-                style={{ height: '38px' }}
+                style={{ resize: 'both', height: '38px' }}
               />
               {showQuerySuggestions && i === activeInputIndex && (
                 <div

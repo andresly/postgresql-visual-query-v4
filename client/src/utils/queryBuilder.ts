@@ -755,8 +755,16 @@ const buildSetQuery = (data: QueryType) => {
           setQuery += `\nINTERSECT\n${cleanSubquerySql}`;
           break;
         }
+        case 'intersectall': {
+          setQuery += `\nINTERSECT ALL\n${cleanSubquerySql}`;
+          break;
+        }
         case 'except': {
           setQuery += `\nEXCEPT\n${cleanSubquerySql}`;
+          break;
+        }
+        case 'exceptall': {
+          setQuery += `\nEXCEPT ALL\n${cleanSubquerySql}`;
           break;
         }
         default:
