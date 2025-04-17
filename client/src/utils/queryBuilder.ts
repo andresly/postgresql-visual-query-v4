@@ -18,14 +18,15 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
     // 1) Handle aggregates first
     if (column.column_aggregate && column.column_aggregate.length > 0) {
-      // If there is an aggregate, we order by its alias (or auto-generated alias).
-      // Use explicit column_alias if provided, otherwise generate an alias
+      // If there is an aggregate, we order by its alias if provided
       if (column.column_alias.length > 0) {
         query.order(format.ident(column.column_alias), column.column_order_dir);
       } else {
-        // Generate auto alias based on current table reference (not any previous alias)
-        const autoAlias = `${column.column_aggregate.toLowerCase()}_${column.column_name}`.toLowerCase();
-        query.order(format.ident(autoAlias), column.column_order_dir);
+        // For ordering without alias, use the full expression directly
+        const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+        const fieldRef = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+        const aggregateExpr = `${column.column_aggregate}(${fieldRef})`;
+        query.order(aggregateExpr, column.column_order_dir);
       }
       return;
     }
@@ -369,6 +370,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
           if (column.column_aggregate.length > 0) {
             field = `${column.column_aggregate}(${field})`;
+            // Don't use auto-alias for aggregates when alias is empty
             query.field(field);
           } else if (column.column_single_line_function.length > 0) {
             field = `${column.column_single_line_function}(${field})`;
@@ -391,12 +393,17 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
           if (column.column_aggregate.length > 0) {
             field = `${column.column_aggregate}(${field})`;
+            // Don't use auto-alias for aggregates when alias is empty
             query.field(field);
           } else if (column.column_single_line_function.length > 0) {
             field = `${column.column_single_line_function}(${field})`;
-            query.field(field);
+            // Apply same alias handling as aggregates for consistency
+            if (autoAlias.length > 0) {
+              query.field(field, autoAlias);
+            } else {
+              query.field(field);
+            }
           } else {
-            // If column name is modified, use it directly without table prefix
             if (column.column_name === column.column_name_original) {
               addField(column.table_alias, column.column_name);
             } else {
@@ -414,10 +421,20 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
         if (column.column_aggregate.length > 0) {
           field = `${column.column_aggregate}(${field})`;
-          query.field(field, autoAlias);
+          // Only use alias if explicitly provided
+          if (autoAlias.length > 0) {
+            query.field(field, autoAlias);
+          } else {
+            query.field(field);
+          }
         } else if (column.column_single_line_function.length > 0) {
           field = `${column.column_single_line_function}(${field})`;
-          query.field(field, autoAlias);
+          // Apply same alias handling as aggregates for consistency
+          if (autoAlias.length > 0) {
+            query.field(field, autoAlias);
+          } else {
+            query.field(field);
+          }
         } else {
           if (column.column_name === column.column_name_original) {
             addFieldWithAlias(column.table_name, column.column_name, autoAlias);
@@ -435,10 +452,20 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
         if (column.column_aggregate.length > 0) {
           field = `${column.column_aggregate}(${field})`;
-          query.field(field, autoAlias);
+          // Only use alias if explicitly provided
+          if (autoAlias.length > 0) {
+            query.field(field, autoAlias);
+          } else {
+            query.field(field);
+          }
         } else if (column.column_single_line_function.length > 0) {
           field = `${column.column_single_line_function}(${field})`;
-          query.field(field, autoAlias);
+          // Apply same alias handling as aggregates for consistency
+          if (autoAlias.length > 0) {
+            query.field(field, autoAlias);
+          } else {
+            query.field(field);
+          }
         } else {
           if (column.column_name === column.column_name_original) {
             addFieldWithAlias(column.table_alias, column.column_name, autoAlias);
