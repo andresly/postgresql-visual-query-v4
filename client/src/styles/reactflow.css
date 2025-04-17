@@ -1,0 +1,193 @@
+/* React Flow Container */
+.react-flow-container {
+  width: 100%;
+  height: 100%;
+  background-color: #f9f9f9;
+}
+
+/* Node styling */
+.table-node {
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: white;
+  transition:
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+  max-width: 300px;
+}
+
+.table-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Edge styling */
+.react-flow__edge path {
+  stroke-width: 1.5;
+  transition:
+    stroke 0.3s,
+    stroke-width 0.3s;
+}
+
+.react-flow__edge:hover path {
+  stroke-width: 2;
+  stroke: #0366d6;
+}
+
+/* Edge highlight animation */
+.react-flow-container.edge-highlight .react-flow__edge path {
+  stroke-width: 2.5;
+  stroke: #0366d6;
+  animation: edgeHighlight 1s ease-in-out;
+}
+
+@keyframes edgeHighlight {
+  0% {
+    stroke-opacity: 0.5;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 3;
+  }
+  100% {
+    stroke-opacity: 0.8;
+  }
+}
+
+/* Handle styling */
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background-color: #555;
+  border: 1px solid #ddd;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.react-flow__handle:hover {
+  background-color: #0366d6;
+  border-color: #0366d6;
+  transform: scale(1.2);
+}
+
+/* Join controls styling */
+.join-controls {
+  font-size: 0.85rem;
+}
+
+.join-type-button {
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  background-color: white;
+  transition:
+    background-color 0.2s,
+    transform 0.2s;
+}
+
+.join-type-button:hover {
+  background-color: #f0f0f0;
+  transform: scale(1.05);
+}
+
+.join-column-info {
+  margin-top: 4px;
+  font-size: 0.7rem;
+  color: #666;
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Controls and minimap styling */
+.react-flow__controls {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.react-flow__controls button {
+  background-color: white;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.react-flow__controls button:hover {
+  background-color: #f0f0f0;
+}
+
+.react-flow__minimap {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Table drag handle */
+.table-drag-handle {
+  padding: 6px 10px;
+  background-color: #f5f5f5;
+  border-top-left-radius: 4px;
+  border-top-right-radius: 4px;
+  font-size: 0.85rem;
+  color: #666;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 1px solid #eee;
+}
+
+.table-drag-handle:active {
+  cursor: grabbing;
+  background-color: #e9e9e9;
+}
+
+/* Fixed tables area */
+.fixed-tables {
+  margin-top: 20px;
+  padding: 10px;
+  border-top: 1px solid #eee;
+}
+
+/* Panel styling */
+.react-flow__panel {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Background styling */
+.react-flow__background {
+  opacity: 0.5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .react-flow__controls,
+  .react-flow__minimap {
+    display: none;
+  }
+
+  .table-node {
+    max-width: 250px;
+  }
+}
+
+/* Column container styling */
+.column-container {
+  position: relative;
+  margin-bottom: 4px;
+}
+
+.column-container:hover {
+  z-index: 5;
+}

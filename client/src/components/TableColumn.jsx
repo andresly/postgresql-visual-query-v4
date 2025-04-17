@@ -10,7 +10,8 @@ import TableColumnPopover from './TableColumnPopover';
 import { addColumn, removeColumn, addJoin, updateJoin } from '../actions/queryActions';
 import { withToggle } from '../hocs/withToggle';
 import { iconPicker } from '../utils/iconPicker';
-import { ArcherElement } from 'react-archer';
+// Import Handle component from React Flow for connections
+import { Handle, Position } from '@xyflow/react';
 
 // Drag and Drop wrapper component
 const DraggableColumn = ({ children, data, onDrop }) => {
@@ -44,7 +45,7 @@ const DraggableColumn = ({ children, data, onDrop }) => {
       }}
       className="d-flex align-items-center position-relative"
       data-column-id={`${data.table_id}-${data.column_name}`}
-      // id={`${data.table_id}-column-${data.column_name}`}
+      id={`${data.table_id}-column-${data.column_name}`}
     >
       {children}
     </div>
@@ -198,8 +199,37 @@ export class TableColumn extends Component {
       }
     }
 
+    // Create a unique ID for this column for React Flow connections
+    const columnId = `${this.props.data.table_id}-${this.props.data.column_name}`;
+
     return (
       <DraggableColumn data={this.props.data} onDrop={this.handleDrop}>
+        {/* Add React Flow connection handles */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          id={`${columnId}-right`}
+          style={{
+            background: '#555',
+            width: '8px',
+            height: '8px',
+            right: '-4px',
+            visibility: 'visible',
+          }}
+        />
+        <Handle
+          type="target"
+          position={Position.Left}
+          id={`${columnId}-left`}
+          style={{
+            background: '#555',
+            width: '8px',
+            height: '8px',
+            left: '-4px',
+            visibility: 'visible',
+          }}
+        />
+
         <ButtonGroup size="sm" className="btn-block my-1 p-0 px-1">
           <Button
             color={btnSelected}

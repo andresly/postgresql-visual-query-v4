@@ -25,7 +25,6 @@
     "react": "^17.0.2",
     "react-app-polyfill": "^1.0.1",
     "react-app-rewired": "^2.2.1",
-    "react-archer": "^4.4.0",
     "react-beautiful-dnd": "^13.1.1",
     "react-codemirror2": "^7.1.0",
     "react-csv": "^1.1.1",

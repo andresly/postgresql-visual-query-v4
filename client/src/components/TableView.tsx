@@ -7,7 +7,6 @@ import { useAppSelector, useAppDispatch } from '../hooks';
 import { fetchTableData, fetchTableCount } from '../actions/tableViewActions';
 
 // Add this for TypeScript to recognize react-table
-declare module 'react-table' {}
 
 interface TableViewProps {
   tableId: number;

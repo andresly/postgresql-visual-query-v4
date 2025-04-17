@@ -5,6 +5,8 @@ import history from './utils/history';
 import store from './store';
 import LandingPage from './routes/LandingPage';
 import QueryPage from './routes/QueryPage';
+// Import React Flow styles for global usage
+import '@xyflow/react/dist/style.css';
 
 const App: React.FC = () => (
   <Provider store={store}>

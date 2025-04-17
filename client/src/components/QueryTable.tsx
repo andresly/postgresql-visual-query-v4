@@ -18,7 +18,6 @@ import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../ac
 import { translations } from '../utils/translations';
 import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
-import { ArcherElement } from 'react-archer';
 import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
 import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
 import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
@@ -143,40 +142,10 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
             return conditions.length ? conditions.map((condition) => ({ condition, join })) : [];
           });
 
+          const columnId = `${data.id}-column-${column.column_name}`;
+
           return (
-            <ArcherElement
-              key={`${data.id}-column-${column.column_name}`}
-              id={`${data.id}-column-${column.column_name}`}
-              relations={
-                columnJoins
-                  ?.map((join) => {
-                    const condition = join.condition;
-                    const joinObj = join.join;
-                    if (
-                      joinObj.main_table?.id === data?.id &&
-                      condition.main_column === column.column_name &&
-                      joinObj.main_table?.id !== condition.secondary_table?.id &&
-                      column.column_name === condition.main_column
-                    ) {
-                      return {
-                        targetId: `${condition.secondary_table?.id}-column-${condition.secondary_column}`,
-                        targetAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'left' : 'right',
-                        sourceAnchor: condition.secondary_table?.id > joinObj.main_table?.id ? 'right' : 'left',
-                        label: (
-                          <JoinLabel
-                            join={joinObj}
-                            mainTable={joinObj.conditions[0].main_table.table_name}
-                            secondaryTable={joinObj.conditions[0].secondary_table.table_name}
-                            onRemove={handleRemove}
-                          />
-                        ),
-                      };
-                    }
-                    return null;
-                  })
-                  .filter((relation): relation is any => relation !== null) || []
-              }
-            >
+            <div key={columnId} id={columnId} className="column-container">
               <div>
                 <TableColumn
                   id={`${id}-table-column-${column.column_name}`}
@@ -184,7 +153,7 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
                   joins={columnJoins}
                 />
               </div>
-            </ArcherElement>
+            </div>
           );
         })}
       </CardBody>
@@ -259,9 +228,10 @@ const JoinLabel: React.FC<{
 interface QueryTableProps {
   data: QueryTableType;
   id: string;
+  isFlowNode?: boolean;
 }
 
-const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id }) => {
+const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id, isFlowNode = false }) => {
   const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.settings.language);
   const queryType = useAppSelector((state) => state.query.queryType);
