@@ -463,14 +463,19 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     }
   });
 
-  // Handle ordering separately, sorted by column_sort_order
+  // Handle ordering separately, sorted by column_order_nr
   columns
+    // First filter to keep only columns that should be in ORDER BY (where column_order is true)
     .filter((column) => column.column_order)
+    // Then sort those columns by their order_nr
     .sort((a, b) => {
-      const aOrder = parseInt(a.column_sort_order, 10) || Number.MAX_SAFE_INTEGER;
-      const bOrder = parseInt(b.column_sort_order, 10) || Number.MAX_SAFE_INTEGER;
+      // Convert column_order_nr to number for sorting, defaulting to MAX_SAFE_INTEGER for nulls
+      // This ensures columns without a specific order number appear last
+      const aOrder = typeof a.column_order_nr === 'number' ? a.column_order_nr : Number.MAX_SAFE_INTEGER;
+      const bOrder = typeof b.column_order_nr === 'number' ? b.column_order_nr : Number.MAX_SAFE_INTEGER;
       return aOrder - bOrder;
     })
+    // Then add each column to the query's ORDER BY clause
     .forEach((column) => {
       addOrder(column);
     });

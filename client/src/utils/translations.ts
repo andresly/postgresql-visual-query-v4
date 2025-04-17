@@ -74,6 +74,19 @@ export const translations = {
       descL: 'Descending',
       groupByL: 'Group rows',
       havingL: 'Filter grouping results',
+      withTiesL: 'With ties',
+      // Table labels
+      columnLabel: 'Column',
+      aliasLabel: 'Alias',
+      tableLabel: 'Table',
+      aggregateLabel: 'Aggregate function',
+      scalarLabel: 'Scalar function',
+      sortLabel: 'Sort',
+      sortOrderLabel: 'Sort order',
+      showLabel: 'Show',
+      removeDuplicatesLabel: 'Remove Duplicates',
+      criteriaLabel: 'Criteria',
+      orLabel: 'Or',
     },
     tooltips: {
       invalidFilter: 'Invalid filter condition',
@@ -89,6 +102,35 @@ export const translations = {
       setType: 'Set operation type',
       linkSq: 'Link subquery to filter',
       queryName: 'Rename query',
+      // Table label tooltips
+      column:
+        "Column or expression that will be included in the result. You can use mathematical operators and functions. Example: (price * quantity) or CONCAT(first_name, ' ', last_name). More info: https://www.postgresql.org/docs/current/sql-expressions.html",
+      alias:
+        'Optional name to assign to the column in the query result. Easier to reference the column in other parts of the query. More info: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
+      table: 'The source table for this column. More info: https://www.postgresql.org/docs/current/ddl-basics.html',
+      aggregate:
+        'Functions that operate on multiple rows and return a single result, like SUM, AVG, COUNT. More info: https://www.postgresql.org/docs/current/functions-aggregate.html',
+      scalar:
+        'Functions that operate on a single row and return a single value, like UPPER, LOWER, LENGTH. More info: https://www.postgresql.org/docs/current/functions.html',
+      sort: 'Sort the results by this column. More info: https://www.postgresql.org/docs/current/queries-order.html',
+      'sort-order':
+        'Numerical position for this column in multi-column sorting. More info: https://www.postgresql.org/docs/current/queries-order.html',
+      show: 'Include this column in the query results. More info: https://www.postgresql.org/docs/current/queries-select-lists.html',
+      'remove-duplicates':
+        'Apply DISTINCT ON to this column to remove duplicate values. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
+      criteria:
+        'Filter condition for this column. Must start with an operator (=, >, <, >=, <=, LIKE, etc.). Can reference other queries using {} syntax, e.g., LIKE {Query 2}. More info: https://www.postgresql.org/docs/current/functions-comparison.html',
+      'or-1':
+        'Alternative filter condition using OR logic. More info: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
+      // Switch tooltips
+      distinct:
+        'Use the DISTINCT clause to eliminate duplicate rows from the result. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
+      limit:
+        'Restrict the number of rows returned by the query. More info: https://www.postgresql.org/docs/current/queries-limit.html',
+      'limit-value':
+        'Maximum number of rows to return. More info: https://www.postgresql.org/docs/current/queries-limit.html',
+      'with-ties':
+        'Include additional rows that tie with the last row, when using ORDER BY. More info: https://www.postgresql.org/docs/current/queries-limit.html',
     },
   },
   est: {
@@ -165,6 +207,19 @@ export const translations = {
       descL: 'Kahanevalt',
       groupByL: 'Grupeeri ridu',
       havingL: 'Piira grupeerimise tulemusi',
+      withTiesL: 'Koos seotud ridadega',
+      // Table labels
+      columnLabel: 'Veerg',
+      aliasLabel: 'Alias',
+      tableLabel: 'Tabel',
+      aggregateLabel: 'Agregaat',
+      scalarLabel: 'Skalaarfunktsioon',
+      sortLabel: 'Sorteerimine',
+      sortOrderLabel: 'Sorteerimise järjekord',
+      showLabel: 'Näita',
+      removeDuplicatesLabel: 'Eemalda kordused',
+      criteriaLabel: 'Kriteeriumid',
+      orLabel: 'Või',
     },
     tooltips: {
       invalidFilter: 'Kehtetu tingimuse sisu',
@@ -180,6 +235,35 @@ export const translations = {
       setType: 'Hulga tüüp',
       linkSq: 'Alampäringu linkimine filtrile',
       queryName: 'Päringu ümbernimetamine',
+      // Table label tooltips
+      column:
+        "Veerg või avaldis, mis lisatakse tulemustesse. Võite kasutada matemaatilisi operaatoreid ja funktsioone. Näide: (hind * kogus) või CONCAT(eesnimi, ' ', perekonnanimi). Rohkem infot: https://www.postgresql.org/docs/current/sql-expressions.html",
+      alias:
+        'Valikuline nimi, mis antakse veerule päringu tulemustes. Lihtsustab veerule viitamist päringu teistes osades. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
+      table: 'Selle veeru lähtetabel. Rohkem infot: https://www.postgresql.org/docs/current/ddl-basics.html',
+      aggregate:
+        'Funktsioonid, mis töötavad mitme reaga ja tagastavad ühe tulemuse, nagu SUM, AVG, COUNT. Rohkem infot: https://www.postgresql.org/docs/current/functions-aggregate.html',
+      scalar:
+        'Funktsioonid, mis töötavad ühe reaga ja tagastavad ühe väärtuse, nagu UPPER, LOWER, LENGTH. Rohkem infot: https://www.postgresql.org/docs/current/functions.html',
+      sort: 'Sorteeri tulemused selle veeru järgi. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
+      'sort-order':
+        'Numbriline positsioon sellele veerule mitme veeru järgi sorteerimisel. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
+      show: 'Lisa see veerg päringu tulemustesse. Rohkem infot: https://www.postgresql.org/docs/current/queries-select-lists.html',
+      'remove-duplicates':
+        'Rakenda DISTINCT ON sellele veerule, et eemaldada duplikaadid. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
+      criteria:
+        'Filtreerimistingimus sellele veerule. Peab algama operaatoriga (=, >, <, >=, <=, LIKE jne). Saate viidata teistele päringutele kasutades {} süntaksit, nt LIKE {Päring 2}. Rohkem infot: https://www.postgresql.org/docs/current/functions-comparison.html',
+      'or-1':
+        'Alternatiivne filtreerimistingimus kasutades OR loogikat. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
+      // Switch tooltips
+      distinct:
+        'Kasuta DISTINCT klauslit, et eemaldada duplikaatread tulemusest. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
+      limit:
+        'Piira päringu poolt tagastatavate ridade arvu. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
+      'limit-value':
+        'Maksimaalne tagastatavate ridade arv. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
+      'with-ties':
+        'Kaasa täiendavad read, mis on seotud viimase reaga, kui kasutatakse ORDER BY. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
     },
   },
 };

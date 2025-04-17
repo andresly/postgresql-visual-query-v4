@@ -16,7 +16,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   index,
 }) => {
   const dispatch = useAppDispatch();
-  const { distinct, columns, queries, query } = useAppSelector((store) => ({
+  const { columns, queries, query } = useAppSelector((store) => ({
     distinct: store.query.distinct,
     queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
     columns: store.query.columns,
@@ -32,7 +32,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const [showQuerySuggestions, setShowQuerySuggestions] = useState<boolean>(false);
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [activeInputIndex, setActiveInputIndex] = useState<number>(-1);
-  const [currentFilter, setCurrentFilter] = useState<string>('');
   const textareaRefs = React.useRef<(HTMLTextAreaElement | HTMLInputElement | null)[]>([]);
 
   // Reset conditions data when query ID changes
@@ -114,7 +113,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
     const cursorPos = target.selectionStart || 0;
     setCursorPosition(cursorPos);
     setActiveInputIndex(index);
-    setCurrentFilter(value);
 
     // Check if the user just typed an opening brace
     if (value[cursorPos - 1] === '{') {
@@ -260,10 +258,18 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
     const value = e.target.value;
 
     // Create a new column object based on the current data
-    const column = {
+    let column = {
       ..._.cloneDeep(data),
-      [name]: value,
+      [name]: name === 'column_order_nr' ? (value === '' ? null : parseInt(value, 10)) : value,
     };
+
+    // If column_order_nr is set to a number, ensure column_order is true
+    if (name === 'column_order_nr' && value !== '') {
+      column = {
+        ...column,
+        column_order: true,
+      };
+    }
 
     // Update the state with the new column
     dispatch(updateColumn(column));
@@ -303,6 +309,9 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             }}
           >
             <FontAwesomeIcon icon={faGripVertical} />
+            <Button size={'sm'} className={'ml-4'} onClick={handleRemoveColumn}>
+              X
+            </Button>
           </div>
 
           {/* Column name */}
@@ -336,7 +345,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               value={data.table_name}
               onChange={handleOnChange}
               onBlur={handleOnSave}
-              readOnly
             />
           </div>
 
@@ -349,7 +357,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               className="form-control"
             >
               <option value="">None</option>
-              {scalarFunctions.map((func) => (
+              {singleLineFunctions.map((func) => (
                 <option key={func} value={func}>
                   {func}
                 </option>
@@ -366,7 +374,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               className="form-control"
             >
               <option value="">None</option>
-              {singleLineFunctions.map((func) => (
+              {scalarFunctions.map((func) => (
                 <option key={func} value={func}>
                   {func}
                 </option>
