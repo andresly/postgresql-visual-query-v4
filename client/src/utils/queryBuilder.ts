@@ -723,7 +723,6 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
 const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
   const mainTable = data.tables[0] ?? null;
-  const mainTableId = mainTable?.id ?? null;
 
   const usedTables = new Set<string>();
 
@@ -742,17 +741,6 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     markTableAsUsed(mainTable);
   }
 
-  const addJoin = (joinObj: JoinType, on: string, joinFn: JoinMixin['join']) => {
-    const table = joinObj.main_table;
-    if (isTableUsed(table)) return;
-
-    const tableRef = `${format.ident(table.table_schema)}.${format.ident(table.table_name)}`;
-    const alias = table.table_alias || undefined;
-
-    joinFn(tableRef, alias, on);
-    markTableAsUsed(table);
-  };
-
   const getJoinFunction = (type: string): JoinMixin['join'] => {
     switch (type) {
       case 'inner':
@@ -770,70 +758,73 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     }
   };
 
-  const groupedJoins: Record<string, JoinType[]> = {};
+  // Step 1: reorder joins into dependency-aware order
+  const orderedJoins: JoinType[] = [];
+  const remaining = [...joins];
+  const maxTries = joins.length * 2;
+  let tries = 0;
 
-  joins.forEach((join) => {
-    join.conditions?.forEach((condition) => {
-      const key = `${join.main_table.table_name}_${condition.secondary_table.table_name}`;
-      if (!groupedJoins[key]) groupedJoins[key] = [];
-      groupedJoins[key].push(join);
+  while (remaining.length && tries < maxTries) {
+    for (let i = 0; i < remaining.length; i++) {
+      const join = remaining[i];
+      const mainUsed = isTableUsed(join.main_table);
+      const secondaryUsed = join.conditions.some((cond) => isTableUsed(cond.secondary_table));
+
+      if (mainUsed || secondaryUsed) {
+        orderedJoins.push(join);
+
+        markTableAsUsed(join.main_table);
+        join.conditions.forEach((cond) => {
+          markTableAsUsed(cond.secondary_table);
+        });
+
+        remaining.splice(i, 1);
+        i--;
+      }
+    }
+    tries++;
+  }
+
+  if (remaining.length) {
+    console.warn('Unresolved join ordering issue:', remaining);
+    orderedJoins.push(...remaining);
+  }
+
+  // Step 2: merge joins by table
+  const mergedJoins: Record<
+    string,
+    { table: (typeof joins)[0]['main_table']; alias?: string; type: string; conditions: string[] }
+  > = {};
+
+  orderedJoins.forEach((join) => {
+    const joinFn = getJoinFunction(join.type);
+    const table = join.main_table;
+    const key = getTableKey(table);
+    const alias = table.table_alias || undefined;
+
+    if (!mergedJoins[key]) {
+      mergedJoins[key] = {
+        table,
+        alias,
+        type: join.type,
+        conditions: [],
+      };
+    }
+
+    join.conditions.forEach((cond) => {
+      const main = cond.main_table.table_alias || cond.main_table.table_name;
+      const sec = cond.secondary_table.table_alias || cond.secondary_table.table_name;
+      const conditionStr = `${format.ident(main)}.${format.ident(cond.main_column)} = ${format.ident(sec)}.${format.ident(cond.secondary_column)}`;
+      mergedJoins[key].conditions.push(conditionStr);
     });
   });
 
-  Object.values(groupedJoins).forEach((group) => {
-    if (group.length === 0) return;
-
-    const template = group[0];
-    const allConditions: string[] = [];
-
-    group.forEach((joinObj) => {
-      joinObj.conditions?.forEach((condition) => {
-        const { main_column, secondary_column, secondary_table } = condition;
-        const main_table = joinObj.main_table;
-
-        if (!main_column || !secondary_column || !secondary_table.table_name) return;
-
-        // Skip self-joins without aliases
-        if (
-          main_table.table_schema === secondary_table.table_schema &&
-          main_table.table_name === secondary_table.table_name &&
-          main_table.table_alias === secondary_table.table_alias
-        )
-          return;
-
-        const mainName = main_table.table_alias || main_table.table_name;
-        const secondaryName = secondary_table.table_alias || secondary_table.table_name;
-
-        const isSecondaryMain = secondary_table.id === mainTableId;
-
-        const conditionStr = isSecondaryMain
-          ? `${format.ident(secondaryName)}.${format.ident(secondary_column)} = ${format.ident(mainName)}.${format.ident(main_column)}`
-          : `${format.ident(mainName)}.${format.ident(main_column)} = ${format.ident(secondaryName)}.${format.ident(secondary_column)}`;
-
-        allConditions.push(conditionStr);
-      });
-    });
-
-    const combinedOn = allConditions.join(' AND ');
-    if (!combinedOn) return;
-
-    let joinObj = template;
-    let joinFn = getJoinFunction(template.type);
-
-    // If main_table is already used, try to flip to secondary_table
-    if (isTableUsed(template.main_table)) {
-      const secondaryTable = template.conditions[0]?.secondary_table;
-      if (secondaryTable && !isTableUsed(secondaryTable)) {
-        joinObj = {
-          ...template,
-          main_table: secondaryTable,
-        };
-      } else {
-        return; // both tables are used, skip
-      }
-    }
-
-    addJoin(joinObj, combinedOn, joinFn);
+  // Step 3: add joins with combined ON conditions
+  Object.values(mergedJoins).forEach(({ table, alias, type, conditions }) => {
+    const joinFn = getJoinFunction(type);
+    const tableRef = `${format.ident(table.table_schema)}.${format.ident(table.table_name)}`;
+    const onCondition = conditions.join(' AND ');
+    joinFn(tableRef, alias, onCondition);
   });
 };
 
