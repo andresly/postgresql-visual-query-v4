@@ -722,195 +722,118 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
 
 const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
-  // Identify the main table (first table in the array)
-  const mainTableId = data.tables.length > 0 ? data.tables[0].id : null;
-  const mainTable = data.tables.length > 0 ? data.tables[0] : null;
+  const mainTable = data.tables[0] ?? null;
+  const mainTableId = mainTable?.id ?? null;
+
+  const usedTables = new Set<string>();
+
+  const getTableKey = (table: { table_schema: string; table_name: string; table_alias?: string }) =>
+    `${table.table_schema}.${table.table_name}.${table.table_alias || ''}`;
+
+  const markTableAsUsed = (table: { table_schema: string; table_name: string; table_alias?: string }) => {
+    usedTables.add(getTableKey(table));
+  };
+
+  const isTableUsed = (table: { table_schema: string; table_name: string; table_alias?: string }) => {
+    return usedTables.has(getTableKey(table));
+  };
+
+  if (mainTable) {
+    markTableAsUsed(mainTable);
+  }
 
   const addJoin = (joinObj: JoinType, on: string, joinFn: JoinMixin['join']) => {
-    // If the main table is in the join, make sure it's always used in the FROM clause (not the JOIN)
-    if (
-      mainTable &&
-      joinObj.main_table.table_schema === mainTable.table_schema &&
-      joinObj.main_table.table_name === mainTable.table_name
-    ) {
-      // Skip this join as the main table should be in FROM, not in JOIN
-      // This condition will be handled differently by swapping in the calling code
-      return;
-    }
+    const table = joinObj.main_table;
+    if (isTableUsed(table)) return;
 
-    if (!_.isEmpty(joinObj.main_table.table_alias)) {
-      joinFn(
-        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        `${format.ident(joinObj.main_table.table_alias)}`,
-        on,
-      );
-    } else {
-      joinFn(
-        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        undefined,
-        on,
-      );
+    const tableRef = `${format.ident(table.table_schema)}.${format.ident(table.table_name)}`;
+    const alias = table.table_alias || undefined;
+
+    joinFn(tableRef, alias, on);
+    markTableAsUsed(table);
+  };
+
+  const getJoinFunction = (type: string): JoinMixin['join'] => {
+    switch (type) {
+      case 'inner':
+        return query.join;
+      case 'left':
+        return query.left_join;
+      case 'right':
+        return query.right_join;
+      case 'outer':
+        return query.outer_join;
+      case 'cross':
+        return query.cross_join;
+      default:
+        return query.join;
     }
   };
 
-  // Group joins by their main table and secondary table
-  const groupedJoins: { [key: string]: JoinType[] } = {};
+  const groupedJoins: Record<string, JoinType[]> = {};
 
-  joins.forEach((joinObj) => {
-    if (!_.isEmpty(joinObj.main_table.table_name)) {
-      // Create a unique key for each main_table + secondary_table combination
-      const conditions = joinObj.conditions || [];
-      conditions.forEach((condition) => {
-        if (!_.isEmpty(condition.secondary_table.table_name)) {
-          // If secondary table is the main table, we will handle this by using reversed conditions
-          // So use a key that reflects this relationship
-          let key;
-          if (condition.secondary_table.id === mainTableId) {
-            // Reverse the key to indicate the main table is now in FROM (not JOIN)
-            key = `${condition.secondary_table.table_name}_${joinObj.main_table.table_name}`;
-          } else {
-            key = `${joinObj.main_table.table_name}_${condition.secondary_table.table_name}`;
-          }
-
-          if (!groupedJoins[key]) {
-            groupedJoins[key] = [];
-          }
-          groupedJoins[key].push(joinObj);
-        }
-      });
-    }
+  joins.forEach((join) => {
+    join.conditions?.forEach((condition) => {
+      const key = `${join.main_table.table_name}_${condition.secondary_table.table_name}`;
+      if (!groupedJoins[key]) groupedJoins[key] = [];
+      groupedJoins[key].push(join);
+    });
   });
 
-  // Process each group of joins
-  Object.keys(groupedJoins).forEach((key) => {
-    const joinGroup = groupedJoins[key];
-    if (joinGroup.length > 0) {
-      // Use the first join in the group as the template
-      const templateJoin = joinGroup[0];
+  Object.values(groupedJoins).forEach((group) => {
+    if (group.length === 0) return;
 
-      // Collect all conditions from all joins in this group
-      const allConditions: string[] = [];
+    const template = group[0];
+    const allConditions: string[] = [];
 
-      joinGroup.forEach((joinObj) => {
-        const conditions = joinObj.conditions || [];
-        conditions.forEach((condition) => {
-          if (
-            !_.isEmpty(condition.main_column) &&
-            !_.isEmpty(condition.secondary_column) &&
-            !_.isEmpty(condition.secondary_table.table_name) &&
-            condition.secondary_table.table_name === templateJoin.conditions[0].secondary_table.table_name
-          ) {
-            // Skip self-joins without proper aliases
-            if (
-              joinObj.main_table.table_schema === condition.secondary_table.table_schema &&
-              joinObj.main_table.table_name === condition.secondary_table.table_name &&
-              joinObj.main_table.table_alias === condition.secondary_table.table_alias
-            ) {
-              return;
-            }
+    group.forEach((joinObj) => {
+      joinObj.conditions?.forEach((condition) => {
+        const { main_column, secondary_column, secondary_table } = condition;
+        const main_table = joinObj.main_table;
 
-            let mainTable = joinObj.main_table.table_name;
-            if (!_.isEmpty(joinObj.main_table.table_alias)) {
-              mainTable = joinObj.main_table.table_alias;
-            }
+        if (!main_column || !secondary_column || !secondary_table.table_name) return;
 
-            let secondaryTable = condition.secondary_table.table_name;
-            if (!_.isEmpty(condition.secondary_table.table_alias)) {
-              secondaryTable = condition.secondary_table.table_alias;
-            }
+        // Skip self-joins without aliases
+        if (
+          main_table.table_schema === secondary_table.table_schema &&
+          main_table.table_name === secondary_table.table_name &&
+          main_table.table_alias === secondary_table.table_alias
+        )
+          return;
 
-            // Check if the secondary table is actually the query's main table
-            const isSecondaryTableMain = condition.secondary_table.id === mainTableId;
+        const mainName = main_table.table_alias || main_table.table_name;
+        const secondaryName = secondary_table.table_alias || secondary_table.table_name;
 
-            let conditionString = '';
+        const isSecondaryMain = secondary_table.id === mainTableId;
 
-            if (isSecondaryTableMain) {
-              // If the secondary table is the main table of the query, swap the condition
-              conditionString = `${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)} = 
-                   ${format.ident(mainTable)}.${format.ident(condition.main_column)}`;
-            } else {
-              // Normal case
-              conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} = 
-                   ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
-            }
+        const conditionStr = isSecondaryMain
+          ? `${format.ident(secondaryName)}.${format.ident(secondary_column)} = ${format.ident(mainName)}.${format.ident(main_column)}`
+          : `${format.ident(mainName)}.${format.ident(main_column)} = ${format.ident(secondaryName)}.${format.ident(secondary_column)}`;
 
-            allConditions.push(conditionString);
-          }
-        });
+        allConditions.push(conditionStr);
       });
+    });
 
-      // Combine all conditions with AND
-      const combinedOn = allConditions.join(' AND ');
+    const combinedOn = allConditions.join(' AND ');
+    if (!combinedOn) return;
 
-      if (!_.isEmpty(combinedOn)) {
-        // Check if templateJoin's main_table is the query main table
-        if (templateJoin.main_table.id === mainTableId) {
-          // We need to use the secondary_table in the JOIN instead
-          // Find a proper secondary table from conditions
-          const secondaryTable = templateJoin.conditions[0]?.secondary_table;
+    let joinObj = template;
+    let joinFn = getJoinFunction(template.type);
 
-          if (secondaryTable && !_.isEmpty(secondaryTable.table_name)) {
-            // Create a modified join object with the secondary table as the main table
-            const modifiedJoin = {
-              ...templateJoin,
-              main_table: secondaryTable,
-            };
-
-            // Apply the join with the combined conditions
-            switch (templateJoin.type) {
-              case 'inner': {
-                addJoin(modifiedJoin, combinedOn, query.join);
-                break;
-              }
-              case 'right': {
-                addJoin(modifiedJoin, combinedOn, query.right_join);
-                break;
-              }
-              case 'left': {
-                addJoin(modifiedJoin, combinedOn, query.left_join);
-                break;
-              }
-              case 'outer': {
-                addJoin(modifiedJoin, combinedOn, query.outer_join);
-                break;
-              }
-              case 'cross': {
-                addJoin(modifiedJoin, combinedOn, query.cross_join);
-                break;
-              }
-              default:
-                break;
-            }
-          }
-        } else {
-          // Normal case - use the join as is
-          switch (templateJoin.type) {
-            case 'inner': {
-              addJoin(templateJoin, combinedOn, query.join);
-              break;
-            }
-            case 'right': {
-              addJoin(templateJoin, combinedOn, query.right_join);
-              break;
-            }
-            case 'left': {
-              addJoin(templateJoin, combinedOn, query.left_join);
-              break;
-            }
-            case 'outer': {
-              addJoin(templateJoin, combinedOn, query.outer_join);
-              break;
-            }
-            case 'cross': {
-              addJoin(templateJoin, combinedOn, query.cross_join);
-              break;
-            }
-            default:
-              break;
-          }
-        }
+    // If main_table is already used, try to flip to secondary_table
+    if (isTableUsed(template.main_table)) {
+      const secondaryTable = template.conditions[0]?.secondary_table;
+      if (secondaryTable && !isTableUsed(secondaryTable)) {
+        joinObj = {
+          ...template,
+          main_table: secondaryTable,
+        };
+      } else {
+        return; // both tables are used, skip
       }
     }
+
+    addJoin(joinObj, combinedOn, joinFn);
   });
 };
 

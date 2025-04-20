@@ -30,6 +30,7 @@ module.exports = {
     'no-continue': 'off',
     camelcase: 'off',
     'prefer-const': 'off',
+    'no-loop-func': 'off',
     'no-unused-expressions': 'off',
     'react/jsx-boolean-value': 'off',
     'consistent-return': 'off',

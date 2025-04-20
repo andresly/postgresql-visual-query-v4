@@ -229,6 +229,34 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     setNodes(newNodes);
   }, [tables, containerWidth, queryType, setNodes]);
 
+  const getMarker = (joinType: string, isSource: boolean): { markerStart?: any; markerEnd?: any } => {
+    const marker = {
+      type: MarkerType.ArrowClosed,
+      color: 'black',
+    };
+
+    switch (joinType) {
+      case 'inner':
+      case 'cross':
+        return {
+          markerStart: marker,
+          markerEnd: marker,
+        };
+      case 'left':
+        return isSource
+          ? { markerEnd: marker } // from left → right
+          : { markerStart: marker }; // reverse edge (optional)
+      case 'right':
+        return isSource
+          ? { markerStart: marker } // from right → left
+          : { markerEnd: marker }; // normal edge
+      default:
+        return {
+          markerEnd: marker,
+        };
+    }
+  };
+
   // Create edges from joins when page loads or joins update
   useEffect(() => {
     if (!joins || joins.length === 0) {
@@ -238,7 +266,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // Create edges for all existing joins
     const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
       return join.conditions.map((condition, condIndex) => {
-        console.log({ condition });
         // Create source and target handles for the specific columns
         const sourceId = `table-${condition.main_table.id}`;
         const targetId = `table-${condition.secondary_table.id}`;
@@ -246,7 +273,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
         const targetSide = condition.secondary_table.joinHandleSide || 'left';
         const sourceHandle = `${condition.main_table.id}-${condition.main_column}-${sourceSide}-source`;
         const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
-
+        const isSourceLeftToRight = sourceSide === 'right' && targetSide === 'left';
+        const markerConfig = getMarker(join.type, isSourceLeftToRight);
         // Create a unique edge ID
         const edgeId = `join-${join.id}-${condIndex}`;
 
@@ -262,10 +290,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           targetHandle,
           type: 'joinEdge',
           animated: true,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            color: 'black',
-          },
+          ...markerConfig,
           data: {
             isLabelOpen: true,
             join,
@@ -282,7 +307,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
         };
       });
     });
-    // console.log({ newEdges });
 
     // Set the edges with the newly created ones
     // @ts-ignore - bypass TypeScript for edge type assignment
@@ -317,7 +341,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         if (!sourceTable || !targetTable) return;
 
-        // console.log('siin jaja');
         // Create a new join between these columns
         const newJoin: JoinType = {
           id: joins.length,
@@ -358,7 +381,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           ],
         };
 
-        console.log({ newJoin });
         // Clone the join object to avoid reference issues
         const join = _.cloneDeep(newJoin);
 
@@ -423,9 +445,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             className="react-flow-container"
             onEdgeClick={(event, clickedEdge) => {
               event.stopPropagation();
-              console.log('Clicked edge:', clickedEdge);
-
-              // Set the active edge ID to trigger re-render with isActive flag
               setActiveEdgeId((clickedEdge as any).id);
             }}
           >
