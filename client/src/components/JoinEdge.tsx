@@ -19,6 +19,7 @@ import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg'
 import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
 import { JoinType, JoinConditionType } from '../types/queryTypes';
 import _ from 'lodash';
+import { useClickAway } from 'react-use';
 
 interface JoinEdgeData {
   join: JoinType;
@@ -83,29 +84,13 @@ function JoinEdge({
   useEffect(() => {
     if (isActive) {
       setIsDropdownOpen(true);
+    } else {
+      setIsDropdownOpen(false);
     }
   }, [isActive]);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsDropdownOpen(false);
-        setIsActiveNull && setIsActiveNull();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [setIsActiveNull]);
-
   // Toggle dropdown manually
   const toggleDropdown = (e?: React.MouseEvent) => {
-    if (e) {
-      e.stopPropagation();
-    }
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -123,10 +108,9 @@ function JoinEdge({
       setCurrentJoinType(type);
       dispatch(updateJoin(updatedJoin));
 
-      // Close the dropdown manually after the update
-      setTimeout(() => {
-        setIsDropdownOpen(false);
-      }, 100);
+      // Close the dropdown immediately
+      setIsDropdownOpen(false);
+      setIsActiveNull && setIsActiveNull();
     }
   };
 
@@ -142,7 +126,8 @@ function JoinEdge({
       // Remove the edge from React Flow
       setEdges((edges) => edges.filter((edge) => edge.id !== id));
 
-      // Reset active edge
+      // Reset active edge and close dropdown
+      setIsDropdownOpen(false);
       setIsActiveNull && setIsActiveNull();
     }
   };
@@ -153,8 +138,16 @@ function JoinEdge({
         path={edgePath}
         markerEnd={markerEnd}
         markerStart={markerStart}
-        style={{ ...style, cursor: 'pointer' }}
-        // interactionWidth={40}
+        style={{
+          ...style,
+          cursor: 'pointer',
+          // strokeDasharray: 'none',
+          strokeWidth: 2,
+        }}
+        interactionWidth={40}
+        onClick={(e) => {
+          toggleDropdown(e);
+        }}
       />
       <EdgeLabelRenderer>
         <div
@@ -162,19 +155,13 @@ function JoinEdge({
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            zIndex: 10001,
             pointerEvents: 'all',
-            zIndex: 10000,
+            background: 'rgba(255, 255, 255, 0.95)',
           }}
           className="join-controls"
+          id={`join-label-${id}`}
         >
-          {/*<div className="dropdown">*/}
-          {/*<div className=" join-type-button" onClick={toggleDropdown} style={{ cursor: 'pointer', padding: 0 }}>*/}
-          {/*{currentJoinType === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}*/}
-          {/*{currentJoinType === 'right' && <RightJoinIcon style={{ width: '20px', height: '20px' }} />}*/}
-          {/*{currentJoinType === 'inner' && <InnerJoinIcon style={{ width: '20px', height: '20px' }} />}*/}
-          {/*{currentJoinType === 'outer' && <OuterJoinIcon style={{ width: '20px', height: '20px' }} />}*/}
-          {/*{currentJoinType === 'cross' && <CorssJoinIcon style={{ width: '20px', height: '20px' }} />}*/}
-          {/*</div>*/}
           {isDropdownOpen && (
             <div className="dropdown-menu show" style={{ position: 'absolute', zIndex: 10001 }}>
               <button
@@ -234,4 +221,4 @@ function JoinEdge({
   );
 }
 
-export default memo(JoinEdge);
+export default JoinEdge;

@@ -165,6 +165,25 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     return { tableId, columnName, side, handleType };
   }
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      console.log('here');
+      if (!activeEdgeId) return;
+
+      const dropdownEl = document.getElementById(`join-label-${activeEdgeId}`);
+      if (dropdownEl) {
+        setActiveEdgeId(null);
+      }
+    };
+
+    // Delay to avoid capturing the opening click
+    document.addEventListener('mousedown', handleClickOutside);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeEdgeId]);
+
   // Update container dimensions on mount and resize
   useEffect(() => {
     const updateDimensions = () => {
@@ -235,9 +254,12 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       color: 'black',
     };
 
+    console.log({ joinType });
     switch (joinType) {
       case 'inner':
       case 'cross':
+      case 'outer':
+      case 'full':
         return {
           markerStart: marker,
           markerEnd: marker,
@@ -285,11 +307,13 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           style: {
             stroke: 'black',
             strokeWidth: 3,
+            strokeDasharray: join.type === 'cross' ? '5,5' : 'none',
+            cursor: 'pointer',
           },
           sourceHandle,
           targetHandle,
           type: 'joinEdge',
-          animated: true,
+          animated: false,
           ...markerConfig,
           data: {
             isLabelOpen: true,
@@ -393,7 +417,13 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
               ...params,
               id: `join-${join.id}-0`,
               type: 'joinEdge',
-              animated: true,
+              animated: false,
+              style: {
+                stroke: 'black',
+                strokeWidth: 3,
+                strokeDasharray: join.type === 'cross' ? '5,5' : 'none',
+                cursor: 'pointer',
+              },
               markerEnd: {
                 type: MarkerType.ArrowClosed,
               },
@@ -440,11 +470,13 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             zoomOnScroll={true}
             minZoom={0.2}
             maxZoom={1}
+            onPaneClick={() => {
+              setActiveEdgeId(null);
+            }}
             defaultViewport={{ x: -100, y: 0, zoom: 0.2 }}
             proOptions={{ hideAttribution: true }}
             className="react-flow-container"
             onEdgeClick={(event, clickedEdge) => {
-              event.stopPropagation();
               setActiveEdgeId((clickedEdge as any).id);
             }}
           >

@@ -21,16 +21,38 @@
   transform: translateY(-2px);
 }
 
-/* Edge styling */
+/* Edge styling - make edges more obvious and interactive */
+.react-flow__edge {
+  cursor: pointer !important;
+}
+
+.react-flow__edge-path {
+  stroke-width: 2 !important;
+  cursor: pointer !important;
+}
+
+.react-flow__edge-interaction {
+  cursor: pointer !important;
+  stroke-opacity: 0 !important; /* Invisible but clickable area */
+  stroke-width: 20px !important; /* Wide clickable area */
+  fill: none !important;
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  /*stroke-width: 3 !important;*/
+}
+
+/* Original Edge styling */
 .react-flow__edge path {
   stroke-width: 1.5;
   transition:
     stroke 0.3s,
     stroke-width 0.3s;
+  cursor: pointer !important;
 }
 
 .react-flow__edge:hover path {
-  stroke-width: 2;
+  /*stroke-width: 2.5;*/
   stroke: #0366d6;
 }
 
@@ -190,4 +212,20 @@
 
 .column-container:hover {
   z-index: 5;
+}
+
+/* Ensure dropdown is properly positioned and styled */
+.join-controls .dropdown-menu {
+  z-index: 10001;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.join-controls .dropdown-item {
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 8px 12px;
+}
+
+.join-controls .dropdown-item:hover {
+  background-color: #f0f0f0;
 }
