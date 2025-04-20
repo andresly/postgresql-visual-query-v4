@@ -21,7 +21,7 @@ import DndIntegration from '../components/DndIntegration';
 import TableView from '../components/TableView';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { LanguageType } from '../types/settingsType';
-import { QueryTableType, QueryType, JoinType } from '../types/queryTypes';
+import { QueryTableType, QueryType, JoinType, JoinConditionType } from '../types/queryTypes';
 import { addJoin, updateJoin } from '../actions/queryActions';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -42,6 +42,8 @@ import {
   Connection,
   NodeTypes as ReactFlowNodeTypes,
   EdgeTypes as ReactFlowEdgeTypes,
+  Edge,
+  MarkerType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -107,13 +109,11 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // Get joins data from redux state
   const joins = useAppSelector((state) => state.query.joins);
-  // Get database columns and constraints from Redux store
-  const databaseColumns = useAppSelector((state) => state.database.columns);
-  const constraints = useAppSelector((state) => state.database.constraints);
+  const query = useAppSelector((state) => state.query);
 
+  console.log({ query });
   // Container dimensions
   const [containerWidth, setContainerWidth] = useState(1200);
-  const [containerHeight, setContainerHeight] = useState(600);
 
   // React Flow states with TypeScript errors bypassed
   // @ts-ignore - bypass TypeScript errors for node state
@@ -133,25 +133,24 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     horizontalSpacing: 300,
   };
 
-  // Helper function to highlight edges after actions
-  const highlightEdges = (duration = 1000) => {
-    const flowElement = document.querySelector('.react-flow');
-    if (flowElement) {
-      flowElement.classList.add('edge-highlight');
-      setTimeout(() => {
-        flowElement.classList.remove('edge-highlight');
-      }, duration);
-    }
-  };
+  function parseHandleId(handleId: string) {
+    // Match the structure: tableId-columnName-side-type
+    // Find last 2 parts (e.g. 'left' + 'target') then pull out the rest as column name
+    const parts = handleId.split('-');
+    const tableId = parseInt(parts[0], 10);
+    const handleType = parts[parts.length - 1]; // source/target
+    const side = parts[parts.length - 2] as 'left' | 'right'; // left/right
+    const columnName = parts.slice(1, parts.length - 2).join('-'); // support dash in column names
+
+    return { tableId, columnName, side, handleType };
+  }
 
   // Update container dimensions on mount and resize
   useEffect(() => {
     const updateDimensions = () => {
       if (containerRef.current) {
         const newWidth = containerRef.current.offsetWidth;
-        const newHeight = window.innerHeight * 0.7; // 70% of viewport height
         setContainerWidth(newWidth);
-        setContainerHeight(newHeight);
       }
     };
 
@@ -205,16 +204,16 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       return;
     }
 
-    console.log('Creating edges for existing joins:', joins);
-
     // Create edges for all existing joins
-    const newEdges = joins.flatMap((join: JoinType) => {
+    const newEdges = joins.flatMap((join: JoinType): Edge[] => {
       return join.conditions.map((condition, condIndex) => {
         // Create source and target handles for the specific columns
         const sourceId = `table-${join.main_table.id}`;
         const targetId = `table-${condition.secondary_table.id}`;
-        const sourceHandle = `${join.main_table.id}-${condition.main_column}-right`;
-        const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-left`;
+        const sourceSide = condition.main_table.joinHandleSide || 'right';
+        const targetSide = condition.secondary_table.joinHandleSide || 'left';
+        const sourceHandle = `${join.main_table.id}-${condition.main_column}-${sourceSide}-source`;
+        const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
 
         // Create a unique edge ID
         const edgeId = `join-${join.id}-${condIndex}`;
@@ -227,7 +226,11 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           targetHandle,
           type: 'joinEdge',
           animated: true,
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+          },
           data: {
+            isLabelOpen: true,
             join,
             condition,
             mainTable: join.main_table.table_name,
@@ -238,8 +241,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
         };
       });
     });
-
-    console.log('Created edges:', newEdges);
 
     // Set the edges with the newly created ones
     // @ts-ignore - bypass TypeScript for edge type assignment
@@ -255,14 +256,18 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     if (sourceHandleId && targetHandleId) {
       // Extract table and column IDs from the handles
       // Format is expected to be like "{tableId}-{columnName}-right" or "{tableId}-{columnName}-left"
-      const sourceHandleParts = sourceHandleId.split('-');
-      const targetHandleParts = targetHandleId.split('-');
+      const source = parseHandleId(sourceHandleId);
+      const target = parseHandleId(targetHandleId);
 
-      if (sourceHandleParts.length >= 2 && targetHandleParts.length >= 2) {
-        const sourceTableId = parseInt(sourceHandleParts[0], 10);
-        const sourceColumnName = sourceHandleParts[1];
-        const targetTableId = parseInt(targetHandleParts[0], 10);
-        const targetColumnName = targetHandleParts[1];
+      if (source.tableId === target.tableId) {
+        return;
+      }
+
+      if (source && target) {
+        const sourceTableId = source.tableId;
+        const sourceColumnName = source.columnName;
+        const targetTableId = target.tableId;
+        const targetColumnName = target.columnName;
 
         // Find source and target tables from the table list
         const sourceTable = tables.find((table) => table.id === sourceTableId);
@@ -270,7 +275,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         if (sourceTable && targetTable) {
           // Create a new join between these columns
-          const newJoin = {
+          const newJoin: JoinType = {
             id: joins.length,
             type: 'inner',
             color: '#' + Math.floor(Math.random() * 16777215).toString(16),
@@ -278,29 +283,31 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
               id: sourceTable.id,
               table_schema: sourceTable.table_schema,
               table_name: sourceTable.table_name,
-              table_alias: sourceTable.table_alias || '',
-              table_type: sourceTable.table_type || 'BASE TABLE',
-              columns: sourceTable.columns || [],
+              table_alias: sourceTable.table_alias,
+              table_type: sourceTable.table_type,
+              columns: sourceTable.columns,
             },
             conditions: [
               {
                 id: 0,
                 main_column: sourceColumnName,
                 main_table: {
+                  joinHandleSide: source.side,
                   id: sourceTable.id,
                   table_schema: sourceTable.table_schema,
                   table_name: sourceTable.table_name,
-                  table_alias: sourceTable.table_alias || '',
-                  table_type: sourceTable.table_type || 'BASE TABLE',
-                  columns: sourceTable.columns || [],
+                  table_alias: sourceTable.table_alias,
+                  table_type: sourceTable.table_type,
+                  columns: sourceTable.columns,
                 },
                 secondary_table: {
+                  joinHandleSide: target.side,
                   id: targetTable.id,
                   table_schema: targetTable.table_schema,
                   table_name: targetTable.table_name,
-                  table_type: targetTable.table_type || 'BASE TABLE',
-                  table_alias: targetTable.table_alias || '',
-                  columns: targetTable.columns || [],
+                  table_type: targetTable.table_type,
+                  table_alias: targetTable.table_alias,
+                  columns: targetTable.columns,
                 },
                 secondary_column: targetColumnName,
               },
@@ -312,6 +319,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
           // Add the edge to React Flow for visualization with the join data
           // @ts-ignore - bypass TypeScript for edge type in addEdge
+
           setEdges((eds) =>
             addEdge(
               {
@@ -319,7 +327,11 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
                 id: `join-${join.id}-0`,
                 type: 'joinEdge',
                 animated: true,
+                markerEnd: {
+                  type: MarkerType.ArrowClosed,
+                },
                 data: {
+                  isLabelOpen: true,
                   join,
                   condition: join.conditions[0],
                   mainTable: sourceTable.table_name,
@@ -342,17 +354,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     }
 
     // Highlight edges after connection
-    highlightEdges();
+    // highlightEdges();
   };
-
-  console.log({ nodes });
-  console.log({ edges });
 
   return (
     <div className="mt-0 pr-2">
       <NavBar language={language} queryType={queryType} />
       <div ref={containerRef} className="grid-container">
-        <div style={{ width: '100%', height: containerHeight, border: '1px solid #ddd', borderRadius: '4px' }}>
+        <div style={{ width: '100%', height: '50vh', border: '1px solid #ddd', borderRadius: '4px' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -365,9 +374,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             zoomOnScroll={true}
             minZoom={0.2}
             maxZoom={1}
-            defaultViewport={{ x: 0, y: 0, zoom: 0.2 }}
+            defaultViewport={{ x: -100, y: 0, zoom: 0.2 }}
             proOptions={{ hideAttribution: true }}
             className="react-flow-container"
+            onEdgeClick={(event, edge) => {
+              event.stopPropagation();
+              console.log('Clicked edge:', edge);
+              // maybe set dropdown open
+            }}
           >
             <Controls />
             <Background gap={16} color="#f8f8f8" />

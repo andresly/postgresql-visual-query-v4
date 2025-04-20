@@ -1,5 +1,14 @@
-import React, { memo, useEffect, useState } from 'react';
-import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, Edge, EdgeProps, Position } from '@xyflow/react';
+import React, { memo, useEffect, useState, useRef } from 'react';
+import {
+  BaseEdge,
+  EdgeLabelRenderer,
+  getBezierPath,
+  useReactFlow,
+  Edge,
+  EdgeProps,
+  Position,
+  SimpleBezierEdge,
+} from '@xyflow/react';
 import { DropdownItem, DropdownMenu, DropdownToggle, UncontrolledDropdown } from 'reactstrap';
 import { useAppDispatch } from '../hooks';
 import { removeJoin, updateJoin } from '../actions/queryActions';
@@ -37,15 +46,17 @@ function JoinEdge({
   const dispatch = useAppDispatch();
   const { setEdges } = useReactFlow();
   const [currentJoinType, setCurrentJoinType] = useState<string>('inner');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Generate path for the edge
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
-    sourcePosition: sourcePosition || Position.Bottom,
+    sourcePosition,
     targetX,
     targetY,
-    targetPosition: targetPosition || Position.Top,
+    targetPosition,
   });
 
   // Extract join data from the edge
@@ -60,15 +71,25 @@ function JoinEdge({
   useEffect(() => {
     if (join && join.type) {
       setCurrentJoinType(join.type);
-      console.log('Current join type set to:', join.type);
     }
   }, [join]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   // Handle join type change
   const handleUpdateJoinType = (type: string) => {
-    console.log('Changing join type to:', type);
-    console.log('Join before update:', join);
-
     if (join && typeof join.id !== 'undefined') {
       // Deep clone the join to avoid reference issues
       const updatedJoin = _.cloneDeep(join);
@@ -78,15 +99,13 @@ function JoinEdge({
       // Update local state immediately for UI responsiveness
       setCurrentJoinType(type);
 
-      console.log('Dispatching updated join:', updatedJoin);
       dispatch(updateJoin(updatedJoin));
+      setIsDropdownOpen(false);
     }
   };
 
   // Handle join removal
   const handleRemoveJoin = () => {
-    console.log('Removing join:', join);
-
     if (join && typeof join.id !== 'undefined') {
       // Deep clone the join to avoid reference issues
       const clonedJoin = _.cloneDeep(join);
@@ -99,9 +118,16 @@ function JoinEdge({
 
   return (
     <>
-      <BaseEdge path={edgePath} markerEnd={markerEnd} style={style} />
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={{ ...style, cursor: 'pointer' }}
+        onClick={() => setIsDropdownOpen(true)}
+        interactionWidth={40}
+      />
       <EdgeLabelRenderer>
         <div
+          ref={dropdownRef}
           style={{
             position: 'absolute',
             transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
@@ -114,7 +140,7 @@ function JoinEdge({
           }}
           className="join-controls"
         >
-          <UncontrolledDropdown>
+          <UncontrolledDropdown isOpen={isDropdownOpen} toggle={() => setIsDropdownOpen(!isDropdownOpen)}>
             <DropdownToggle color="light" size="sm" className="join-type-button" style={{ padding: 0 }}>
               {currentJoinType === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
               {currentJoinType === 'right' && <RightJoinIcon style={{ width: '20px', height: '20px' }} />}

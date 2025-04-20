@@ -84,6 +84,7 @@ export type QueryTableType = {
   table_name: string;
   table_schema: string;
   table_type: string;
+  joinHandleSide?: 'left' | 'right';
   columns: QueryColumnType[];
 };
 
