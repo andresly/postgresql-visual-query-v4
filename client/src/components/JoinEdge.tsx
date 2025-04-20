@@ -98,10 +98,20 @@ function JoinEdge({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [setIsActiveNull]);
+
+  // Toggle dropdown manually
+  const toggleDropdown = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setIsDropdownOpen(!isDropdownOpen);
+  };
 
   // Handle join type change
-  const handleUpdateJoinType = (type: string) => {
+  const handleUpdateJoinType = (type: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+
     if (join && typeof join.id !== 'undefined') {
       // Deep clone the join to avoid reference issues
       const updatedJoin = _.cloneDeep(join);
@@ -110,14 +120,19 @@ function JoinEdge({
 
       // Update local state immediately for UI responsiveness
       setCurrentJoinType(type);
-
       dispatch(updateJoin(updatedJoin));
-      setIsDropdownOpen(false);
+
+      // Close the dropdown manually after the update
+      setTimeout(() => {
+        setIsDropdownOpen(false);
+      }, 100);
     }
   };
 
   // Handle join removal
-  const handleRemoveJoin = () => {
+  const handleRemoveJoin = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+
     if (join && typeof join.id !== 'undefined') {
       // Deep clone the join to avoid reference issues
       const clonedJoin = _.cloneDeep(join);
@@ -125,6 +140,9 @@ function JoinEdge({
 
       // Remove the edge from React Flow
       setEdges((edges) => edges.filter((edge) => edge.id !== id));
+
+      // Reset active edge
+      setIsActiveNull && setIsActiveNull();
     }
   };
 
@@ -142,44 +160,72 @@ function JoinEdge({
             borderRadius: '4px',
             padding: '4px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            zIndex: 2000,
+            zIndex: 10000,
           }}
           className="join-controls"
         >
-          <UncontrolledDropdown isOpen={isDropdownOpen} toggle={() => setIsDropdownOpen(!isDropdownOpen)}>
-            <DropdownToggle color="light" size="sm" className="join-type-button" style={{ padding: 0 }}>
+          <div className="dropdown">
+            <div className=" join-type-button" onClick={toggleDropdown} style={{ cursor: 'pointer', padding: 0 }}>
               {currentJoinType === 'left' && <LeftJoinIcon style={{ width: '20px', height: '20px' }} />}
               {currentJoinType === 'right' && <RightJoinIcon style={{ width: '20px', height: '20px' }} />}
               {currentJoinType === 'inner' && <InnerJoinIcon style={{ width: '20px', height: '20px' }} />}
               {currentJoinType === 'outer' && <OuterJoinIcon style={{ width: '20px', height: '20px' }} />}
               {currentJoinType === 'cross' && <CorssJoinIcon style={{ width: '20px', height: '20px' }} />}
-            </DropdownToggle>
-            <DropdownMenu>
-              <DropdownItem onClick={() => handleUpdateJoinType('inner')} active={currentJoinType === 'inner'}>
-                Select only matching rows from <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Inner
-                Join)
-              </DropdownItem>
-              <DropdownItem onClick={() => handleUpdateJoinType('left')} active={currentJoinType === 'left'}>
-                Select all rows from <strong>{mainTable}</strong>, matching rows from <strong>{secondaryTable}</strong>{' '}
-                (Left Join)
-              </DropdownItem>
-              <DropdownItem onClick={() => handleUpdateJoinType('right')} active={currentJoinType === 'right'}>
-                Select all rows from <strong>{secondaryTable}</strong>, matching rows from <strong>{mainTable}</strong>{' '}
-                (Right Join)
-              </DropdownItem>
-              <DropdownItem onClick={() => handleUpdateJoinType('outer')} active={currentJoinType === 'outer'}>
-                Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full join)
-              </DropdownItem>
-              <DropdownItem onClick={() => handleUpdateJoinType('cross')} active={currentJoinType === 'cross'}>
-                Combine every row from <strong>{mainTable}</strong> with every row from{' '}
-                <strong>{secondaryTable}</strong> (Cross Join)
-              </DropdownItem>
-              <DropdownItem divider />
-              <DropdownItem className="text-danger" onClick={handleRemoveJoin}>
-                Delete Join
-              </DropdownItem>
-            </DropdownMenu>
-          </UncontrolledDropdown>
+            </div>
+            {isDropdownOpen && (
+              <div className="dropdown-menu show" style={{ position: 'absolute', zIndex: 10001 }}>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  onClick={(e) => handleUpdateJoinType('inner', e)}
+                  style={currentJoinType === 'inner' ? { backgroundColor: '#007bff', color: 'white' } : {}}
+                >
+                  Select only matching rows from <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong>{' '}
+                  (Inner Join)
+                </button>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  onClick={(e) => handleUpdateJoinType('left', e)}
+                  style={currentJoinType === 'left' ? { backgroundColor: '#007bff', color: 'white' } : {}}
+                >
+                  Select all rows from <strong>{mainTable}</strong>, matching rows from{' '}
+                  <strong>{secondaryTable}</strong> (Left Join)
+                </button>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  onClick={(e) => handleUpdateJoinType('right', e)}
+                  style={currentJoinType === 'right' ? { backgroundColor: '#007bff', color: 'white' } : {}}
+                >
+                  Select all rows from <strong>{secondaryTable}</strong>, matching rows from{' '}
+                  <strong>{mainTable}</strong> (Right Join)
+                </button>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  onClick={(e) => handleUpdateJoinType('outer', e)}
+                  style={currentJoinType === 'outer' ? { backgroundColor: '#007bff', color: 'white' } : {}}
+                >
+                  Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full
+                  join)
+                </button>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  onClick={(e) => handleUpdateJoinType('cross', e)}
+                  style={currentJoinType === 'cross' ? { backgroundColor: '#007bff', color: 'white' } : {}}
+                >
+                  Combine every row from <strong>{mainTable}</strong> with every row from{' '}
+                  <strong>{secondaryTable}</strong> (Cross Join)
+                </button>
+                <div className="dropdown-divider" />
+                <button className="dropdown-item text-danger" type="button" onClick={handleRemoveJoin}>
+                  Delete Join
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </EdgeLabelRenderer>
     </>
