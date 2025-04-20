@@ -151,26 +151,6 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
             )}
             <div className="text-truncate">{data.column_name}</div>
           </div>
-          <div className="ml-auto pl-3">
-            <div className="bg-light rounded-pill">
-              {joins.map((join) =>
-                join.conditions.map(
-                  (condition) =>
-                    ((_.isEqual(join.main_table.id, data.table_id) &&
-                      _.isEqual(condition.main_column, data.column_name)) ||
-                      (_.isEqual(condition.secondary_table.id, data.table_id) &&
-                        _.isEqual(condition.secondary_column, data.column_name))) && (
-                      <FontAwesomeIcon
-                        key={`condition-icon-${data.table_schema}-${data.table_name}-${data.column_name}-${_.uniqueId()}`}
-                        className="mx-1"
-                        icon={'link' as IconProp}
-                        style={{ color: join.color }}
-                      />
-                    ),
-                ),
-              )}
-            </div>
-          </div>
         </Button>
         <Tooltip
           placement="left"

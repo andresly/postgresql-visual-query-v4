@@ -44,6 +44,9 @@ import {
   EdgeTypes as ReactFlowEdgeTypes,
   Edge,
   MarkerType,
+  applyNodeChanges,
+  NodeChange,
+  Node,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -133,6 +136,22 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     horizontalSpacing: 300,
   };
 
+  // Custom onNodesChange handler to save positions to sessionStorage
+  const handleNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      // @ts-ignore - bypass type error between React Flow's node types and setState
+      setNodes((nds) => {
+        const updated = applyNodeChanges(changes, nds);
+
+        // Save to sessionStorage
+        sessionStorage.setItem('flow-positions', JSON.stringify(updated));
+
+        return updated;
+      });
+    },
+    [setNodes],
+  );
+
   function parseHandleId(handleId: string) {
     // Match the structure: tableId-columnName-side-type
     // Find last 2 parts (e.g. 'left' + 'target') then pull out the rest as column name
@@ -169,21 +188,32 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       return;
     }
 
+    // Try to load saved positions from sessionStorage
+    const saved = sessionStorage.getItem('flow-positions');
+    let savedPositions: Node[] = [];
+
+    if (saved) {
+      try {
+        savedPositions = JSON.parse(saved);
+      } catch (e) {
+        console.warn('Invalid saved positions');
+      }
+    }
+
     // Calculate how many tables per row
     const tablesPerRow = Math.floor(containerWidth / gridConfig.horizontalSpacing);
 
     // Create nodes for each table
     const newNodes = tables.map((table, index) => {
-      // Calculate position
-      const row = Math.floor(index / tablesPerRow);
-      const col = index % tablesPerRow;
+      // Check if we have a saved position for this table
+      const savedNode = savedPositions.find((n) => n.id === `table-${table.id}`);
 
       return {
         id: `table-${table.id}`,
         type: 'tableNode',
-        position: {
-          x: col * gridConfig.horizontalSpacing + 50,
-          y: row * gridConfig.verticalSpacing + 50,
+        position: savedNode?.position || {
+          x: (index % tablesPerRow) * gridConfig.horizontalSpacing + 50,
+          y: Math.floor(index / tablesPerRow) * gridConfig.verticalSpacing + 50,
         },
         data: {
           table,
@@ -222,12 +252,17 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           id: edgeId,
           source: sourceId,
           target: targetId,
+          style: {
+            stroke: 'black',
+            strokeWidth: 3,
+          },
           sourceHandle,
           targetHandle,
           type: 'joinEdge',
           animated: true,
           markerEnd: {
             type: MarkerType.ArrowClosed,
+            color: 'black',
           },
           data: {
             isLabelOpen: true,
@@ -365,7 +400,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           <ReactFlow
             nodes={nodes}
             edges={edges}
-            onNodesChange={onNodesChange}
+            onNodesChange={handleNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             nodeTypes={nodeTypes}
