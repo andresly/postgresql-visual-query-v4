@@ -29,6 +29,7 @@ module.exports = {
     quotes: 'off',
     'no-continue': 'off',
     camelcase: 'off',
+    'prefer-const': 'off',
     'react/jsx-boolean-value': 'off',
     'consistent-return': 'off',
     'arrow-body-style': 'off',
