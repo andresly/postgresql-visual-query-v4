@@ -28,6 +28,8 @@ interface JoinEdgeData {
   sourceColumn: string;
   targetColumn: string;
   joinId?: number;
+  isActive?: boolean;
+  setIsActiveNull?: () => void;
 }
 
 // Enhanced JoinEdge component for displaying join relationships
@@ -66,6 +68,8 @@ function JoinEdge({
   const secondaryTable = typedData?.secondaryTable || 'Table';
   const sourceColumn = typedData?.sourceColumn || 'column';
   const targetColumn = typedData?.targetColumn || 'column';
+  const isActive = typedData?.isActive || false;
+  const setIsActiveNull = typedData?.setIsActiveNull;
 
   // Update the current join type when it changes
   useEffect(() => {
@@ -74,11 +78,19 @@ function JoinEdge({
     }
   }, [join]);
 
+  // Open dropdown when isActive changes to true
+  useEffect(() => {
+    if (isActive) {
+      setIsDropdownOpen(true);
+    }
+  }, [isActive]);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
+        setIsActiveNull && setIsActiveNull();
       }
     };
 
@@ -118,13 +130,7 @@ function JoinEdge({
 
   return (
     <>
-      <BaseEdge
-        path={edgePath}
-        markerEnd={markerEnd}
-        style={{ ...style, cursor: 'pointer' }}
-        onClick={() => setIsDropdownOpen(true)}
-        interactionWidth={40}
-      />
+      <BaseEdge path={edgePath} markerEnd={markerEnd} style={{ ...style, cursor: 'pointer' }} interactionWidth={40} />
       <EdgeLabelRenderer>
         <div
           ref={dropdownRef}
@@ -136,7 +142,7 @@ function JoinEdge({
             borderRadius: '4px',
             padding: '4px',
             boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-            zIndex: 1000,
+            zIndex: 2000,
           }}
           className="join-controls"
         >

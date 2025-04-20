@@ -42,11 +42,12 @@ import {
   Connection,
   NodeTypes as ReactFlowNodeTypes,
   EdgeTypes as ReactFlowEdgeTypes,
-  Edge,
+  Edge as ReactFlowEdge,
   MarkerType,
   applyNodeChanges,
   NodeChange,
   Node,
+  EdgeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -112,10 +113,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // Get joins data from redux state
   const joins = useAppSelector((state) => state.query.joins);
-  const query = useAppSelector((state) => state.query);
 
-  const queryMainTableId = query.tables.length > 0 ? query.tables[0].id : null;
-  console.log({ queryMainTableId });
+  // Track active edge ID
+  const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
   // Container dimensions
   const [containerWidth, setContainerWidth] = useState(1200);
 
@@ -236,7 +236,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     }
 
     // Create edges for all existing joins
-    const newEdges = joins.flatMap((join: JoinType): Edge[] => {
+    const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
       return join.conditions.map((condition, condIndex) => {
         console.log({ condition });
         // Create source and target handles for the specific columns
@@ -274,6 +274,10 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             secondaryTable: condition.secondary_table.table_name,
             sourceColumn: condition.main_column,
             targetColumn: condition.secondary_column,
+            isActive: edgeId === activeEdgeId,
+            setIsActiveNull: () => {
+              setActiveEdgeId(null);
+            },
           },
         };
       });
@@ -283,7 +287,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // Set the edges with the newly created ones
     // @ts-ignore - bypass TypeScript for edge type assignment
     setEdges(newEdges);
-  }, [joins, setEdges, tables]);
+  }, [joins, setEdges, tables, activeEdgeId]);
 
   // Handle new connections
   const onConnect = (params: Connection) => {
@@ -417,10 +421,12 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             defaultViewport={{ x: -100, y: 0, zoom: 0.2 }}
             proOptions={{ hideAttribution: true }}
             className="react-flow-container"
-            onEdgeClick={(event, edge) => {
+            onEdgeClick={(event, clickedEdge) => {
               event.stopPropagation();
-              console.log('Clicked edge:', edge);
-              // maybe set dropdown open
+              console.log('Clicked edge:', clickedEdge);
+
+              // Set the active edge ID to trigger re-render with isActive flag
+              setActiveEdgeId((clickedEdge as any).id);
             }}
           >
             <Controls />
