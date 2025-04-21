@@ -790,17 +790,16 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     orderedJoins.push(...remaining);
   }
 
-  // Step 2: merge joins by table
+  // Step 2: merge joins by table **and type**
   const mergedJoins: Record<
     string,
     { table: (typeof joins)[0]['main_table']; alias?: string; type: string; conditions: string[] }
   > = {};
 
   orderedJoins.forEach((join) => {
-    const joinFn = getJoinFunction(join.type);
     const table = join.main_table;
-    const key = getTableKey(table);
     const alias = table.table_alias || undefined;
+    const key = `${getTableKey(table)}::${join.type}`; // ← include join type in key!
 
     if (!mergedJoins[key]) {
       mergedJoins[key] = {

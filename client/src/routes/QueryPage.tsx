@@ -254,7 +254,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       color: 'black',
     };
 
-    console.log({ joinType });
     switch (joinType) {
       case 'inner':
       case 'cross':
