@@ -18,11 +18,6 @@ import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../ac
 import { translations } from '../utils/translations';
 import QueryTablePopover from './QueryTablePopover';
 import TableColumn from './TableColumn';
-import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
-import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
-import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
-import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg';
-import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryTableType, JoinType, QueryColumnType } from '../types/queryTypes';
 import { LanguageType } from '../types/settingsType';

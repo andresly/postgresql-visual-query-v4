@@ -17,7 +17,6 @@ import SearchBar from '../components/SearchBar';
 import DatabaseViewer from '../components/DatabaseViewer';
 // eslint-disable-next-line import/no-named-as-default-member
 import NavBar from '../components/NavBar';
-import DndIntegration from '../components/DndIntegration';
 import TableView from '../components/TableView';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { LanguageType } from '../types/settingsType';
@@ -29,7 +28,6 @@ import '../styles/grid-layout.css';
 import '../styles/reactflow.css';
 import _ from 'lodash';
 
-// XY Flow imports
 import {
   ReactFlow,
   Background,
@@ -90,15 +88,6 @@ export const TableTypeWrapper: React.FC<TableTypeWrapperProps> = ({ index, child
     </div>
   </div>
 );
-
-interface GridItemData {
-  i: string;
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  tableId: number;
-}
 
 interface QueryBuilderProps {
   language: LanguageType;
@@ -165,42 +154,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     return { tableId, columnName, side, handleType };
   }
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      console.log('here');
-      if (!activeEdgeId) return;
-
-      const dropdownEl = document.getElementById(`join-label-${activeEdgeId}`);
-      if (dropdownEl) {
-        setActiveEdgeId(null);
-      }
-    };
-
-    // Delay to avoid capturing the opening click
-    document.addEventListener('mousedown', handleClickOutside);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [activeEdgeId]);
-
-  // Update container dimensions on mount and resize
-  useEffect(() => {
-    const updateDimensions = () => {
-      if (containerRef.current) {
-        const newWidth = containerRef.current.offsetWidth;
-        setContainerWidth(newWidth);
-      }
-    };
-
-    updateDimensions();
-    window.addEventListener('resize', updateDimensions);
-
-    return () => {
-      window.removeEventListener('resize', updateDimensions);
-    };
-  }, []);
-
   // Create nodes from tables
   useEffect(() => {
     if (tables.length === 0) {
@@ -248,55 +201,55 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     setNodes(newNodes);
   }, [tables, containerWidth, queryType, setNodes]);
 
-  const getMarker = (joinType: string, isSource: boolean): { markerStart?: any; markerEnd?: any } => {
+  const getMarker = (joinType: string, isMainSide: boolean): { markerStart?: any; markerEnd?: any } => {
     const marker = {
       type: MarkerType.ArrowClosed,
       color: 'black',
     };
 
     switch (joinType) {
+      case 'full':
+      case 'outer':
+        return { markerStart: marker, markerEnd: marker };
+
+      case 'left':
+        // Arrow TO secondary table → secondary is NOT main side
+        return isMainSide ? { markerEnd: marker } : { markerStart: marker };
+
+      case 'right':
+        // Arrow TO main table → main side gets the arrow start
+        return isMainSide ? { markerStart: marker } : { markerEnd: marker };
+
       case 'inner':
       case 'cross':
-      case 'outer':
-      case 'full':
-        return {
-          markerStart: marker,
-          markerEnd: marker,
-        };
-      case 'left':
-        return isSource
-          ? { markerEnd: marker } // from left → right
-          : { markerStart: marker }; // reverse edge (optional)
-      case 'right':
-        return isSource
-          ? { markerStart: marker } // from right → left
-          : { markerEnd: marker }; // normal edge
       default:
-        return {
-          markerEnd: marker,
-        };
+        return {};
     }
   };
 
   // Create edges from joins when page loads or joins update
   useEffect(() => {
-    if (!joins || joins.length === 0) {
+    if (!joins || joins.length === 0 || !tables || tables.length === 0) {
       return;
     }
 
-    // Create edges for all existing joins
+    const mainTableId = tables[0].id; // ✅ Your main table is always the first one!
+
     const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
       return join.conditions.map((condition, condIndex) => {
-        // Create source and target handles for the specific columns
         const sourceId = `table-${condition.main_table.id}`;
         const targetId = `table-${condition.secondary_table.id}`;
         const sourceSide = condition.main_table.joinHandleSide || 'right';
         const targetSide = condition.secondary_table.joinHandleSide || 'left';
         const sourceHandle = `${condition.main_table.id}-${condition.main_column}-${sourceSide}-source`;
         const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
-        const isSourceLeftToRight = sourceSide === 'right' && targetSide === 'left';
-        const markerConfig = getMarker(join.type, isSourceLeftToRight);
-        // Create a unique edge ID
+
+        const isSource = sourceId === `table-${join.main_table.id}`;
+        const isSourceMainSide =
+          (isSource ? join.main_table.id : join.conditions[0].secondary_table.id) === mainTableId;
+
+        const markerConfig = getMarker(join.type, isSourceMainSide);
+
         const edgeId = `join-${join.id}-${condIndex}`;
 
         return {
@@ -331,7 +284,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       });
     });
 
-    // Set the edges with the newly created ones
+    // Set the edges
     // @ts-ignore - bypass TypeScript for edge type assignment
     setEdges(newEdges);
   }, [joins, setEdges, tables, activeEdgeId]);
@@ -355,57 +308,102 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       if (source && target) {
         const sourceTableId = source.tableId;
         const targetTableId = target.tableId;
-        let sourceColumnName = source.columnName;
-        let targetColumnName = target.columnName;
+        const sourceColumnName = source.columnName;
+        const targetColumnName = target.columnName;
 
-        // Find source and target tables from the table list
-        let sourceTable = tables.find((table) => table.id === sourceTableId);
-        let targetTable = tables.find((table) => table.id === targetTableId);
+        const sourceTable = tables.find((table) => table.id === sourceTableId);
+        const targetTable = tables.find((table) => table.id === targetTableId);
 
         if (!sourceTable || !targetTable) return;
 
-        // Create a new join between these columns
+        const firstTableId = tables[0].id;
+
+        let mainTable, secondaryTable;
+        let mainColumnName, secondaryColumnName;
+        let mainSide, secondarySide;
+
+        // always make first table in tables row the main table
+        if (sourceTableId === firstTableId) {
+          mainTable = sourceTable;
+          mainColumnName = sourceColumnName;
+          mainSide = source.side;
+
+          secondaryTable = targetTable;
+          secondaryColumnName = targetColumnName;
+          secondarySide = target.side;
+        } else if (targetTableId === firstTableId) {
+          mainTable = targetTable;
+          mainColumnName = targetColumnName;
+          mainSide = target.side;
+
+          secondaryTable = sourceTable;
+          secondaryColumnName = sourceColumnName;
+          secondarySide = source.side;
+        } else {
+          // If neither is first table, default to source as main
+          mainTable = sourceTable;
+          mainColumnName = sourceColumnName;
+          mainSide = source.side;
+
+          secondaryTable = targetTable;
+          secondaryColumnName = targetColumnName;
+          secondarySide = target.side;
+        }
+
+        // figure out what join type to use if there are previous joins with the same involved tables
+        const involvedTablesSorted = [sourceTableId, targetTableId].sort().join('::');
+        const existingJoin = joins.find((join) => {
+          if (join.conditions.length > 0) {
+            const existingMainId = join.main_table.id;
+            const existingSecondaryId = join.conditions[0].secondary_table.id;
+            const existingPairKey = [existingMainId, existingSecondaryId].sort().join('::');
+            return existingPairKey === involvedTablesSorted;
+          }
+          return false;
+        });
+
+        const joinType = existingJoin ? existingJoin.type : 'inner'; // Use existing type if found
+
         const newJoin: JoinType = {
           id: joins.length,
-          type: 'inner',
+          type: joinType,
           color: '#' + Math.floor(Math.random() * 16777215).toString(16),
           main_table: {
-            id: sourceTable.id,
-            table_schema: sourceTable.table_schema,
-            table_name: sourceTable.table_name,
-            table_alias: sourceTable.table_alias,
-            table_type: sourceTable.table_type,
-            columns: sourceTable.columns,
+            id: mainTable.id,
+            table_schema: mainTable.table_schema,
+            table_name: mainTable.table_name,
+            table_alias: mainTable.table_alias,
+            table_type: mainTable.table_type,
+            columns: mainTable.columns,
           },
           conditions: [
             {
               id: 0,
-              main_column: sourceColumnName,
+              main_column: mainColumnName,
               main_table: {
-                joinHandleSide: source.side,
-                id: sourceTable.id,
-                table_schema: sourceTable.table_schema,
-                table_name: sourceTable.table_name,
-                table_alias: sourceTable.table_alias,
-                table_type: sourceTable.table_type,
-                columns: sourceTable.columns,
+                joinHandleSide: mainSide,
+                id: mainTable.id,
+                table_schema: mainTable.table_schema,
+                table_name: mainTable.table_name,
+                table_alias: mainTable.table_alias,
+                table_type: mainTable.table_type,
+                columns: mainTable.columns,
               },
-              secondary_column: targetColumnName,
+              secondary_column: secondaryColumnName,
               secondary_table: {
-                joinHandleSide: target.side,
-                id: targetTable.id,
-                table_schema: targetTable.table_schema,
-                table_name: targetTable.table_name,
-                table_type: targetTable.table_type,
-                table_alias: targetTable.table_alias,
-                columns: targetTable.columns,
+                joinHandleSide: secondarySide,
+                id: secondaryTable.id,
+                table_schema: secondaryTable.table_schema,
+                table_name: secondaryTable.table_name,
+                table_alias: secondaryTable.table_alias,
+                table_type: secondaryTable.table_type,
+                columns: secondaryTable.columns,
               },
             },
           ],
         };
 
-        // Clone the join object to avoid reference issues
-        const join = _.cloneDeep(newJoin);
+        const join = _.cloneDeep(newJoin); // safe clone if needed
 
         // Add the edge to React Flow for visualization with the join data
         // @ts-ignore - bypass TypeScript for edge type in addEdge

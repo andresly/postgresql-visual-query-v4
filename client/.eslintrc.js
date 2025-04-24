@@ -32,6 +32,7 @@ module.exports = {
     'prefer-const': 'off',
     'no-loop-func': 'off',
     'no-unused-expressions': 'off',
+    'one-var': 'off',
     'react/jsx-boolean-value': 'off',
     'consistent-return': 'off',
     'arrow-body-style': 'off',

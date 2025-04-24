@@ -733,9 +733,8 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     usedTables.add(getTableKey(table));
   };
 
-  const isTableUsed = (table: { table_schema: string; table_name: string; table_alias?: string }) => {
-    return usedTables.has(getTableKey(table));
-  };
+  const isTableUsed = (table: { table_schema: string; table_name: string; table_alias?: string }) =>
+    usedTables.has(getTableKey(table));
 
   if (mainTable) {
     markTableAsUsed(mainTable);
@@ -758,7 +757,7 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     }
   };
 
-  // Step 1: reorder joins into dependency-aware order
+  // Dependency-aware ordering of joins
   const orderedJoins: JoinType[] = [];
   const remaining = [...joins];
   const maxTries = joins.length * 2;
@@ -772,12 +771,8 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
 
       if (mainUsed || secondaryUsed) {
         orderedJoins.push(join);
-
         markTableAsUsed(join.main_table);
-        join.conditions.forEach((cond) => {
-          markTableAsUsed(cond.secondary_table);
-        });
-
+        join.conditions.forEach((cond) => markTableAsUsed(cond.secondary_table));
         remaining.splice(i, 1);
         i--;
       }
@@ -790,24 +785,21 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     orderedJoins.push(...remaining);
   }
 
-  // Step 2: merge joins by table **and type**
-  const mergedJoins: Record<
-    string,
-    { table: (typeof joins)[0]['main_table']; alias?: string; type: string; conditions: string[] }
-  > = {};
+  // Merge joins by involved tables (sorted for order-agnostic merge)
+  const mergedJoins: Record<string, { join: JoinType; conditions: string[] }> = {};
 
   orderedJoins.forEach((join) => {
-    const table = join.main_table;
-    const alias = table.table_alias || undefined;
-    const key = `${getTableKey(table)}::${join.type}`; // ← include join type in key!
+    const involvedTables = [
+      getTableKey(join.main_table),
+      ...join.conditions.map((cond) => getTableKey(cond.secondary_table)),
+    ]
+      .sort()
+      .join('::'); // Sort to avoid order dependency
+
+    const key = involvedTables + `::${join.type}`;
 
     if (!mergedJoins[key]) {
-      mergedJoins[key] = {
-        table,
-        alias,
-        type: join.type,
-        conditions: [],
-      };
+      mergedJoins[key] = { join, conditions: [] };
     }
 
     join.conditions.forEach((cond) => {
@@ -818,12 +810,23 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     });
   });
 
-  // Step 3: add joins with combined ON conditions
-  Object.values(mergedJoins).forEach(({ table, alias, type, conditions }) => {
-    const joinFn = getJoinFunction(type);
-    const tableRef = `${format.ident(table.table_schema)}.${format.ident(table.table_name)}`;
+  // Apply joins (no need to flip anymore!)
+  Object.values(mergedJoins).forEach(({ join, conditions }) => {
+    const firstCondition = join.conditions[0];
+    if (!firstCondition) {
+      console.warn('Skipping join because no conditions found:', join);
+      return;
+    }
+
+    const joinTarget = firstCondition.secondary_table; // always secondary table
+    const joinAlias = joinTarget.table_alias || undefined;
+    const joinRef = `${format.ident(joinTarget.table_schema)}.${format.ident(joinTarget.table_name)}`;
+
+    const joinFn = getJoinFunction(join.type);
     const onCondition = conditions.join(' AND ');
-    joinFn(tableRef, alias, onCondition);
+
+    joinFn(joinRef, joinAlias, onCondition);
+    markTableAsUsed(joinTarget);
   });
 };
 

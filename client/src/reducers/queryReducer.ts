@@ -606,7 +606,34 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       const joins = _.cloneDeep(state.joins);
 
       if (action.payload.id > -1 && action.payload.id < state.joins.length) {
-        joins[action.payload.id] = action.payload;
+        const updatedJoin = action.payload;
+
+        // Identify which tables are involved
+        const mainTableKey = `${updatedJoin.main_table.table_schema}.${updatedJoin.main_table.table_name}.${updatedJoin.main_table.table_alias || ''}`;
+        const secondaryTableKey =
+          updatedJoin.conditions.length > 0
+            ? `${updatedJoin.conditions[0].secondary_table.table_schema}.${updatedJoin.conditions[0].secondary_table.table_name}.${updatedJoin.conditions[0].secondary_table.table_alias || ''}`
+            : null;
+
+        if (secondaryTableKey) {
+          const involvedTablesSorted = [mainTableKey, secondaryTableKey].sort().join('::');
+
+          // Update the type for ALL joins between these two tables
+          joins.forEach((join) => {
+            if (join.conditions.length > 0) {
+              const currentMainKey = `${join.main_table.table_schema}.${join.main_table.table_name}.${join.main_table.table_alias || ''}`;
+              const currentSecondaryKey = `${join.conditions[0].secondary_table.table_schema}.${join.conditions[0].secondary_table.table_name}.${join.conditions[0].secondary_table.table_alias || ''}`;
+              const currentPairKey = [currentMainKey, currentSecondaryKey].sort().join('::');
+
+              if (currentPairKey === involvedTablesSorted) {
+                join.type = updatedJoin.type; // Apply the same type to all
+              }
+            }
+          });
+        }
+
+        // Replace the updated join as usual
+        joins[updatedJoin.id] = updatedJoin;
       }
 
       return {

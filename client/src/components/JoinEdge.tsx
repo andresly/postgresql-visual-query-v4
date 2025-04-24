@@ -180,7 +180,6 @@ function JoinEdge({
                 style={currentJoinType === 'left' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
                 Select all rows from <strong>{mainTable}</strong>, matching rows from <strong>{secondaryTable}</strong>{' '}
-                (Left Join)
               </button>
               <button
                 className="dropdown-item"
@@ -189,7 +188,6 @@ function JoinEdge({
                 style={currentJoinType === 'right' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
                 Select all rows from <strong>{secondaryTable}</strong>, matching rows from <strong>{mainTable}</strong>{' '}
-                (Right Join)
               </button>
               <button
                 className="dropdown-item"
@@ -197,7 +195,8 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('outer', e)}
                 style={currentJoinType === 'outer' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full join)
+                Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full outer
+                join)
               </button>
               <button
                 className="dropdown-item"
