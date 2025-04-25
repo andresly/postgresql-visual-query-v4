@@ -2,6 +2,42 @@ import * as _ from 'lodash';
 import * as format from 'pg-format';
 import squel, { JoinMixin } from 'squel';
 import { QueryColumnType, JoinType, QueryTableType, QueryType } from '../types/queryTypes';
+import { ReservedKeywordType } from '../types/hostTypes';
+
+// PostgreSQL reserved words that always need quoting
+
+/**
+ * Determines if a SQL identifier needs quoting and returns the properly quoted version if necessary.
+ * Quotes are added only when:
+ * 1. The identifier contains spaces
+ * 2. The identifier contains special characters
+ * 3. The identifier is a PostgreSQL reserved keyword
+ * @param identifier The SQL identifier to potentially quote
+ * @returns The identifier, quoted if necessary
+ */
+const quoteIdentifier = (identifier: string): string => {
+  if (!identifier) return identifier;
+
+  // If already quoted, return as is
+  if (identifier.startsWith('"') && identifier.endsWith('"')) {
+    return identifier;
+  }
+
+  const reservedKeywordsArray = JSON.parse(sessionStorage.getItem('psql_reserved_keywords') || '[]');
+  const reservedKeywords = new Set(
+    reservedKeywordsArray.map((keyword: ReservedKeywordType) => keyword.word.toLowerCase()),
+  );
+
+  // Check if it's a reserved word (case insensitive)
+  if (reservedKeywords.has(identifier.toLowerCase())) {
+    return `"${identifier}"`;
+  }
+
+  // Check if it contains spaces or special characters
+  const needsQuoting = /[\s!"#$%&'()*+,\-./:;<=>?@[\\\]^`{|}~]/.test(identifier);
+
+  return needsQuoting ? `"${identifier}"` : identifier;
+};
 
 const squelPostgres = squel.useFlavour('postgres');
 
@@ -18,15 +54,23 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
     // 1) Handle aggregates first
     if (column.column_aggregate && column.column_aggregate.length > 0) {
-      // If there is an aggregate, we order by its alias if provided
-      if (column.column_alias.length > 0) {
-        query.order(format.ident(column.column_alias), column.column_order_dir);
+      // If there is an aggregate, we order by its alias if provided and not an expression/function
+      if (
+        column.column_alias.length > 0 &&
+        column.column_aggregate.length === 0 &&
+        column.column_single_line_function.length === 0
+      ) {
+        // Only use alias if NOT an expression or function
+        query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+      } else if (column.column_alias.length > 0) {
+        // Aggregate with alias: use aggregate(column_alias)
+        const aggField = `${column.column_aggregate}(${quoteIdentifier(column.column_alias)})`;
+        query.order(aggField, column.column_order_dir);
       } else {
-        // For ordering without alias, use the full expression directly
-        const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-        const fieldRef = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
-        const aggregateExpr = `${column.column_aggregate}(${fieldRef})`;
-        query.order(aggregateExpr, column.column_order_dir);
+        // Aggregate without alias: use aggregate(tableOrAlias.column_name)
+        const tableOrAlias = column.table_alias || column.table_name;
+        const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
+        query.order(aggField, column.column_order_dir);
       }
       return;
     }
@@ -35,7 +79,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     if (column.column_single_line_function && column.column_single_line_function.length > 0) {
       // If there's an alias, use it directly without wrapping in the function
       if (column.column_alias.length > 0) {
-        query.order(format.ident(column.column_alias), column.column_order_dir);
+        query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
         return;
       }
 
@@ -44,12 +88,12 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
       // Check if column_name is an expression
       if (isExpression(column.column_name)) {
-        // For expressions, don't use format.ident on the column part and don't prepend table name
+        // For expressions, don't use quoteIdentifier on the column part and don't prepend table name
         const wrappedField = `${column.column_single_line_function}(${column.column_name})`;
         query.order(wrappedField, column.column_order_dir);
       } else {
-        // For regular column names, use format.ident
-        const baseExpression = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+        // For regular column names, use quoteIdentifier
+        const baseExpression = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
         const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
         query.order(wrappedField, column.column_order_dir);
       }
@@ -65,25 +109,25 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
       } else {
         // Use table alias if present, else table_name
         const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-        // For regular column names, use format.ident
-        const orderColumn = `${format.ident(tableOrAlias)}.${format.ident(column.column_name)}`;
+        // For regular column names, use quoteIdentifier
+        const orderColumn = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
         query.order(orderColumn, column.column_order_dir);
       }
     } else {
-      query.order(format.ident(column.column_alias), column.column_order_dir);
+      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
     }
   };
 
   const addField = (table: string, column: string) => {
-    query.field(`${format.ident(table)}.${format.ident(column)}`);
+    query.field(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`);
   };
 
   const addFieldWithAlias = (table: string, column: string, alias: string) => {
-    query.field(`${format.ident(table)}.${format.ident(column)}`, `${format.ident(alias)}`);
+    query.field(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`, quoteIdentifier(alias));
   };
 
   const addGroupBy = (table: string, column: string) => {
-    query.group(`${format.ident(table)}.${format.ident(column)}`);
+    query.group(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`);
   };
 
   const matchesIgnoreCase = (str: string, startIndex: number, pattern: string) =>
@@ -309,9 +353,9 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
           // Build a fully qualified column reference
           let colRef = '';
           if (table_alias && !_.isEmpty(table_alias)) {
-            colRef = `${format.ident(table_alias)}.${format.ident(column_name)}`;
+            colRef = `${quoteIdentifier(table_alias)}.${quoteIdentifier(column_name)}`;
           } else {
-            colRef = `${format.ident(table_name)}.${format.ident(column_name)}`;
+            colRef = `${quoteIdentifier(table_name)}.${quoteIdentifier(column_name)}`;
           }
 
           // If we have an aggregate, that belongs to HAVING
@@ -351,7 +395,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
   // Process columns for fields, orders, group by, etc.
   columns.forEach((column) => {
     if (!data.distinct && column.column_distinct_on) {
-      query.distinct(`${format.ident(column.table_name)}.${format.ident(column.column_name)}`);
+      query.distinct(`${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)}`);
     }
 
     if (column.display_in_query) {
@@ -365,16 +409,17 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
           // Only add table prefix if column_name matches the original
           if (column.column_name === column.column_name_original) {
-            field = `${column.table_name}.${field}`;
+            field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
           }
 
           if (column.column_aggregate.length > 0) {
-            field = `${column.column_aggregate}(${field})`;
-            // Don't use auto-alias for aggregates when alias is empty
-            query.field(field);
+            // Aggregate with alias: aggregate(table.column)
+            const tableRef = column.table_alias || column.table_name;
+            field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
+            query.field(field, quoteIdentifier(column.column_alias));
           } else if (column.column_single_line_function.length > 0) {
-            field = `${column.column_single_line_function}(${field})`;
-            query.field(field);
+            field = `${column.column_single_line_function}(${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)})`;
+            query.field(field, quoteIdentifier(autoAlias));
           } else {
             // If column name is modified, use it directly without table prefix
             if (column.column_name === column.column_name_original) {
@@ -388,21 +433,17 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
           // Only add table alias prefix if column_name matches the original
           if (column.column_name === column.column_name_original) {
-            field = `${column.table_alias}.${field}`;
+            field = `${quoteIdentifier(column.table_alias)}.${quoteIdentifier(field)}`;
           }
 
           if (column.column_aggregate.length > 0) {
-            field = `${column.column_aggregate}(${field})`;
-            // Don't use auto-alias for aggregates when alias is empty
-            query.field(field);
+            // Aggregate with alias: aggregate(table.column)
+            const tableRef = column.table_alias || column.table_name;
+            field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
+            query.field(field, quoteIdentifier(column.column_alias));
           } else if (column.column_single_line_function.length > 0) {
-            field = `${column.column_single_line_function}(${field})`;
-            // Apply same alias handling as aggregates for consistency
-            if (autoAlias.length > 0) {
-              query.field(field, autoAlias);
-            } else {
-              query.field(field);
-            }
+            field = `${column.column_single_line_function}(${quoteIdentifier(column.table_alias)}.${quoteIdentifier(column.column_name)})`;
+            query.field(field, quoteIdentifier(autoAlias));
           } else {
             if (column.column_name === column.column_name_original) {
               addField(column.table_alias, column.column_name);
@@ -416,30 +457,22 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
         // Only add table prefix if column_name matches the original
         if (column.column_name === column.column_name_original) {
-          field = `${column.table_name}.${field}`;
+          field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
         }
 
         if (column.column_aggregate.length > 0) {
-          field = `${column.column_aggregate}(${field})`;
-          // Only use alias if explicitly provided
-          if (autoAlias.length > 0) {
-            query.field(field, autoAlias);
-          } else {
-            query.field(field);
-          }
+          // Aggregate with alias: aggregate(table.column)
+          const tableRef = column.table_alias || column.table_name;
+          field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
+          query.field(field, quoteIdentifier(column.column_alias));
         } else if (column.column_single_line_function.length > 0) {
-          field = `${column.column_single_line_function}(${field})`;
-          // Apply same alias handling as aggregates for consistency
-          if (autoAlias.length > 0) {
-            query.field(field, autoAlias);
-          } else {
-            query.field(field);
-          }
+          field = `${column.column_single_line_function}(${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)})`;
+          query.field(field, quoteIdentifier(autoAlias));
         } else {
           if (column.column_name === column.column_name_original) {
             addFieldWithAlias(column.table_name, column.column_name, autoAlias);
           } else {
-            query.field(column.column_name, autoAlias);
+            query.field(column.column_name, quoteIdentifier(autoAlias));
           }
         }
       } else {
@@ -447,30 +480,22 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
         // Only add table alias prefix if column_name matches the original
         if (column.column_name === column.column_name_original) {
-          field = `${column.table_alias}.${field}`;
+          field = `${quoteIdentifier(column.table_alias)}.${quoteIdentifier(field)}`;
         }
 
         if (column.column_aggregate.length > 0) {
-          field = `${column.column_aggregate}(${field})`;
-          // Only use alias if explicitly provided
-          if (autoAlias.length > 0) {
-            query.field(field, autoAlias);
-          } else {
-            query.field(field);
-          }
+          // Aggregate with alias: aggregate(table.column)
+          const tableRef = column.table_alias || column.table_name;
+          field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
+          query.field(field, quoteIdentifier(column.column_alias));
         } else if (column.column_single_line_function.length > 0) {
-          field = `${column.column_single_line_function}(${field})`;
-          // Apply same alias handling as aggregates for consistency
-          if (autoAlias.length > 0) {
-            query.field(field, autoAlias);
-          } else {
-            query.field(field);
-          }
+          field = `${column.column_single_line_function}(${quoteIdentifier(column.table_alias)}.${quoteIdentifier(column.column_name)})`;
+          query.field(field, quoteIdentifier(autoAlias));
         } else {
           if (column.column_name === column.column_name_original) {
             addFieldWithAlias(column.table_alias, column.column_name, autoAlias);
           } else {
-            query.field(column.column_name, autoAlias);
+            query.field(column.column_name, quoteIdentifier(autoAlias));
           }
         }
       }
@@ -482,11 +507,19 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
       column.display_in_query &&
       (!column.column_aggregate || column.column_aggregate.length === 0)
     ) {
-      if (_.isEmpty(column.table_alias)) {
-        addGroupBy(column.table_name, column.column_name);
+      const tableOrAlias = column.table_alias || column.table_name;
+      let groupByExpr;
+
+      if (column.column_single_line_function.length > 0) {
+        // Use the function expression directly
+        groupByExpr = `${column.column_single_line_function}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
+      } else if (column.column_alias.length > 0) {
+        groupByExpr = quoteIdentifier(column.column_alias);
       } else {
-        addGroupBy(column.table_alias, column.column_name);
+        groupByExpr = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
       }
+
+      query.group(groupByExpr);
     }
   });
 
@@ -519,9 +552,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
 
 const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
-  // Identify the main table (first table in the array)
-  const mainTableId = data.tables.length > 0 ? data.tables[0].id : null;
-  const mainTable = data.tables.length > 0 ? data.tables[0] : null;
+  const mainTable = data.tables[0] ?? null;
 
   const addJoin = (joinObj: JoinType, on: string, joinFn: JoinMixin['join']) => {
     // If the main table is in the join, make sure it's always used in the FROM clause (not the JOIN)
@@ -530,24 +561,13 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
       joinObj.main_table.table_schema === mainTable.table_schema &&
       joinObj.main_table.table_name === mainTable.table_name
     ) {
-      // Skip this join as the main table should be in FROM, not in JOIN
-      // This condition will be handled differently by swapping in the calling code
       return;
     }
 
-    if (!_.isEmpty(joinObj.main_table.table_alias)) {
-      joinFn(
-        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        `${format.ident(joinObj.main_table.table_alias)}`,
-        on,
-      );
-    } else {
-      joinFn(
-        `${format.ident(joinObj.main_table.table_schema)}.${format.ident(joinObj.main_table.table_name)}`,
-        undefined,
-        on,
-      );
-    }
+    const tableName = `${quoteIdentifier(joinObj.main_table.table_schema)}.${quoteIdentifier(joinObj.main_table.table_name)}`;
+    const tableAlias = joinObj.main_table.table_alias ? quoteIdentifier(joinObj.main_table.table_alias) : undefined;
+
+    joinFn(tableName, tableAlias, on);
   };
 
   // Group joins by their main table and secondary table
@@ -555,7 +575,6 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
 
   joins.forEach((joinObj) => {
     if (!_.isEmpty(joinObj.main_table.table_name)) {
-      // Create a unique key for each main_table + secondary_table combination
       const conditions = joinObj.conditions || [];
       conditions.forEach((condition) => {
         if (!_.isEmpty(condition.secondary_table.table_name)) {
@@ -568,11 +587,8 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
             return;
           }
 
-          // If secondary table is the main table, we will handle this by using reversed conditions
-          // So use a key that reflects this relationship
           let key;
-          if (condition.secondary_table.id === mainTableId) {
-            // Reverse the key to indicate the main table is now in FROM (not JOIN)
+          if (condition.secondary_table.id === mainTable?.id) {
             key = `${condition.secondary_table.table_name}_${joinObj.main_table.table_name}`;
           } else {
             key = `${joinObj.main_table.table_name}_${condition.secondary_table.table_name}`;
@@ -591,10 +607,7 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   Object.keys(groupedJoins).forEach((key) => {
     const joinGroup = groupedJoins[key];
     if (joinGroup.length > 0) {
-      // Use the first join in the group as the template
       const templateJoin = joinGroup[0];
-
-      // Collect all conditions from all joins in this group
       const allConditions: string[] = [];
 
       joinGroup.forEach((joinObj) => {
@@ -606,7 +619,6 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
             !_.isEmpty(condition.secondary_table.table_name) &&
             condition.secondary_table.table_name === templateJoin.conditions[0].secondary_table.table_name
           ) {
-            // Skip self-joins without proper aliases
             if (
               joinObj.main_table.table_schema === condition.secondary_table.table_schema &&
               joinObj.main_table.table_name === condition.secondary_table.table_name &&
@@ -615,29 +627,16 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
               return;
             }
 
-            let mainTable = joinObj.main_table.table_name;
-            if (!_.isEmpty(joinObj.main_table.table_alias)) {
-              mainTable = joinObj.main_table.table_alias;
-            }
+            const mainTable = joinObj.main_table.table_alias || joinObj.main_table.table_name;
+            const secondaryTable = condition.secondary_table.table_alias || condition.secondary_table.table_name;
 
-            let secondaryTable = condition.secondary_table.table_name;
-            if (!_.isEmpty(condition.secondary_table.table_alias)) {
-              secondaryTable = condition.secondary_table.table_alias;
-            }
-
-            // Check if the secondary table is actually the query's main table
-            const isSecondaryTableMain = condition.secondary_table.id === mainTableId;
+            const isSecondaryTableMain = condition.secondary_table.id === mainTable?.id;
 
             let conditionString = '';
-
             if (isSecondaryTableMain) {
-              // If the secondary table is the main table of the query, swap the condition
-              conditionString = `${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)} = 
-                   ${format.ident(mainTable)}.${format.ident(condition.main_column)}`;
+              conditionString = `${quoteIdentifier(secondaryTable)}.${quoteIdentifier(condition.secondary_column)} = ${quoteIdentifier(mainTable)}.${quoteIdentifier(condition.main_column)}`;
             } else {
-              // Normal case
-              conditionString = `${format.ident(mainTable)}.${format.ident(condition.main_column)} = 
-                   ${format.ident(secondaryTable)}.${format.ident(condition.secondary_column)}`;
+              conditionString = `${quoteIdentifier(mainTable)}.${quoteIdentifier(condition.main_column)} = ${quoteIdentifier(secondaryTable)}.${quoteIdentifier(condition.secondary_column)}`;
             }
 
             allConditions.push(conditionString);
@@ -645,72 +644,53 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
         });
       });
 
-      // Combine all conditions with AND
       const combinedOn = allConditions.join(' AND ');
 
       if (!_.isEmpty(combinedOn)) {
-        // Check if templateJoin's main_table is the query main table
-        if (templateJoin.main_table.id === mainTableId) {
-          // We need to use the secondary_table in the JOIN instead
-          // Find a proper secondary table from conditions
+        if (templateJoin.main_table.id === mainTable?.id) {
           const secondaryTable = templateJoin.conditions[0]?.secondary_table;
-
           if (secondaryTable && !_.isEmpty(secondaryTable.table_name)) {
-            // Create a modified join object with the secondary table as the main table
             const modifiedJoin = {
               ...templateJoin,
               main_table: secondaryTable,
             };
-
-            // Apply the join with the combined conditions
             switch (templateJoin.type) {
-              case 'inner': {
+              case 'inner':
                 addJoin(modifiedJoin, combinedOn, query.join);
                 break;
-              }
-              case 'right': {
+              case 'right':
                 addJoin(modifiedJoin, combinedOn, query.right_join);
                 break;
-              }
-              case 'left': {
+              case 'left':
                 addJoin(modifiedJoin, combinedOn, query.left_join);
                 break;
-              }
-              case 'outer': {
+              case 'outer':
                 addJoin(modifiedJoin, combinedOn, query.outer_join);
                 break;
-              }
-              case 'cross': {
+              case 'cross':
                 addJoin(modifiedJoin, combinedOn, query.cross_join);
                 break;
-              }
               default:
                 break;
             }
           }
         } else {
-          // Normal case - use the join as is
           switch (templateJoin.type) {
-            case 'inner': {
+            case 'inner':
               addJoin(templateJoin, combinedOn, query.join);
               break;
-            }
-            case 'right': {
+            case 'right':
               addJoin(templateJoin, combinedOn, query.right_join);
               break;
-            }
-            case 'left': {
+            case 'left':
               addJoin(templateJoin, combinedOn, query.left_join);
               break;
-            }
-            case 'outer': {
+            case 'outer':
               addJoin(templateJoin, combinedOn, query.outer_join);
               break;
-            }
-            case 'cross': {
+            case 'cross':
               addJoin(templateJoin, combinedOn, query.cross_join);
               break;
-            }
             default:
               break;
           }
@@ -803,9 +783,9 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     }
 
     join.conditions.forEach((cond) => {
-      const main = cond.main_table.table_alias || cond.main_table.table_name;
-      const sec = cond.secondary_table.table_alias || cond.secondary_table.table_name;
-      const conditionStr = `${format.ident(main)}.${format.ident(cond.main_column)} = ${format.ident(sec)}.${format.ident(cond.secondary_column)}`;
+      const mainTableAlias = cond.main_table.table_alias || cond.main_table.table_name;
+      const secondaryTableAlias = cond.secondary_table.table_alias || cond.secondary_table.table_name;
+      const conditionStr = `${quoteIdentifier(mainTableAlias)}.${quoteIdentifier(cond.main_column)} = ${quoteIdentifier(secondaryTableAlias)}.${quoteIdentifier(cond.secondary_column)}`;
       mergedJoins[key].conditions.push(conditionStr);
     });
   });
@@ -820,7 +800,7 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
 
     const joinTarget = firstCondition.secondary_table; // always secondary table
     const joinAlias = joinTarget.table_alias || undefined;
-    const joinRef = `${format.ident(joinTarget.table_schema)}.${format.ident(joinTarget.table_name)}`;
+    const joinRef = `${quoteIdentifier(joinTarget.table_schema)}.${quoteIdentifier(joinTarget.table_name)}`;
 
     const joinFn = getJoinFunction(join.type);
     const onCondition = conditions.join(' AND ');
@@ -876,11 +856,11 @@ const buildSetQuery = (data: QueryType) => {
 const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const addTable = (table: QueryTableType) => {
     if (_.isEmpty(table.table_alias)) {
-      query.from(`${format.ident(table.table_schema)}.${format.ident(table.table_name)}`);
+      query.from(`${quoteIdentifier(table.table_schema)}.${quoteIdentifier(table.table_name)}`);
     } else {
       query.from(
-        `${format.ident(table.table_schema)}.${format.ident(table.table_name)}`,
-        `${format.ident(table.table_alias)}`,
+        `${quoteIdentifier(table.table_schema)}.${quoteIdentifier(table.table_name)}`,
+        quoteIdentifier(table.table_alias),
       );
     }
   };
@@ -945,7 +925,10 @@ const addFilterToQueryNew = (data: QueryType) => {
   columns.forEach((column: QueryColumnType) => {
     column.column_filters.forEach((filter) => {
       if (filter.filter.length > 0 && !column.returningOnly) {
-        filterList.push({ id: filter.id, filter: `${column.table_name}.${column.column_name} ${filter.filter}` });
+        filterList.push({
+          id: filter.id,
+          filter: `${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)} ${filter.filter}`,
+        });
       }
     });
   });
@@ -978,7 +961,9 @@ const getUsingTables = (data: QueryType) => {
   const usingTables: string[] = [];
 
   usings.forEach((using) => {
-    usingTables.push(`${using.main_table.table_schema}.${using.main_table.table_name}`);
+    usingTables.push(
+      `${quoteIdentifier(using.main_table.table_schema)}.${quoteIdentifier(using.main_table.table_name)}`,
+    );
   });
 
   return usingTables;
@@ -992,7 +977,7 @@ const getUsingConditions = (data: QueryType) => {
   usings.forEach((using) => {
     using.conditions.forEach((condition) => {
       usingConditions.push(
-        `${condition.secondary_table.table_name}.${condition.secondary_column} = ${using.main_table.table_name}.${condition.main_column}`,
+        `${quoteIdentifier(condition.secondary_table.table_name)}.${quoteIdentifier(condition.secondary_column)} = ${quoteIdentifier(using.main_table.table_name)}.${quoteIdentifier(condition.main_column)}`,
       );
     });
   });
@@ -1008,7 +993,12 @@ const addReturningToQuery = (data: QueryType) => {
 
   columns.forEach((column) => {
     if (column.returning || column.returningOnly) {
-      returningColumns.push(`${column.table_name}.${column.column_name}`);
+      // Always quote the alias if present, otherwise table/col
+      if (column.column_alias && column.column_alias.length > 0) {
+        returningColumns.push(quoteIdentifier(column.column_alias));
+      } else {
+        returningColumns.push(`${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)}`);
+      }
     }
   });
 
@@ -1062,7 +1052,7 @@ export const buildDeleteQuery = (data: QueryType) => {
     separator: '\n',
   });
 
-  query.from(`${format.ident(data.tables[0].table_schema)}.${format.ident(data.tables[0].table_name)}`);
+  query.from(`${quoteIdentifier(data.tables[0].table_schema)}.${quoteIdentifier(data.tables[0].table_name)}`);
 
   const usingTables = getUsingTables(data);
   const usingConditions = getUsingConditions(data);
@@ -1089,12 +1079,12 @@ export const buildInsertQuery = (data: QueryType) => {
     separator: '\n',
   });
 
-  query.into(`${format.ident(data.tables[0].table_schema)}.${format.ident(data.tables[0].table_name)}`);
+  query.into(`${quoteIdentifier(data.tables[0].table_schema)}.${quoteIdentifier(data.tables[0].table_name)}`);
 
   const columnString: string[] = [];
   data.columns.forEach((column) => {
     if (!column.returningOnly) {
-      columnString.push(column.column_name);
+      columnString.push(quoteIdentifier(column.column_name));
     }
   });
 
@@ -1125,7 +1115,7 @@ export const buildUpdateQuery = (data: QueryType) => {
     separator: '\n',
   });
 
-  query.table(`${format.ident(data.tables[0].table_schema)}.${format.ident(data.tables[0].table_name)}`);
+  query.table(`${quoteIdentifier(data.tables[0].table_schema)}.${quoteIdentifier(data.tables[0].table_name)}`);
 
   addUpdateValuesToQuery(data, query);
 

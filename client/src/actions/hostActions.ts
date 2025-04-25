@@ -14,6 +14,7 @@ export const CONNECTING = 'CONNECTING';
 export const DELETE_DATABASE = 'DELETE_DATABASE';
 export const DISCONNECT_FROM_DATABASE = 'DISCONNECT_FROM_DATABASE';
 export const PSQL_VERSION = 'PSQL_VERSION';
+export const PSQL_RESERVED_KEYWORDS = 'PSQL_RESERVED_KEYWORDS';
 export const CONNECT_TO_DATABASE = 'CONNECT_TO_DATABASE';
 
 interface DatabaseState {
@@ -51,6 +52,21 @@ export const getDatabaseVersion =
     const response = await axiosClient.post('/database/version', data);
     if (response.data) {
       dispatch({ type: PSQL_VERSION, payload: response.data.version });
+    }
+  };
+
+export const getReservedKeywords =
+  (state: DatabaseState) =>
+  async (dispatch: Dispatch): Promise<void> => {
+    const data = {
+      user: state.user,
+      password: state.password,
+    };
+    const response = await axiosClient.post('/database/reserved-keywords', data);
+    if (response.data) {
+      // Store in both Redux and sessionStorage
+      sessionStorage.setItem('psql_reserved_keywords', JSON.stringify(response.data));
+      dispatch({ type: PSQL_RESERVED_KEYWORDS, payload: response.data });
     }
   };
 

@@ -68,8 +68,6 @@ function JoinEdge({
   const join = typedData?.join || { type: 'inner', id: 0, color: '#000000', main_table: {}, conditions: [] };
   const mainTable = typedData?.mainTable || 'Table';
   const secondaryTable = typedData?.secondaryTable || 'Table';
-  const sourceColumn = typedData?.sourceColumn || 'column';
-  const targetColumn = typedData?.targetColumn || 'column';
   const isActive = typedData?.isActive || false;
   const setIsActiveNull = typedData?.setIsActiveNull;
 

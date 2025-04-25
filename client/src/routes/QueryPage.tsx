@@ -46,6 +46,8 @@ import {
   NodeChange,
   Node,
   EdgeProps,
+  Viewport,
+  useReactFlow,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -96,17 +98,28 @@ interface QueryBuilderProps {
   queryType: string;
 }
 
+// Define viewport interface
+interface SavedFlowState {
+  nodes: Node[];
+  viewport: Viewport;
+}
+
 export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, queryValid, queryType }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
+  const reactFlowInstance = useRef<any>(null);
 
   // Get joins data from redux state
   const joins = useAppSelector((state) => state.query.joins);
+  const query = useAppSelector((state) => state.query);
 
   // Track active edge ID
   const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
   // Container dimensions
   const [containerWidth, setContainerWidth] = useState(1200);
+
+  // Default viewport
+  const defaultViewport = { x: -100, y: 0, zoom: 0.2 };
 
   // React Flow states with TypeScript errors bypassed
   // @ts-ignore - bypass TypeScript errors for node state
@@ -126,6 +139,18 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     horizontalSpacing: 300,
   };
 
+  // Function to save flow state (nodes and viewport)
+  const saveFlowState = useCallback(
+    (nodes: Node[], viewport: Viewport) => {
+      const state: SavedFlowState = {
+        nodes,
+        viewport,
+      };
+      sessionStorage.setItem(`flow-state-${query.id}`, JSON.stringify(state));
+    },
+    [query.id],
+  );
+
   // Custom onNodesChange handler to save positions to sessionStorage
   const handleNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -133,14 +158,32 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       setNodes((nds) => {
         const updated = applyNodeChanges(changes, nds);
 
-        // Save to sessionStorage
-        sessionStorage.setItem('flow-positions', JSON.stringify(updated));
+        // Get viewport from instance and save complete state
+        if (reactFlowInstance.current) {
+          const viewport = reactFlowInstance.current.getViewport();
+          saveFlowState(updated, viewport);
+        }
 
         return updated;
       });
     },
-    [setNodes],
+    [setNodes, saveFlowState],
   );
+
+  // Handle viewport changes (pan & zoom)
+  const onViewportChange = useCallback(
+    (event: any, viewport: Viewport) => {
+      if (nodes.length > 0) {
+        saveFlowState(nodes, viewport);
+      }
+    },
+    [nodes, saveFlowState],
+  );
+
+  // Function to get ReactFlow instance
+  const onInit = useCallback((instance: any) => {
+    reactFlowInstance.current = instance;
+  }, []);
 
   function parseHandleId(handleId: string) {
     // Match the structure: tableId-columnName-side-type
@@ -161,15 +204,27 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       return;
     }
 
-    // Try to load saved positions from sessionStorage
-    const saved = sessionStorage.getItem('flow-positions');
-    let savedPositions: Node[] = [];
+    // Try to load saved flow state from sessionStorage
+    const saved = sessionStorage.getItem(`flow-state-${query.id}`);
+    let savedState: SavedFlowState | null = null;
 
     if (saved) {
       try {
-        savedPositions = JSON.parse(saved);
+        const parsedState = JSON.parse(saved);
+        // Validate that the parsed state has the expected structure
+        if (
+          parsedState &&
+          typeof parsedState === 'object' &&
+          Array.isArray(parsedState.nodes) &&
+          parsedState.viewport &&
+          typeof parsedState.viewport === 'object'
+        ) {
+          savedState = parsedState;
+        } else {
+          console.warn('Invalid saved flow state structure');
+        }
       } catch (e) {
-        console.warn('Invalid saved positions');
+        console.warn('Invalid saved flow state', e);
       }
     }
 
@@ -179,7 +234,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // Create nodes for each table
     const newNodes = tables.map((table, index) => {
       // Check if we have a saved position for this table
-      const savedNode = savedPositions.find((n) => n.id === `table-${table.id}`);
+      const savedNode = savedState?.nodes?.find((n) => n.id === `table-${table.id}`);
 
       return {
         id: `table-${table.id}`,
@@ -199,7 +254,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
     // @ts-ignore - bypass TypeScript for node type assignment
     setNodes(newNodes);
-  }, [tables, containerWidth, queryType, setNodes]);
+
+    // If we have a saved viewport and instance is available, set it after a small delay
+    if (savedState?.viewport && reactFlowInstance.current) {
+      setTimeout(() => {
+        reactFlowInstance.current.setViewport(savedState?.viewport as Viewport);
+      }, 100);
+    }
+  }, [tables, containerWidth, queryType, setNodes, query.id]);
 
   const getMarker = (joinType: string, isMainSide: boolean): { markerStart?: any; markerEnd?: any } => {
     const marker = {
@@ -230,6 +292,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   // Create edges from joins when page loads or joins update
   useEffect(() => {
     if (!joins || joins.length === 0 || !tables || tables.length === 0) {
+      setEdges([]);
       return;
     }
 
@@ -250,7 +313,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         const markerConfig = getMarker(join.type, isSourceMainSide);
 
-        const edgeId = `join-${join.id}-${condIndex}`;
+        const edgeId = `join-${query.id}-${join.id}-${condIndex}`;
 
         return {
           id: edgeId,
@@ -287,7 +350,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // Set the edges
     // @ts-ignore - bypass TypeScript for edge type assignment
     setEdges(newEdges);
-  }, [joins, setEdges, tables, activeEdgeId]);
+  }, [joins, setEdges, tables, activeEdgeId, query.id]);
 
   // Handle new connections
   const onConnect = (params: Connection) => {
@@ -470,7 +533,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             onPaneClick={() => {
               setActiveEdgeId(null);
             }}
-            defaultViewport={{ x: -100, y: 0, zoom: 0.2 }}
+            defaultViewport={defaultViewport}
+            onMove={onViewportChange}
+            onInit={onInit}
             proOptions={{ hideAttribution: true }}
             className="react-flow-container"
             onEdgeClick={(event, clickedEdge) => {

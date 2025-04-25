@@ -9,6 +9,7 @@ import {
   LOGGED_OUT,
   DISCONNECT_FROM_DATABASE,
   PSQL_VERSION,
+  PSQL_RESERVED_KEYWORDS,
 } from '../actions/hostActions';
 import { HostType } from '../types/hostTypes';
 import { HostActions } from '../types/actions/hostActionTypes';
@@ -22,6 +23,7 @@ export const INITIAL_STATE: HostType = {
   connected: false,
   connecting: false,
   psqlVersion: '',
+  reservedKeywords: [],
 };
 
 export const hostReducer: Reducer<HostType, HostActions> = (state = INITIAL_STATE, action) => {
@@ -82,6 +84,12 @@ export const hostReducer: Reducer<HostType, HostActions> = (state = INITIAL_STAT
       return {
         ...state,
         psqlVersion: action.payload,
+      };
+    }
+    case PSQL_RESERVED_KEYWORDS: {
+      return {
+        ...state,
+        reservedKeywords: action.payload,
       };
     }
     default:

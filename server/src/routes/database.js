@@ -77,4 +77,21 @@ router.post("/version", async (req, res) => {
   }
 });
 
+router.post("/reserved-keywords", async (req, res) => {
+  try {
+    const db = await connectToPostgres(req, res);
+    await db.query(queries.postgre.reservedKeywords, (err, queryRes) => {
+      console.log(queryRes);
+      const reservedKeywords = queryRes.rows.filter(
+        (row) => row.catdesc !== "unreserved",
+      );
+      res.json(reservedKeywords);
+      db.end();
+    });
+  } catch (err) {
+    console.error("Error in /databases route:", err);
+    res.status(500).json({ message: "An unexpected error occurred" });
+  }
+});
+
 export default router;

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button, Input } from 'reactstrap';
 import { Redirect } from 'react-router-dom';
 import { connectToDatabase, fetchAvailableDatabases } from '../actions/databaseActions';
-import { logout, getDatabaseVersion } from '../actions/hostActions';
+import { logout, getDatabaseVersion, getReservedKeywords } from '../actions/hostActions';
 import { translations } from '../utils/translations';
 import { useAppDispatch, useAppSelector } from '../hooks';
 
@@ -17,6 +17,7 @@ const DatabaseSelector: React.FC = () => {
   useEffect(() => {
     dispatch(fetchAvailableDatabases({ user, password, database: database }));
     dispatch(getDatabaseVersion({ user, password }));
+    dispatch(getReservedKeywords({ user, password }));
   }, [dispatch, user, password]);
 
   const handleDatabaseClick = (database: string) => {

@@ -18,7 +18,7 @@ export const ResultSQL: React.FC = () => {
           value={sql}
           onChange={(editor, data, value) => {
             if (data.origin) {
-              dispatch(updateSql({ sqlString: value }));
+              dispatch(updateSql(value));
             }
           }}
           autoCursor={false}

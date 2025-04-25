@@ -9,7 +9,9 @@ import {
   LOGGED_OUT,
   PSQL_VERSION,
   UPDATE_HOST,
+  PSQL_RESERVED_KEYWORDS,
 } from '../../actions/hostActions';
+import { ReservedKeywordType } from '../hostTypes';
 
 export interface UpdateHostAction {
   type: typeof UPDATE_HOST;
@@ -67,6 +69,11 @@ export interface PsqlVersionAction {
   payload: string;
 }
 
+export interface PsqlReservedKeywordsAction {
+  type: typeof PSQL_RESERVED_KEYWORDS;
+  payload: ReservedKeywordType[];
+}
+
 export type HostActions =
   | UpdateHostAction
   | DeleteHostAction
@@ -77,4 +84,5 @@ export type HostActions =
   | LoggedInAction
   | LoggedOutAction
   | ConnectToDatabaseAction
+  | PsqlReservedKeywordsAction
   | PsqlVersionAction;

@@ -73,6 +73,7 @@ const queries = {
       "select conname, contype, key_schema, key_table,  key_col, NULL, NULL, NULL\n" +
       "from keys_with_names\n" +
       "order by table_schema, table_name, constraint_type, column_name;\n",
+    reservedKeywords: "SELECT * FROM pg_get_keywords();",
   },
 };
 

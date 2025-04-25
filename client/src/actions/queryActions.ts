@@ -285,7 +285,7 @@ export const resetQuery = (data: ResetQueryAction['payload']) => (dispatch: Disp
   dispatch({ type: RESET_QUERY, payload: data });
 };
 
-export const updateSql = (sqlString: UpdateSqlAction['payload']) => ({ type: UPDATE_SQL, payload: { sqlString } });
+export const updateSql = (sql: UpdateSqlAction['payload']) => ({ type: UPDATE_SQL, payload: sql });
 
 export const setActiveQuery = (data: SetActiveQueryAction['payload']) => ({ type: SET_ACTIVE_QUERY, payload: data });
 

@@ -205,9 +205,7 @@ export interface GenerateSqlAction {
 
 export interface UpdateSqlAction {
   type: typeof UPDATE_SQL;
-  payload: {
-    sqlString: string;
-  };
+  payload: string;
 }
 
 export interface UpdateValidityAction {

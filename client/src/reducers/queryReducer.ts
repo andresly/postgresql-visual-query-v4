@@ -782,9 +782,11 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       return state;
     }
     case UPDATE_SQL: {
+      console.log(action.payload);
+      console.log(state.sql);
       return {
         ...state,
-        sql: action.payload.sqlString,
+        sql: action.payload,
       };
     }
     case `ADD_RESULT_REJECTED`: {
