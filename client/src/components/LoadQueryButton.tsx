@@ -76,7 +76,7 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
       );
       setError(null);
     } catch (err) {
-      setError('Failed to load saved queries');
+      setError(translations[language.code].loadQuery.errorLoading);
       setSavedQueries([]);
     }
   };
@@ -114,9 +114,11 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
 
         // Check if the saved query is from the current database
         if (databaseInfo.database !== hostInfo.database) {
-          setError(
-            `Warning: This query was saved for database "${databaseInfo.database}" but you are currently connected to "${hostInfo.database}". Loading may cause errors.`,
-          );
+          const warningMessage = translations[language.code].loadQuery.warningDifferentDatabase
+            .replace('{0}', databaseInfo.database)
+            .replace('{1}', hostInfo.database);
+
+          setError(warningMessage);
           return;
         }
 
@@ -142,15 +144,17 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
         setConfirmModalOpen(false);
         toggleModal();
       } else {
-        setError('Query data not found');
+        setError(translations[language.code].loadQuery.errorLoading);
       }
     } catch (err) {
-      setError('Failed to load query');
+      setError(translations[language.code].loadQuery.errorLoading);
     }
   };
 
   const handleDeleteQuery = (key: string, name: string) => {
-    if (window.confirm(`Are you sure you want to delete the query "${name}"?`)) {
+    const confirmMessage = translations[language.code].loadQuery.deleteConfirm.replace('{0}', name);
+
+    if (window.confirm(confirmMessage)) {
       try {
         // Remove from saved queries list
         const updatedQueries = savedQueries.filter((q) => q.key !== key);
@@ -166,7 +170,7 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
         // Update the state
         setSavedQueries(updatedQueries);
       } catch (err) {
-        setError('Failed to delete query');
+        setError(translations[language.code].loadQuery.errorDeleting);
       }
     }
   };
@@ -182,42 +186,41 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
         size="sm"
         className={`mr-2 ${className || ''}`}
         onClick={toggleModal}
-        title="Load Query"
+        title={translations[language.code].loadQuery.buttonTitle}
         disabled={!hostInfo.connected || !hostInfo.database}
       >
         <FontAwesomeIcon icon="folder-open" className="mr-1" />
-        Load Query
+        {translations[language.code].loadQuery.buttonText}
       </Button>
 
       {/* Main Modal with Saved Queries List */}
       <Modal isOpen={modalOpen} toggle={toggleModal} size="lg">
-        <ModalHeader toggle={toggleModal}>Saved Queries</ModalHeader>
+        <ModalHeader toggle={toggleModal}>{translations[language.code].loadQuery.modalTitle}</ModalHeader>
         <ModalBody>
           {error && <Alert color="danger">{error}</Alert>}
 
           <FormGroup check className="mb-3">
             <Label check>
-              <Input type="checkbox" checked={showAllDatabases} onChange={toggleShowAllDatabases} /> Show queries from
-              all databases (current database: {hostInfo.database})
+              <Input type="checkbox" checked={showAllDatabases} onChange={toggleShowAllDatabases} />
+              {translations[language.code].loadQuery.showAllDatabases.replace('{0}', hostInfo.database)}
             </Label>
           </FormGroup>
 
           {savedQueries.length === 0 ? (
             <Alert color="info">
               {showAllDatabases
-                ? 'No saved queries found in any database'
-                : `No saved queries found for database "${hostInfo.database}"`}
+                ? translations[language.code].loadQuery.noSavedQueriesAny
+                : translations[language.code].loadQuery.noSavedQueries.replace('{0}', hostInfo.database)}
             </Alert>
           ) : (
             <Table responsive striped hover>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Type</th>
-                  <th>Database</th>
-                  <th>Date Saved</th>
-
-                  <th>Actions</th>
+                  <th>{translations[language.code].loadQuery.columnName}</th>
+                  <th>{translations[language.code].loadQuery.columnType}</th>
+                  <th>{translations[language.code].loadQuery.columnDatabase}</th>
+                  <th>{translations[language.code].loadQuery.columnDateSaved}</th>
+                  <th>{translations[language.code].loadQuery.columnActions}</th>
                 </tr>
               </thead>
               <tbody>
@@ -243,11 +246,11 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
                         disabled={query.database !== hostInfo.database}
                       >
                         <FontAwesomeIcon icon="file-import" className="mr-1" />
-                        Load
+                        {translations[language.code].loadQuery.loadButton}
                       </Button>
                       <Button color="danger" size="sm" onClick={() => handleDeleteQuery(query.key, query.name)}>
                         <FontAwesomeIcon icon="trash-alt" className="mr-1" />
-                        Delete
+                        {translations[language.code].loadQuery.deleteButton}
                       </Button>
                     </td>
                   </tr>
@@ -260,20 +263,19 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
 
       {/* Confirmation Modal */}
       <Modal isOpen={confirmModalOpen} toggle={toggleConfirmModal}>
-        <ModalHeader toggle={toggleConfirmModal}>Confirm Loading Query</ModalHeader>
+        <ModalHeader toggle={toggleConfirmModal}>{translations[language.code].loadQuery.confirmLoadTitle}</ModalHeader>
         <ModalBody>
           <Alert color="warning">
-            <strong>Warning!</strong> Loading query &quot;{selectedQuery?.name}&quot; will overwrite your current query
-            and all other stored queries. All unsaved changes will be lost.
+            <strong>{translations[language.code].loadQuery.warningHeader}</strong>{' '}
+            {translations[language.code].loadQuery.confirmLoadMessage.replace('{0}', selectedQuery?.name || '')}
           </Alert>
-          <p>Are you sure you want to continue?</p>
         </ModalBody>
         <ModalFooter>
           <Button color="secondary" onClick={toggleConfirmModal}>
-            Cancel
+            {translations[language.code].loadQuery.cancelButton}
           </Button>
           <Button color="primary" onClick={handleLoadQuery}>
-            Confirm
+            {translations[language.code].loadQuery.loadButton}
           </Button>
         </ModalFooter>
       </Modal>

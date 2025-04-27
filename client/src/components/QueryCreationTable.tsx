@@ -23,18 +23,21 @@ const tooltipStyle = {
 
 // Format tooltip content to make links clickable
 const formatTooltipContent = (content: string) => {
+  const { language } = useAppSelector((store) => ({
+    language: store.settings.language,
+  }));
   // Check if the content contains link
   if (!content.includes('https://')) return content;
 
   // Split content at "More info: " to separate text and link
-  const parts = content.split('More info: ');
+  const parts = content.split(/More info: |Rohkem infot: /);
   const text = parts[0];
   const link = parts[1];
 
   return (
     <div>
       {text}
-      <span>More info: </span>
+      <span>{translations[language.code].queryBuilder.moreInfo} </span>
       <a
         href={link}
         target="_blank"

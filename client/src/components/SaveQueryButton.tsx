@@ -36,13 +36,13 @@ export const SaveQueryButton: React.FC<SaveQueryButtonProps> = ({ className }) =
 
   const saveQuery = () => {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const queryName = activeQuery.queryName || 'Unnamed Query';
+    const queryName = activeQuery.queryName || translations[language.code].saveQuery.unnamedQuery;
     const queryType = activeQuery.queryType || 'SELECT';
     const saveKey = `${queryName}-${timestamp}`;
 
     // Check if connected to a database
     if (!hostInfo.connected || !hostInfo.database) {
-      alert('You must be connected to a database to save queries.');
+      alert(translations[language.code].saveQuery.notConnected);
       return;
     }
 
@@ -91,7 +91,12 @@ export const SaveQueryButton: React.FC<SaveQueryButtonProps> = ({ className }) =
     localStorage.setItem('savedQueries', JSON.stringify(savedQueries));
     localStorage.setItem(`query-${saveKey}`, JSON.stringify(queryDataToSave));
 
-    alert(`Query "${queryName}" and all related queries saved successfully for database "${hostInfo.database}"!`);
+    // Format success message with parameters
+    const successMessage = translations[language.code].saveQuery.successMessage
+      .replace('{0}', queryName)
+      .replace('{1}', hostInfo.database);
+
+    alert(successMessage);
   };
 
   return (
@@ -100,11 +105,11 @@ export const SaveQueryButton: React.FC<SaveQueryButtonProps> = ({ className }) =
       size="sm"
       className={`mr-2 ${className || ''}`}
       onClick={saveQuery}
-      title="Save Query"
+      title={translations[language.code].saveQuery.buttonTitle}
       disabled={!hostInfo.connected || !hostInfo.database}
     >
       <FontAwesomeIcon icon="save" className="mr-1" />
-      Save Query
+      {translations[language.code].saveQuery.buttonText}
     </Button>
   );
 };

@@ -4,6 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { resetQuery } from '../actions/queryActions';
 import { QueryType } from '../types/queryTypes';
+import { translations } from '../utils/translations';
+import { LanguageType } from '../types/settingsType';
 
 interface ClearQueryButtonProps {
   className?: string;
@@ -15,6 +17,7 @@ export const ClearQueryButton: React.FC<ClearQueryButtonProps> = ({ className })
   const dispatch = useAppDispatch();
   const activeQuery = useAppSelector((state) => state.query) as QueryType;
   const hostInfo = useAppSelector((state) => state.host);
+  const language = useAppSelector((state) => state.settings.language) as LanguageType;
 
   const toggleConfirmModal = () => {
     setConfirmModalOpen(!confirmModalOpen);
@@ -23,7 +26,7 @@ export const ClearQueryButton: React.FC<ClearQueryButtonProps> = ({ className })
   const handleClearQuery = () => {
     // Check if there's anything to clear
     if (!activeQuery.tables.length && !activeQuery.joins.length) {
-      alert('The query is already empty.');
+      alert(translations[language.code].clearQuery.alreadyEmptyMessage);
       setConfirmModalOpen(false);
       return;
     }
@@ -48,29 +51,29 @@ export const ClearQueryButton: React.FC<ClearQueryButtonProps> = ({ className })
         size="sm"
         className={`mr-2 ${className || ''}`}
         onClick={toggleConfirmModal}
-        title="Clear Query"
+        title={translations[language.code].clearQuery.buttonTitle}
         disabled={!hostInfo.connected || !hostInfo.database}
       >
         <FontAwesomeIcon icon="eraser" className="mr-1" />
-        Clear Query
+        {translations[language.code].clearQuery.buttonText}
       </Button>
 
       {/* Confirmation Modal */}
       <Modal isOpen={confirmModalOpen} toggle={toggleConfirmModal}>
-        <ModalHeader toggle={toggleConfirmModal}>Clear Current Query</ModalHeader>
+        <ModalHeader toggle={toggleConfirmModal}>{translations[language.code].clearQuery.modalTitle}</ModalHeader>
         <ModalBody>
           <Alert color="warning">
-            <strong>Warning!</strong> This will clear all tables, joins, and settings from your current query. All
-            unsaved changes will be lost.
+            <strong>{translations[language.code].clearQuery.warningHeader}</strong>{' '}
+            {translations[language.code].clearQuery.confirmMessage}
           </Alert>
-          <p>Are you sure you want to start with a new empty query?</p>
+          <p>{translations[language.code].clearQuery.confirmPrompt}</p>
         </ModalBody>
         <ModalFooter>
           <Button color="secondary" onClick={toggleConfirmModal}>
-            Cancel
+            {translations[language.code].clearQuery.cancelButton}
           </Button>
           <Button color="danger" onClick={handleClearQuery}>
-            Clear Query
+            {translations[language.code].clearQuery.clearButton}
           </Button>
         </ModalFooter>
       </Modal>
