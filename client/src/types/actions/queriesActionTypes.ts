@@ -1,4 +1,4 @@
-import { ADD_QUERY, REMOVE_MAIN_FROM_QUERIES, UPDATE_QUERIES } from '../../actions/queriesActions';
+import { ADD_QUERY, COPY_QUERY, REMOVE_MAIN_FROM_QUERIES, UPDATE_QUERIES } from '../../actions/queriesActions';
 import { QueryType } from '../queryTypes';
 import { DELETE_QUERIES } from '../../actions/hostActions';
 
@@ -6,6 +6,13 @@ export interface AddQueryAction {
   type: typeof ADD_QUERY;
   payload: {
     activeQueryId: number;
+  };
+}
+
+export interface CopyQueryAction {
+  type: typeof COPY_QUERY;
+  payload: {
+    sourceQuery: QueryType;
   };
 }
 
@@ -27,4 +34,9 @@ export type RemoveMainFromQueriesAction = {
   // no payload
 };
 
-export type QueriesActions = AddQueryAction | updateQueriesAction | DeleteQueriesAction | RemoveMainFromQueriesAction;
+export type QueriesActions =
+  | AddQueryAction
+  | CopyQueryAction
+  | updateQueriesAction
+  | DeleteQueriesAction
+  | RemoveMainFromQueriesAction;

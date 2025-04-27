@@ -103,7 +103,7 @@ export const SaveQueryButton: React.FC<SaveQueryButtonProps> = ({ className }) =
     <Button
       color="info"
       size="sm"
-      className={`mr-2 ${className || ''}`}
+      className={`query-button mr-2 ${className || ''}`}
       onClick={saveQuery}
       title={translations[language.code].saveQuery.buttonTitle}
       disabled={!hostInfo.connected || !hostInfo.database}

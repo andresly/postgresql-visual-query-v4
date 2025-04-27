@@ -184,7 +184,7 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
       <Button
         color="primary"
         size="sm"
-        className={`mr-2 ${className || ''}`}
+        className={`query-button mr-2 ${className || ''}`}
         onClick={toggleModal}
         title={translations[language.code].loadQuery.buttonTitle}
         disabled={!hostInfo.connected || !hostInfo.database}

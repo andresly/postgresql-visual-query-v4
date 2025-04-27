@@ -55,3 +55,12 @@
   top: -20px;
   right: 0;
 }
+
+// Query buttons styling to ensure text stays on a single line
+.query-button {
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+}
