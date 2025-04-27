@@ -41,82 +41,81 @@ const quoteIdentifier = (identifier: string): string => {
 
 const squelPostgres = squel.useFlavour('postgres');
 
+const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
+  // Helper function to check if a string is an expression (contains operators)
+  const isExpression = (str: string) => {
+    // Check for common SQL operators
+    const operators = ['||', '+', '-', '*', '/', 'AND', 'OR', 'IN', 'LIKE', 'IS', 'NOT', 'NULL'];
+    return operators.some((op) => str.includes(op));
+  };
+
+  // 1) Handle aggregates first
+  if (column.column_aggregate && column.column_aggregate.length > 0) {
+    // If there is an aggregate, we order by its alias if provided and not an expression/function
+    if (
+      column.column_alias.length > 0 &&
+      column.column_aggregate.length === 0 &&
+      column.column_single_line_function.length === 0
+    ) {
+      // Only use alias if NOT an expression or function
+      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+    } else if (column.column_alias.length > 0) {
+      // Aggregate with alias: use aggregate(column_alias)
+      const aggField = `${column.column_aggregate}(${quoteIdentifier(column.column_alias)})`;
+      query.order(aggField, column.column_order_dir);
+    } else {
+      // Aggregate without alias: use aggregate(tableOrAlias.column_name)
+      const tableOrAlias = column.table_alias || column.table_name;
+      const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
+      query.order(aggField, column.column_order_dir);
+    }
+    return;
+  }
+
+  // 2) Handle single-line functions
+  if (column.column_single_line_function && column.column_single_line_function.length > 0) {
+    // If there's an alias, use it directly without wrapping in the function
+    if (column.column_alias.length > 0) {
+      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+      return;
+    }
+
+    // Otherwise, use table_alias or table_name + the column name and wrap in the function
+    const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+
+    // Check if column_name is an expression
+    if (isExpression(column.column_name)) {
+      // For expressions, don't use quoteIdentifier on the column part and don't prepend table name
+      const wrappedField = `${column.column_single_line_function}(${column.column_name})`;
+      query.order(wrappedField, column.column_order_dir);
+    } else {
+      // For regular column names, use quoteIdentifier
+      const baseExpression = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
+      const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
+      query.order(wrappedField, column.column_order_dir);
+    }
+    return;
+  }
+
+  // 3) No aggregate, no single-line function → fallback to alias or table.column
+  if (_.isEmpty(column.column_alias)) {
+    // Check if column_name is an expression
+    if (isExpression(column.column_name)) {
+      // For expressions, don't prepend table name
+      query.order(column.column_name, column.column_order_dir);
+    } else {
+      // Use table alias if present, else table_name
+      const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
+      // For regular column names, use quoteIdentifier
+      const orderColumn = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
+      query.order(orderColumn, column.column_order_dir);
+    }
+  } else {
+    query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+  }
+};
 const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries: QueryType[]) => {
   const columns = _.cloneDeep(data.columns);
-
-  const addOrder = (column: QueryColumnType) => {
-    // Helper function to check if a string is an expression (contains operators)
-    const isExpression = (str: string) => {
-      // Check for common SQL operators
-      const operators = ['||', '+', '-', '*', '/', 'AND', 'OR', 'IN', 'LIKE', 'IS', 'NOT', 'NULL'];
-      return operators.some((op) => str.includes(op));
-    };
-
-    // 1) Handle aggregates first
-    if (column.column_aggregate && column.column_aggregate.length > 0) {
-      // If there is an aggregate, we order by its alias if provided and not an expression/function
-      if (
-        column.column_alias.length > 0 &&
-        column.column_aggregate.length === 0 &&
-        column.column_single_line_function.length === 0
-      ) {
-        // Only use alias if NOT an expression or function
-        query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
-      } else if (column.column_alias.length > 0) {
-        // Aggregate with alias: use aggregate(column_alias)
-        const aggField = `${column.column_aggregate}(${quoteIdentifier(column.column_alias)})`;
-        query.order(aggField, column.column_order_dir);
-      } else {
-        // Aggregate without alias: use aggregate(tableOrAlias.column_name)
-        const tableOrAlias = column.table_alias || column.table_name;
-        const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
-        query.order(aggField, column.column_order_dir);
-      }
-      return;
-    }
-
-    // 2) Handle single-line functions
-    if (column.column_single_line_function && column.column_single_line_function.length > 0) {
-      // If there's an alias, use it directly without wrapping in the function
-      if (column.column_alias.length > 0) {
-        query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
-        return;
-      }
-
-      // Otherwise, use table_alias or table_name + the column name and wrap in the function
-      const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-
-      // Check if column_name is an expression
-      if (isExpression(column.column_name)) {
-        // For expressions, don't use quoteIdentifier on the column part and don't prepend table name
-        const wrappedField = `${column.column_single_line_function}(${column.column_name})`;
-        query.order(wrappedField, column.column_order_dir);
-      } else {
-        // For regular column names, use quoteIdentifier
-        const baseExpression = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
-        const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
-        query.order(wrappedField, column.column_order_dir);
-      }
-      return;
-    }
-
-    // 3) No aggregate, no single-line function → fallback to alias or table.column
-    if (_.isEmpty(column.column_alias)) {
-      // Check if column_name is an expression
-      if (isExpression(column.column_name)) {
-        // For expressions, don't prepend table name
-        query.order(column.column_name, column.column_order_dir);
-      } else {
-        // Use table alias if present, else table_name
-        const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
-        // For regular column names, use quoteIdentifier
-        const orderColumn = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
-        query.order(orderColumn, column.column_order_dir);
-      }
-    } else {
-      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
-    }
-  };
 
   const addField = (table: string, column: string) => {
     query.field(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`);
@@ -523,22 +522,25 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     }
   });
 
-  // Handle ordering separately, sorted by column_order_nr
-  columns
-    // First filter to keep only columns that should be in ORDER BY (where column_order is true)
-    .filter((column) => column.column_order)
-    // Then sort those columns by their order_nr
-    .sort((a, b) => {
-      // Convert column_order_nr to number for sorting, defaulting to MAX_SAFE_INTEGER for nulls
-      // This ensures columns without a specific order number appear last
-      const aOrder = typeof a.column_order_nr === 'number' ? a.column_order_nr : Number.MAX_SAFE_INTEGER;
-      const bOrder = typeof b.column_order_nr === 'number' ? b.column_order_nr : Number.MAX_SAFE_INTEGER;
-      return aOrder - bOrder;
-    })
-    // Then add each column to the query's ORDER BY clause
-    .forEach((column) => {
-      addOrder(column);
-    });
+  // Add order by here only when Don't have sets
+  if (data.sets.length === 0) {
+    // Handle ordering separately, sorted by column_order_nr
+    columns
+      // First filter to keep only columns that should be in ORDER BY (where column_order is true)
+      .filter((column) => column.column_order)
+      // Then sort those columns by their order_nr
+      .sort((a, b) => {
+        // Convert column_order_nr to number for sorting, defaulting to MAX_SAFE_INTEGER for nulls
+        // This ensures columns without a specific order number appear last
+        const aOrder = typeof a.column_order_nr === 'number' ? a.column_order_nr : Number.MAX_SAFE_INTEGER;
+        const bOrder = typeof b.column_order_nr === 'number' ? b.column_order_nr : Number.MAX_SAFE_INTEGER;
+        return aOrder - bOrder;
+      })
+      // Then add each column to the query's ORDER BY clause
+      .forEach((column) => {
+        addOrder(column, query);
+      });
+  }
 
   // Build and apply the WHERE and HAVING clauses
   const { where, having } = buildFilters(columns, queries);
@@ -812,7 +814,6 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
 
 const buildSetQuery = (data: QueryType) => {
   const sets = _.cloneDeep(data.sets);
-
   let setQuery = '';
 
   sets.forEach((set) => {
@@ -904,13 +905,42 @@ export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryT
 
   const setQueryString = buildSetQuery(data);
 
+  let orderByString = '';
+  if (setQueryString.length > 0) {
+    orderByString = addOrderByForSetQuery(queries);
+  }
+
   if (data.limit && data.limitValue) {
     return `${`${query.toString() + setQueryString}\n` + `FETCH FIRST ${data.limitValue} ROWS ${data.withTies ? 'WITH TIES;' : 'ONLY;'}`}`;
   }
 
-  return `${query}${setQueryString};`;
+  return `${query}${setQueryString}${orderByString};`;
 };
 
+const addOrderByForSetQuery = (queries: QueryType[]) => {
+  const orderByClauses: string[] = [];
+
+  queries.forEach((query) => {
+    query.columns
+      .filter((column) => column.column_order)
+      .sort((a, b) => {
+        const aOrder = typeof a.column_order_nr === 'number' ? a.column_order_nr : Number.MAX_SAFE_INTEGER;
+        const bOrder = typeof b.column_order_nr === 'number' ? b.column_order_nr : Number.MAX_SAFE_INTEGER;
+        return aOrder - bOrder;
+      })
+      .forEach((column) => {
+        const tableOrAlias = column.table_alias || column.table_name;
+        const columnRef =
+          column.column_alias.length > 0
+            ? quoteIdentifier(column.column_alias)
+            : `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
+
+        orderByClauses.push(`${columnRef} ${column.column_order_dir ? 'ASC' : 'DESC'}`);
+      });
+  });
+
+  return orderByClauses.length > 0 ? `\nORDER BY ${orderByClauses.join(', ')}` : '';
+};
 const addFilterToQueryNew = (data: QueryType) => {
   const columns = _.cloneDeep(data.columns);
 

@@ -82,7 +82,7 @@ type RootState = any; // Ideally replace 'any' with your actual root state type
 export const generateSql = (): ThunkAction<void, RootState, unknown, QueryActions> => (dispatch, getState) => {
   // Get access to both query and queries state
   const state = getState();
-  const queries = state.queries || [];
+  const queries = [...(state.queries || []), state.query];
 
   dispatch({
     type: GENERATE_SQL,

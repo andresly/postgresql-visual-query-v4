@@ -28,18 +28,21 @@ export const Set: React.FC<SetProps> = ({ id, set, index, queryName, queryId }) 
 
   useEffect(() => {
     if (set.subqueryId) {
-      const newSet = _.cloneDeep(set);
       const subquery = queries.find((query: QueryType) => query.id === set.subqueryId);
-      const subquerySql = subquery ? subquery.sql : '';
+      const newSubquerySql = subquery ? subquery.sql : '';
 
-      dispatch(
-        updateSet({
-          ...newSet,
-          subquerySql,
-        }),
-      );
+      if (newSubquerySql !== set.subquerySql) {
+        const newSet = _.cloneDeep(set);
+
+        dispatch(
+          updateSet({
+            ...newSet,
+            subquerySql: newSubquerySql,
+          }),
+        );
+      }
     }
-  }, [set.subqueryId, dispatch, queries]);
+  }, [set.subqueryId, dispatch, queries, set.subquerySql]);
 
   const selectedQuery = queries.find((query: QueryType) => query.id === set.subqueryId);
   const selectedQueryId = selectedQuery ? selectedQuery.id : 0;
