@@ -114,7 +114,12 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
   }
 };
-const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries: QueryType[]) => {
+const addColumnsToQuery = (
+  data: QueryType,
+  query: squel.PostgresSelect,
+  queries: QueryType[],
+  isSetQuery?: boolean,
+) => {
   const columns = _.cloneDeep(data.columns);
 
   const addField = (table: string, column: string) => {
@@ -525,7 +530,7 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
   //check if any of the queries have sets.
   const hasSets = queries.some((query) => query.sets.length > 0);
   // Add order by here only when Don't have sets
-  if (!hasSets) {
+  if (data.sets.length === 0 && !isSetQuery) {
     // Handle ordering separately, sorted by column_order_nr
     columns
       // First filter to keep only columns that should be in ORDER BY (where column_order is true)
@@ -832,12 +837,16 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
   });
 };
 
-const buildSetQuery = (data: QueryType) => {
+const buildSetQuery = (data: QueryType, queries: QueryType[]) => {
   const sets = _.cloneDeep(data.sets);
   let setQuery = '';
 
   sets.forEach((set) => {
-    const cleanSubquerySql = set.subquerySql.slice(0, -1);
+    const subQueryId = set.subqueryId;
+    const subQuery = queries.find((query) => query.id === subQueryId);
+    if (!subQuery) return;
+
+    const cleanSubquerySql = buildQuery({ data: subQuery, queries, isSetQuery: true });
 
     if (set.subquerySql.length) {
       switch (set.type) {
@@ -874,7 +883,7 @@ const buildSetQuery = (data: QueryType) => {
   return setQuery;
 };
 
-const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
+const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect, queries: QueryType[]) => {
   const addTable = (table: QueryTableType) => {
     if (_.isEmpty(table.table_alias)) {
       query.from(`${quoteIdentifier(table.table_schema)}.${quoteIdentifier(table.table_name)}`);
@@ -900,12 +909,20 @@ const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect) => {
       } else {
         addJoinsToQuery(data, query);
       }
-      buildSetQuery(data);
+      buildSetQuery(data, queries);
     }
   }
 };
 
-export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryType[] }) => {
+export const buildQuery = ({
+  data,
+  queries,
+  isSetQuery,
+}: {
+  data: QueryType;
+  queries: QueryType[];
+  isSetQuery?: boolean;
+}) => {
   const query = squelPostgres.select({
     useAsForTableAliasNames: true,
     fieldAliasQuoteCharacter: '',
@@ -919,11 +936,11 @@ export const buildQuery = ({ data, queries }: { data: QueryType; queries: QueryT
   }
 
   if (queries) {
-    addColumnsToQuery(data, query, queries);
+    addColumnsToQuery(data, query, queries, isSetQuery);
   }
-  addTablesToQuery(data, query);
+  addTablesToQuery(data, query, queries);
 
-  const setQueryString = buildSetQuery(data);
+  const setQueryString = buildSetQuery(data, queries);
 
   let orderByString = '';
   if (setQueryString.length > 0) {
