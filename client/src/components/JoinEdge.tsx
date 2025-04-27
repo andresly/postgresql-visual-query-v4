@@ -10,7 +10,7 @@ import {
   SimpleBezierEdge,
 } from '@xyflow/react';
 import { DropdownItem, DropdownMenu, DropdownToggle, UncontrolledDropdown } from 'reactstrap';
-import { useAppDispatch } from '../hooks';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import { removeJoin, updateJoin } from '../actions/queryActions';
 import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
 import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
@@ -20,6 +20,7 @@ import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg'
 import { JoinType, JoinConditionType } from '../types/queryTypes';
 import _ from 'lodash';
 import { useClickAway } from 'react-use';
+import { translations } from '../utils/translations';
 
 interface JoinEdgeData {
   join: JoinType;
@@ -52,6 +53,7 @@ function JoinEdge({
   const [currentJoinType, setCurrentJoinType] = useState<string>('inner');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const language = useAppSelector((state) => state.settings.language);
 
   // Generate path for the edge
   const [edgePath, labelX, labelY] = getBezierPath({
@@ -168,8 +170,8 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('inner', e)}
                 style={currentJoinType === 'inner' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Select only matching rows from <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Inner
-                Join)
+                {translations[language.code].queryBuilder.innerJoinDescription} <strong>{mainTable}</strong>{' '}
+                {translations[language.code].queryBuilder.andText} <strong>{secondaryTable}</strong> (Inner Join)
               </button>
               <button
                 className="dropdown-item"
@@ -177,7 +179,8 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('left', e)}
                 style={currentJoinType === 'left' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Select all rows from <strong>{mainTable}</strong>, matching rows from <strong>{secondaryTable}</strong>{' '}
+                {translations[language.code].queryBuilder.leftJoinDescription} <strong>{mainTable}</strong>,{' '}
+                {translations[language.code].queryBuilder.matchingRowsFrom} <strong>{secondaryTable}</strong>
               </button>
               <button
                 className="dropdown-item"
@@ -185,7 +188,8 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('right', e)}
                 style={currentJoinType === 'right' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Select all rows from <strong>{secondaryTable}</strong>, matching rows from <strong>{mainTable}</strong>{' '}
+                {translations[language.code].queryBuilder.rightJoinDescription} <strong>{secondaryTable}</strong>,{' '}
+                {translations[language.code].queryBuilder.matchingRowsFrom} <strong>{mainTable}</strong>
               </button>
               <button
                 className="dropdown-item"
@@ -193,8 +197,8 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('outer', e)}
                 style={currentJoinType === 'outer' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Select all rows from both <strong>{mainTable}</strong> and <strong>{secondaryTable}</strong> (Full outer
-                join)
+                {translations[language.code].queryBuilder.outerJoinDescription} <strong>{mainTable}</strong>{' '}
+                {translations[language.code].queryBuilder.andText} <strong>{secondaryTable}</strong> (Full outer join)
               </button>
               <button
                 className="dropdown-item"
@@ -202,12 +206,13 @@ function JoinEdge({
                 onClick={(e) => handleUpdateJoinType('cross', e)}
                 style={currentJoinType === 'cross' ? { backgroundColor: '#007bff', color: 'white' } : {}}
               >
-                Combine every row from <strong>{mainTable}</strong> with every row from{' '}
-                <strong>{secondaryTable}</strong> (Cross Join)
+                {translations[language.code].queryBuilder.crossJoinDescription} <strong>{mainTable}</strong>{' '}
+                {translations[language.code].queryBuilder.withEveryRowFrom} <strong>{secondaryTable}</strong> (Cross
+                Join)
               </button>
               <div className="dropdown-divider" />
               <button className="dropdown-item text-danger" type="button" onClick={handleRemoveJoin}>
-                Delete Join
+                {translations[language.code].queryBuilder.deleteJoin}
               </button>
             </div>
           )}

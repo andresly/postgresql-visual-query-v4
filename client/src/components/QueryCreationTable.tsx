@@ -22,12 +22,9 @@ const tooltipStyle = {
 };
 
 // Format tooltip content to make links clickable
-const formatTooltipContent = (content: string) => {
-  const { language } = useAppSelector((store) => ({
-    language: store.settings.language,
-  }));
-  // Check if the content contains link
-  if (!content.includes('https://')) return content;
+const formatTooltipContent = (content: string, languageCode: 'eng' | 'est') => {
+  // Check if content exists and contains link
+  if (!content || !content.includes('https://')) return content;
 
   // Split content at "More info: " to separate text and link
   const parts = content.split(/More info: |Rohkem infot: /);
@@ -37,7 +34,7 @@ const formatTooltipContent = (content: string) => {
   return (
     <div>
       {text}
-      <span>{translations[language.code].queryBuilder.moreInfo} </span>
+      <span>{translations[languageCode].queryBuilder.moreInfo} </span>
       <a
         href={link}
         target="_blank"
@@ -175,7 +172,7 @@ export const QueryCreationTable = () => {
     ...Array(maxConditions - 1)
       .fill(null)
       .map((_, i) => ({
-        id: `or-${i + 1}`,
+        id: `or-1`,
         label: translations[language.code].queryBuilder.orLabel,
       })),
   ];
@@ -235,6 +232,7 @@ export const QueryCreationTable = () => {
                     translations[language.code].tooltips[
                       label.id as keyof (typeof translations)[typeof language.code]['tooltips']
                     ],
+                    language.code as 'eng' | 'est',
                   )}
                 </CustomTooltip>
               </div>
@@ -284,7 +282,7 @@ export const QueryCreationTable = () => {
               toggleTooltip={toggleTooltip}
               position="top"
             >
-              {formatTooltipContent(translations[language.code].tooltips.distinct)}
+              {formatTooltipContent(translations[language.code].tooltips.distinct, language.code as 'eng' | 'est')}
             </CustomTooltip>
           </div>
 
@@ -297,7 +295,7 @@ export const QueryCreationTable = () => {
               onChange={() => dispatch(switchLimit())}
             />
             <CustomTooltip id="limit-switch" activeTooltip={activeTooltip} toggleTooltip={toggleTooltip} position="top">
-              {formatTooltipContent(translations[language.code].tooltips.limit)}
+              {formatTooltipContent(translations[language.code].tooltips.limit, language.code as 'eng' | 'est')}
             </CustomTooltip>
           </div>
 
@@ -319,7 +317,7 @@ export const QueryCreationTable = () => {
                 toggleTooltip={toggleTooltip}
                 position="top"
               >
-                {formatTooltipContent(translations[language.code].tooltips.limitValueD)}
+                {formatTooltipContent(translations[language.code].tooltips.limitValueD, language.code as 'eng' | 'est')}
               </CustomTooltip>
 
               <div className="d-flex align-items-center ml-2" style={{ position: 'relative' }}>
@@ -336,7 +334,7 @@ export const QueryCreationTable = () => {
                   toggleTooltip={toggleTooltip}
                   position="top"
                 >
-                  {formatTooltipContent(translations[language.code].tooltips.withTies)}
+                  {formatTooltipContent(translations[language.code].tooltips.withTies, language.code as 'eng' | 'est')}
                 </CustomTooltip>
               </div>
             </InputGroup>
