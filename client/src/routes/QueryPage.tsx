@@ -263,7 +263,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     }
   }, [tables, containerWidth, queryType, setNodes, query.id]);
 
-  const getMarker = (joinType: string, isMainSide: boolean): { markerStart?: any; markerEnd?: any } => {
+  const getMarker = (joinType: string) => {
     const marker = {
       type: MarkerType.ArrowClosed,
       color: 'black',
@@ -276,11 +276,11 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
       case 'left':
         // Arrow TO secondary table → secondary is NOT main side
-        return isMainSide ? { markerEnd: marker } : { markerStart: marker };
+        return { markerEnd: marker };
 
       case 'right':
         // Arrow TO main table → main side gets the arrow start
-        return isMainSide ? { markerStart: marker } : { markerEnd: marker };
+        return { markerStart: marker };
 
       case 'inner':
       case 'cross':
@@ -296,8 +296,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       return;
     }
 
-    const mainTableId = tables[0].id; // ✅ Your main table is always the first one!
-
     const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
       return join.conditions.map((condition, condIndex) => {
         const sourceId = `table-${condition.main_table.id}`;
@@ -307,11 +305,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
         const sourceHandle = `${condition.main_table.id}-${condition.main_column}-${sourceSide}-source`;
         const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
 
-        const isSource = sourceId === `table-${join.main_table.id}`;
-        const isSourceMainSide =
-          (isSource ? join.main_table.id : join.conditions[0].secondary_table.id) === mainTableId;
-
-        const markerConfig = getMarker(join.type, isSourceMainSide);
+        const markerConfig = getMarker(join.type);
 
         const edgeId = `join-${query.id}-${join.id}-${condIndex}`;
 
@@ -379,7 +373,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         if (!sourceTable || !targetTable) return;
 
-        const firstTableId = tables[0].id;
+        const firstTableId = Math.min(sourceTableId, targetTableId);
 
         let mainTable, secondaryTable;
         let mainColumnName, secondaryColumnName;

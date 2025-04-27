@@ -522,8 +522,10 @@ const addColumnsToQuery = (data: QueryType, query: squel.PostgresSelect, queries
     }
   });
 
+  //check if any of the queries have sets.
+  const hasSets = queries.some((query) => query.sets.length > 0);
   // Add order by here only when Don't have sets
-  if (data.sets.length === 0) {
+  if (!hasSets) {
     // Handle ordering separately, sorted by column_order_nr
     columns
       // First filter to keep only columns that should be in ORDER BY (where column_order is true)
@@ -753,8 +755,6 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
 
       if (mainUsed || secondaryUsed) {
         orderedJoins.push(join);
-        markTableAsUsed(join.main_table);
-        join.conditions.forEach((cond) => markTableAsUsed(cond.secondary_table));
         remaining.splice(i, 1);
         i--;
       }
@@ -792,7 +792,7 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
     });
   });
 
-  // Apply joins (no need to flip anymore!)
+  // Apply joins correctly!
   Object.values(mergedJoins).forEach(({ join, conditions }) => {
     const firstCondition = join.conditions[0];
     if (!firstCondition) {
@@ -800,7 +800,27 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
       return;
     }
 
-    const joinTarget = firstCondition.secondary_table; // always secondary table
+    const mainTableKey = getTableKey(join.main_table);
+    const secondaryTableKeys = join.conditions.map((cond) => getTableKey(cond.secondary_table));
+
+    const allSecondaryUsed = secondaryTableKeys.every((key) => usedTables.has(key));
+    const mainUsed = usedTables.has(mainTableKey);
+
+    let joinTarget;
+
+    if (mainUsed && !allSecondaryUsed) {
+      joinTarget = join.conditions[0].secondary_table;
+    } else if (!mainUsed && allSecondaryUsed) {
+      joinTarget = join.main_table;
+    } else if (!mainUsed && !allSecondaryUsed) {
+      // Pick secondary by default (or adjust this logic if needed)
+      joinTarget = join.conditions[0].secondary_table;
+    } else {
+      // This used to skip, but now we allow the join (to avoid deadlocks):
+      console.warn('Both sides seem used, but join might still be needed (alias collision or complex logic):', join);
+      return; // <-- This prevents duplicate joins!
+    }
+
     const joinAlias = joinTarget.table_alias || undefined;
     const joinRef = `${quoteIdentifier(joinTarget.table_schema)}.${quoteIdentifier(joinTarget.table_name)}`;
 

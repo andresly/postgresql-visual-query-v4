@@ -33,6 +33,9 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const [cursorPosition, setCursorPosition] = useState<number>(0);
   const [activeInputIndex, setActiveInputIndex] = useState<number>(-1);
   const textareaRefs = React.useRef<(HTMLTextAreaElement | HTMLInputElement | null)[]>([]);
+  const [isCanShowDisabled, setIsCanShowDisabled] = useState(
+    !data.column_alias && !data.column_name && !data.table_name,
+  );
 
   // Local state for input fields
   const [columnName, setColumnName] = useState(data.column_name);
@@ -244,8 +247,20 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       ...column,
       [e.target.name]: !column[e.target.name as keyof QueryColumnType],
     };
+    setIsCanShowDisabled(true);
     dispatch(updateColumn(column));
   };
+
+  useEffect(() => {
+    if (!data.column_alias && !data.column_name && !data.table_name) {
+      let column = _.cloneDeep(data);
+      column = {
+        ...column,
+        display_in_query: false,
+      };
+      dispatch(updateColumn(column));
+    }
+  }, [data.column_alias, data.column_name, data.table_name]);
 
   const handleOnChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const name = e.target.name;
@@ -455,6 +470,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               id={`show-${id}`}
               label="Show"
               checked={data.display_in_query}
+              disabled={isCanShowDisabled}
               onChange={handleSwitch}
               name="display_in_query"
             />
