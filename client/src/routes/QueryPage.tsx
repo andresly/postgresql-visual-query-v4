@@ -123,7 +123,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // React Flow states with TypeScript errors bypassed
   // @ts-ignore - bypass TypeScript errors for node state
-  const [nodes, setNodes] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
   // @ts-ignore - bypass TypeScript errors for edge state
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -220,6 +220,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
           typeof parsedState.viewport === 'object'
         ) {
           savedState = parsedState;
+        } else {
+          console.warn('Invalid saved flow state structure');
         }
       } catch (e) {
         console.warn('Invalid saved flow state', e);
@@ -234,38 +236,13 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       // Check if we have a saved position for this table
       const savedNode = savedState?.nodes?.find((n) => n.id === `table-${table.id}`);
 
-      if (savedNode) {
-        // If a saved position exists, use it
-        return {
-          id: `table-${table.id}`,
-          type: 'tableNode',
-          position: savedNode.position,
-          data: {
-            table,
-            index,
-            isDraggable: !['DELETE', 'UPDATE'].includes(queryType),
-          },
-          draggable: !['DELETE', 'UPDATE'].includes(queryType),
-        };
-      }
-
-      // If no saved position, find the leftmost node
-      const rightMostNode = nodes.reduce((leftmost: Node, node: Node) => {
-        return node.position.x > leftmost.position.x ? node : leftmost;
-      }, nodes[0]);
-
-      // Place the new node to the right of the leftmost node
-      const xPos = rightMostNode
-        ? rightMostNode.position.x + (rightMostNode.measured?.width ? rightMostNode.measured.width + 100 : 250)
-        : (index % tablesPerRow) * gridConfig.horizontalSpacing + 50;
-      const yPos = rightMostNode
-        ? rightMostNode.position.y
-        : Math.floor(index / tablesPerRow) * gridConfig.verticalSpacing + 50;
-
       return {
         id: `table-${table.id}`,
         type: 'tableNode',
-        position: { x: xPos, y: yPos },
+        position: savedNode?.position || {
+          x: (index % tablesPerRow) * gridConfig.horizontalSpacing + 50,
+          y: Math.floor(index / tablesPerRow) * gridConfig.verticalSpacing + 50,
+        },
         data: {
           table,
           index,

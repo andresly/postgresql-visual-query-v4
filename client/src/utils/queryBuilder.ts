@@ -940,7 +940,7 @@ export const buildQuery = ({
   }
   addTablesToQuery(data, query, queries);
 
-  const setQueryString = buildSetQuery(data, queries);
+  const setQueryString = buildSetQuery(data, queries).replace(/;$/, '');
 
   let orderByString = '';
   if (setQueryString.length > 0) {
@@ -948,7 +948,7 @@ export const buildQuery = ({
   }
 
   if (data.limit && data.limitValue) {
-    return `${`${query.toString() + setQueryString}\n` + `FETCH FIRST ${data.limitValue} ROWS ${data.withTies ? 'WITH TIES;' : 'ONLY;'}`}`;
+    return `${`${query.toString() + setQueryString + orderByString}\n` + `FETCH FIRST ${data.limitValue} ROWS ${data.withTies ? 'WITH TIES;' : 'ONLY;'}`}`;
   }
 
   return `${query}${setQueryString}${orderByString};`;
@@ -966,11 +966,9 @@ const addOrderByForSetQuery = (queries: QueryType[]) => {
         return aOrder - bOrder;
       })
       .forEach((column) => {
-        const tableOrAlias = column.table_alias || column.table_name;
+        // For set queries, use just the column name or alias without table prefix
         const columnRef =
-          column.column_alias.length > 0
-            ? quoteIdentifier(column.column_alias)
-            : `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
+          column.column_alias.length > 0 ? quoteIdentifier(column.column_alias) : quoteIdentifier(column.column_name);
 
         orderByClauses.push(`${columnRef} ${column.column_order_dir ? 'ASC' : 'DESC'}`);
       });

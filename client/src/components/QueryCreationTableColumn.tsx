@@ -247,7 +247,6 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       ...column,
       [e.target.name]: !column[e.target.name as keyof QueryColumnType],
     };
-    setIsCanShowDisabled(true);
     dispatch(updateColumn(column));
   };
 
@@ -259,6 +258,9 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
         display_in_query: false,
       };
       dispatch(updateColumn(column));
+      setIsCanShowDisabled(true);
+    } else {
+      setIsCanShowDisabled(false);
     }
   }, [data.column_alias, data.column_name, data.table_name]);
 
