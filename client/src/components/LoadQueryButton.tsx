@@ -23,6 +23,7 @@ interface SavedQueryData {
   activeQuery: QueryType;
   allQueries: QueryType[];
   flowState: SavedFlowState | null;
+  allQueryFlowStates?: Record<number, SavedFlowState>;
   databaseInfo: DatabaseInfo;
 }
 
@@ -110,7 +111,7 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
       const queryData = localStorage.getItem(`query-${selectedQuery.key}`);
       if (queryData) {
         const parsedData = JSON.parse(queryData) as SavedQueryData;
-        const { activeQuery, allQueries, flowState, databaseInfo } = parsedData;
+        const { activeQuery, allQueries, flowState, allQueryFlowStates, databaseInfo } = parsedData;
 
         // Check if the saved query is from the current database
         if (databaseInfo.database !== hostInfo.database) {
@@ -135,7 +136,41 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
         // Save flow state to sessionStorage if available
         if (flowState) {
           try {
+            // Save flow state for active query
             sessionStorage.setItem(`flow-state-${activeQuery.id}`, JSON.stringify(flowState));
+
+            // Also save flow states for all other queries if available
+            if (allQueryFlowStates) {
+              console.log('Saving all query flow states:', Object.keys(allQueryFlowStates));
+              Object.entries(allQueryFlowStates).forEach(([queryId, queryFlowState]) => {
+                const flowStateKey = `flow-state-${queryId}`;
+                console.log(`Saving flow state for query ${queryId} to ${flowStateKey}`);
+                sessionStorage.setItem(flowStateKey, JSON.stringify(queryFlowState));
+              });
+            } else {
+              // Fallback to old behavior for backward compatibility
+              console.log('No allQueryFlowStates found, using fallback behavior');
+              // Also check if there are flow states for other queries in the saved data
+              allQueries.forEach((query) => {
+                // If this is not the active query, we need to manually create a flow state for it
+                if (query.id !== activeQuery.id) {
+                  console.log(`Creating flow state for query ${query.id} based on active query flow state`);
+
+                  // Create a new flow state based on the active query's flow state
+                  const newFlowState = {
+                    nodes: flowState.nodes.map((node) => {
+                      // The ID format is "table-{table.id}" not "table-{query.id}-{something}"
+                      // so we don't need to modify the node IDs, just use them as is
+                      return { ...node };
+                    }),
+                    viewport: flowState.viewport,
+                  };
+
+                  // Save this new flow state
+                  sessionStorage.setItem(`flow-state-${query.id}`, JSON.stringify(newFlowState));
+                }
+              });
+            }
           } catch (err) {
             console.warn('Unable to save flow state to sessionStorage:', err);
           }

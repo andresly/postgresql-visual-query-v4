@@ -119,7 +119,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   const [containerWidth, setContainerWidth] = useState(1200);
 
   // Default viewport
-  const defaultViewport = { x: -100, y: 0, zoom: 0.2 };
+  const defaultViewport = { x: 0, y: 0, zoom: 0.6 };
 
   // Add debounced viewport update to fix ResizeObserver issues
   const debouncedViewportUpdate = useCallback(
@@ -282,7 +282,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       // Place the new node to the right of the leftmost node
       const xPos = rightMostNode
         ? rightMostNode.position.x + (rightMostNode.measured?.width ? rightMostNode.measured.width + 100 : 250)
-        : (index % tablesPerRow) * gridConfig.horizontalSpacing + 50;
+        : -600; // Position from the left edge - same for all queries
       const yPos = rightMostNode
         ? rightMostNode.position.y
         : Math.floor(index / tablesPerRow) * gridConfig.verticalSpacing + 50;

@@ -6,7 +6,7 @@ import { deleteQueries, removeMainFromQueries } from '../actions/queriesActions'
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryType } from '../types/queryTypes';
 
-const DeleteQueryButton: React.FC = () => {
+const DeleteQueryButton: React.FC<{ queryId: number }> = ({ queryId }) => {
   const dispatch = useAppDispatch();
   const queries = useAppSelector((state) => state.queries);
 
@@ -21,6 +21,8 @@ const DeleteQueryButton: React.FC = () => {
     } else {
       dispatch(deleteQueries());
     }
+
+    sessionStorage.removeItem(`flow-state-${queryId}`);
   };
 
   return (

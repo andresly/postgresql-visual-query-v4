@@ -50,7 +50,7 @@ export const NavBarQueryTab: React.FC<NavBarQueryTabProps> = ({ queryTabContent,
           {queryName}
         </NavLink>
       </Button>
-      {showDeleteBtn() && <DeleteQueryButton />}
+      {showDeleteBtn() && <DeleteQueryButton queryId={queryTabContent.id} />}
     </div>
   );
 };
