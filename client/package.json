@@ -51,7 +51,7 @@
   },
   "scripts": {
     "start": "react-app-rewired start /src/client/index.js",
-    "serve": "serve -s build",
+    "serve": "serve -s build -l $PORT",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",
