@@ -121,6 +121,16 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   // Default viewport
   const defaultViewport = { x: -100, y: 0, zoom: 0.2 };
 
+  // Add debounced viewport update to fix ResizeObserver issues
+  const debouncedViewportUpdate = useCallback(
+    _.debounce((viewport: Viewport) => {
+      if (reactFlowInstance.current) {
+        reactFlowInstance.current.setViewport(viewport);
+      }
+    }, 200),
+    [],
+  );
+
   // React Flow states with TypeScript errors bypassed
   // @ts-ignore - bypass TypeScript errors for node state
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -181,9 +191,22 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   );
 
   // Function to get ReactFlow instance
-  const onInit = useCallback((instance: any) => {
-    reactFlowInstance.current = instance;
-  }, []);
+  const onInit = useCallback(
+    (instance: any) => {
+      reactFlowInstance.current = instance;
+
+      // Special handling for Main query (id = 0) to avoid ResizeObserver issues
+      if (query.id === 0 && tables.length > 0) {
+        // Use a short delay to ensure stable initialization
+        setTimeout(() => {
+          if (instance) {
+            instance.fitView({ padding: 0.2 });
+          }
+        }, 50);
+      }
+    },
+    [query.id, tables.length],
+  );
 
   function parseHandleId(handleId: string) {
     // Match the structure: tableId-columnName-side-type
@@ -282,9 +305,15 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
     // If we have a saved viewport and instance is available, set it after a small delay
     if (savedState?.viewport && reactFlowInstance.current) {
-      setTimeout(() => {
-        reactFlowInstance.current.setViewport(savedState?.viewport as Viewport);
-      }, 100);
+      if (query.id === 0) {
+        // For Main query (id=0), use debounced update to avoid ResizeObserver issues
+        debouncedViewportUpdate(savedState.viewport as Viewport);
+      } else {
+        // For other queries, normal behavior
+        setTimeout(() => {
+          reactFlowInstance.current.setViewport(savedState?.viewport as Viewport);
+        }, 100);
+      }
     }
   }, [tables, containerWidth, queryType, setNodes, query.id]);
 
@@ -321,54 +350,63 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       return;
     }
 
-    const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
-      return join.conditions.map((condition, condIndex) => {
-        const sourceId = `table-${condition.main_table.id}`;
-        const targetId = `table-${condition.secondary_table.id}`;
-        const sourceSide = condition.main_table.joinHandleSide || 'right';
-        const targetSide = condition.secondary_table.joinHandleSide || 'left';
-        const sourceHandle = `${condition.main_table.id}-${condition.main_column}-${sourceSide}-source`;
-        const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
+    // For Main query, add a small delay to ensure nodes are properly positioned
+    const createEdges = () => {
+      const newEdges = joins.flatMap((join: JoinType): ReactFlowEdge[] => {
+        return join.conditions.map((condition, condIndex) => {
+          const sourceId = `table-${condition.main_table.id}`;
+          const targetId = `table-${condition.secondary_table.id}`;
+          const sourceSide = condition.main_table.joinHandleSide || 'right';
+          const targetSide = condition.secondary_table.joinHandleSide || 'left';
+          const sourceHandle = `${condition.main_table.id}-${condition.main_column}-${sourceSide}-source`;
+          const targetHandle = `${condition.secondary_table.id}-${condition.secondary_column}-${targetSide}-target`;
 
-        const markerConfig = getMarker(join.type);
+          const markerConfig = getMarker(join.type);
 
-        const edgeId = `join-${query.id}-${join.id}-${condIndex}`;
+          const edgeId = `join-${query.id}-${join.id}-${condIndex}`;
 
-        return {
-          id: edgeId,
-          source: sourceId,
-          target: targetId,
-          style: {
-            stroke: 'black',
-            strokeWidth: 3,
-            strokeDasharray: join.type === 'cross' ? '5,5' : 'none',
-            cursor: 'pointer',
-          },
-          sourceHandle,
-          targetHandle,
-          type: 'joinEdge',
-          animated: false,
-          ...markerConfig,
-          data: {
-            isLabelOpen: true,
-            join,
-            condition,
-            mainTable: condition.main_table.table_name,
-            secondaryTable: condition.secondary_table.table_name,
-            sourceColumn: condition.main_column,
-            targetColumn: condition.secondary_column,
-            isActive: edgeId === activeEdgeId,
-            setIsActiveNull: () => {
-              setActiveEdgeId(null);
+          return {
+            id: edgeId,
+            source: sourceId,
+            target: targetId,
+            style: {
+              stroke: 'black',
+              strokeWidth: 3,
+              strokeDasharray: join.type === 'cross' ? '5,5' : 'none',
+              cursor: 'pointer',
             },
-          },
-        };
+            sourceHandle,
+            targetHandle,
+            type: 'joinEdge',
+            animated: false,
+            ...markerConfig,
+            data: {
+              isLabelOpen: true,
+              join,
+              condition,
+              mainTable: condition.main_table.table_name,
+              secondaryTable: condition.secondary_table.table_name,
+              sourceColumn: condition.main_column,
+              targetColumn: condition.secondary_column,
+              isActive: edgeId === activeEdgeId,
+              setIsActiveNull: () => {
+                setActiveEdgeId(null);
+              },
+            },
+          };
+        });
       });
-    });
 
-    // Set the edges
-    // @ts-ignore - bypass TypeScript for edge type assignment
-    setEdges(newEdges);
+      // @ts-ignore - bypass TypeScript for edge type assignment
+      setEdges(newEdges);
+    };
+
+    if (query.id === 0) {
+      // For Main query, add a small delay to reduce ResizeObserver issues
+      setTimeout(createEdges, 50);
+    } else {
+      createEdges();
+    }
   }, [joins, setEdges, tables, activeEdgeId, query.id]);
 
   // Handle new connections
@@ -560,6 +598,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             onEdgeClick={(event, clickedEdge) => {
               setActiveEdgeId((clickedEdge as any).id);
             }}
+            key={`flow-${query.id}`}
           >
             <Controls />
             <Background gap={16} color="#f8f8f8" />
