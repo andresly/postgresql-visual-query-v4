@@ -40,9 +40,7 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
 
       const allQueries = [...state, action.payload.sourceQuery];
       // Get all existing queries and compute next available ID
-      console.log('state: ', state);
       const allIds = allQueries.map((query) => query.id);
-      console.log('allIds: ', allIds);
       const maxId = Math.max(...allIds);
       id = maxId + 1;
 
@@ -56,10 +54,6 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
         id, // Override with new ID
         queryName: `Query ${id}`, // Override with new name
       };
-
-      console.log('source query: ', action.payload.sourceQuery);
-      console.log({ newQuery });
-      console.log('final state: ', [...state, newQuery]);
 
       // Ensure we keep ALL existing queries intact and just add the new one
       return [...state, newQuery];
