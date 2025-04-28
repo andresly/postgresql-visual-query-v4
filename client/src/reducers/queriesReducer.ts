@@ -27,7 +27,6 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
         id = 1;
       }
 
-      console.log({ id });
       const query = {
         ...INIT_QUERIES_STATE,
         id,
@@ -39,14 +38,13 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
     case COPY_QUERY: {
       let id;
 
+      const allQueries = [...state, action.payload.sourceQuery];
       // Get all existing queries and compute next available ID
-      if (state.length) {
-        const allIds = state.map((query) => query.id);
-        const maxId = Math.max(...allIds);
-        id = maxId + 1;
-      } else {
-        id = 1;
-      }
+      console.log('state: ', state);
+      const allIds = allQueries.map((query) => query.id);
+      console.log('allIds: ', allIds);
+      const maxId = Math.max(...allIds);
+      id = maxId + 1;
 
       // Create a completely new query with a deep clone of the source
       const sourceQuery = _.cloneDeep(action.payload.sourceQuery);
@@ -58,6 +56,10 @@ export const queriesReducer: Reducer<QueryType[], QueriesActions> = (state = [],
         id, // Override with new ID
         queryName: `Query ${id}`, // Override with new name
       };
+
+      console.log('source query: ', action.payload.sourceQuery);
+      console.log({ newQuery });
+      console.log('final state: ', [...state, newQuery]);
 
       // Ensure we keep ALL existing queries intact and just add the new one
       return [...state, newQuery];
