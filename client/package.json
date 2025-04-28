@@ -2,7 +2,7 @@
   "name": "postgresql-visual-query-2",
   "version": "0.1.0",
   "private": true,
-  "homepage": "./",
+  "homepage": "/postgres-query",
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.36",
     "@fortawesome/free-solid-svg-icons": "^5.15.4",
@@ -51,7 +51,7 @@
   },
   "scripts": {
     "start": "react-app-rewired start /src/client/index.js",
-    "serve": "serve -s build -l $PORT",
+    "serve": "serve -s build",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-app-rewired eject",

@@ -7,7 +7,7 @@ import dotenv from "dotenv";
 
 const app = express();
 
-const port = process.env.SERVER_PORT || 8080;
+const port = process.env.SERVER_PORT || 8081;
 
 if (!dotenv.config()) {
   throw new Error("⚠️  Couldn't find .env file  ⚠️");
