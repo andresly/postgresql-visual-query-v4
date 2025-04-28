@@ -1,25 +1,9 @@
-import React, { memo, useEffect, useState, useRef } from 'react';
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  useReactFlow,
-  Edge,
-  EdgeProps,
-  Position,
-  SimpleBezierEdge,
-} from '@xyflow/react';
-import { DropdownItem, DropdownMenu, DropdownToggle, UncontrolledDropdown } from 'reactstrap';
+import React, { useEffect, useState, useRef } from 'react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, useReactFlow, EdgeProps } from '@xyflow/react';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { removeJoin, updateJoin } from '../actions/queryActions';
-import { ReactComponent as LeftJoinIcon } from '../assets/icons/left-join.svg';
-import { ReactComponent as RightJoinIcon } from '../assets/icons/right-join.svg';
-import { ReactComponent as InnerJoinIcon } from '../assets/icons/inner-join.svg';
-import { ReactComponent as OuterJoinIcon } from '../assets/icons/outer-join.svg';
-import { ReactComponent as CorssJoinIcon } from '../assets/icons/cross-join.svg';
 import { JoinType, JoinConditionType } from '../types/queryTypes';
 import _ from 'lodash';
-import { useClickAway } from 'react-use';
 import { translations } from '../utils/translations';
 
 interface JoinEdgeData {
