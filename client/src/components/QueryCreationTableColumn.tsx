@@ -450,19 +450,21 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
 
           {/* Sort order */}
           <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
-            <select
+            <Input
+              type="number"
               name="column_order_nr"
               value={data.column_order_nr || ''}
-              onChange={handleOnSave}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                const value = e.target.value;
+                // Only allow positive numbers
+                if (value === '' || parseInt(value, 10) > 0) {
+                  handleOnSave(e as any);
+                }
+              }}
+              min="1"
               className="form-control"
-            >
-              <option value="">None</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
+              placeholder="Sort order number"
+            />
           </div>
 
           {/* Show */}
