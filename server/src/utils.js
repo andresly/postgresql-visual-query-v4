@@ -26,7 +26,6 @@ const connectToDatabase = async (req, res) => {
     database: req.body.database,
   };
 
-  console.log({ data });
   const db = new pg.Client(data);
 
   db.connect().catch((err) => {

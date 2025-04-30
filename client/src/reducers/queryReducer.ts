@@ -324,6 +324,7 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       table.id = state.lastTableId + 1;
       table.table_alias = '';
 
+      const tablesCount = state.tables.length;
       const copies = state.tables.filter(
         (stateTable) =>
           _.isEqual(stateTable.table_name, table.table_name) && _.isEqual(stateTable.table_schema, table.table_schema),
@@ -349,6 +350,8 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
         const index = largestCopy + 1;
         table.table_alias = `${table.table_name}_${index}`;
       }
+
+      table.selectIndex = tablesCount;
 
       return {
         ...state,

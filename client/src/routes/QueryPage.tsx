@@ -384,8 +384,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
               isLabelOpen: true,
               join,
               condition,
-              mainTable: condition.main_table.table_name,
-              secondaryTable: condition.secondary_table.table_name,
+              mainTable:
+                condition.main_table.table_alias !== ''
+                  ? condition.main_table.table_alias
+                  : condition.main_table.table_name,
+              secondaryTable:
+                condition.secondary_table.table_alias !== ''
+                  ? condition.secondary_table.table_alias
+                  : condition.secondary_table.table_name,
               sourceColumn: condition.main_column,
               targetColumn: condition.secondary_column,
               isActive: edgeId === activeEdgeId,
@@ -411,6 +417,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // Handle new connections
   const onConnect = (params: Connection) => {
+    // console.log('tables', query.tables);
     // Extract table and column IDs from the source and target handles
     const sourceHandleId = params.sourceHandle;
     const targetHandleId = params.targetHandle;
@@ -428,6 +435,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       if (source && target) {
         const sourceTableId = source.tableId;
         const targetTableId = target.tableId;
+
         const sourceColumnName = source.columnName;
         const targetColumnName = target.columnName;
 
@@ -436,12 +444,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         if (!sourceTable || !targetTable) return;
 
-        const firstTableId = Math.min(sourceTableId, targetTableId);
+        const sourceTableSelectedIndex = sourceTable.selectIndex;
+        const targetTableSelectedIndex = targetTable.selectIndex;
+
+        const firstTableId = Math.min(sourceTableSelectedIndex, targetTableSelectedIndex);
 
         let mainTable, secondaryTable;
         let mainColumnName, secondaryColumnName;
         let mainSide, secondarySide;
-
         // always make first table in tables row the main table
         if (sourceTableId === firstTableId) {
           mainTable = sourceTable;
@@ -508,6 +518,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
                 table_alias: mainTable.table_alias,
                 table_type: mainTable.table_type,
                 columns: mainTable.columns,
+                selectIndex: mainTable.selectIndex,
               },
               secondary_column: secondaryColumnName,
               secondary_table: {
@@ -518,18 +529,20 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
                 table_alias: secondaryTable.table_alias,
                 table_type: secondaryTable.table_type,
                 columns: secondaryTable.columns,
+                selectIndex: secondaryTable.selectIndex,
               },
             },
           ],
         };
 
+        // console.log({ targetTable });
         const join = _.cloneDeep(newJoin); // safe clone if needed
 
         // Add the edge to React Flow for visualization with the join data
         // @ts-ignore - bypass TypeScript for edge type in addEdge
 
-        setEdges((eds) =>
-          addEdge(
+        setEdges((eds) => {
+          return addEdge(
             {
               ...params,
               id: `join-${join.id}-0`,
@@ -548,15 +561,15 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
                 isLabelOpen: true,
                 join,
                 condition: join.conditions[0],
-                mainTable: sourceTable?.table_name,
-                secondaryTable: targetTable?.table_name,
+                mainTable: sourceTable.table_alias !== '' ? sourceTable.table_alias : sourceTable.table_name,
+                secondaryTable: targetTable?.table_name !== '' ? targetTable.table_alias : targetTable.table_name,
                 sourceColumn: source.columnName,
                 targetColumn: target.columnName,
               },
             },
             eds,
-          ),
-        );
+          );
+        });
 
         // Add the join first
         dispatch(addJoin(join, true));

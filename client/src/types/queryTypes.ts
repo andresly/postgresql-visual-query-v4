@@ -86,6 +86,7 @@ export type QueryTableType = {
   table_type: string;
   joinHandleSide?: 'left' | 'right';
   columns: QueryColumnType[];
+  selectIndex: number;
 };
 
 export type JoinConditionType = {

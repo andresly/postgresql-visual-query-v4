@@ -81,7 +81,6 @@ router.post("/reserved-keywords", async (req, res) => {
   try {
     const db = await connectToPostgres(req, res);
     await db.query(queries.postgre.reservedKeywords, (err, queryRes) => {
-      console.log(queryRes);
       const reservedKeywords = queryRes.rows.filter(
         (row) => row.catdesc !== "unreserved",
       );
