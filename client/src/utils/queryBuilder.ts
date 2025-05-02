@@ -49,38 +49,25 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     return operators.some((op) => str.includes(op));
   };
 
-  // 1) Handle aggregates first
-  if (column.column_aggregate && column.column_aggregate.length > 0) {
-    // If there is an aggregate, we order by its alias if provided and not an expression/function
-    if (
-      column.column_alias.length > 0 &&
-      column.column_aggregate.length === 0 &&
-      column.column_single_line_function.length === 0
-    ) {
-      // Only use alias if NOT an expression or function
-      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
-    } else if (column.column_alias.length > 0) {
-      // Aggregate with alias: use aggregate(column_alias)
-      const aggField = `${column.column_aggregate}(${quoteIdentifier(column.column_alias)})`;
-      query.order(aggField, column.column_order_dir);
-    } else {
-      // Aggregate without alias: use aggregate(tableOrAlias.column_name)
-      const tableOrAlias = column.table_alias || column.table_name;
-      const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
-      query.order(aggField, column.column_order_dir);
-    }
+  // If we have an alias, use it directly for aggregate and single-line functions
+  if (
+    column.column_alias.length > 0 &&
+    (column.column_aggregate.length > 0 || column.column_single_line_function.length > 0)
+  ) {
+    query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
     return;
   }
 
-  // 2) Handle single-line functions
-  if (column.column_single_line_function && column.column_single_line_function.length > 0) {
-    // If there's an alias, use it directly without wrapping in the function
-    if (column.column_alias.length > 0) {
-      query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
-      return;
-    }
+  // 1) Handle aggregates without alias
+  if (column.column_aggregate && column.column_aggregate.length > 0) {
+    const tableOrAlias = column.table_alias || column.table_name;
+    const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
+    query.order(aggField, column.column_order_dir);
+    return;
+  }
 
-    // Otherwise, use table_alias or table_name + the column name and wrap in the function
+  // 2) Handle single-line functions without alias
+  if (column.column_single_line_function && column.column_single_line_function.length > 0) {
     const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
 
     // Check if column_name is an expression
@@ -114,6 +101,7 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
   }
 };
+
 const addColumnsToQuery = (
   data: QueryType,
   query: squel.PostgresSelect,
