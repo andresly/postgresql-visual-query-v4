@@ -97,7 +97,7 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
             <SaveQueryButton />
             <LoadQueryButton />
             <ClearQueryButton />
-            <CopyQueryButton />
+            {/*<CopyQueryButton />*/}
           </Col>
         </Row>
       </div>
