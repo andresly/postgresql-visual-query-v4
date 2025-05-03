@@ -57,8 +57,14 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
   };
 
   return (
-    <div className="w-100 pr-1">
-      <Button size="sm" color={btnSelected} id={id} className="btn-block my-1 pt-0 text-left">
+    <div className="w-100 pr-1 position-relative my-1 ">
+      <Button
+        size="sm"
+        color={btnSelected}
+        id={id}
+        className="btn-block pt-0 text-left"
+        style={{ paddingRight: '30px' }}
+      >
         <div className="d-flex justify-content-between align-items-center">
           <div onClick={handleOnClick} className="w-100">
             <small color={tableTypeColor} className="text-truncate align-self-start">
@@ -68,13 +74,6 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
               {data.table_type}
             </small>
             <div className="text-truncate">{` ${data.table_name}`}</div>
-          </div>
-          <div>
-            <FontAwesomeIcon
-              icon={faExternalLinkAlt}
-              style={{ width: '1rem', height: '1rem' }}
-              onClick={handleOpenNewTab}
-            />
           </div>
         </div>
       </Button>
@@ -89,6 +88,14 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
       >
         {data.table_name}
       </Tooltip>
+      <div className={'open-new-tab-btn'}>
+        <FontAwesomeIcon
+          icon={faExternalLinkAlt}
+          style={{ width: '1rem', height: '1rem' }}
+          color={'white'}
+          onClick={handleOpenNewTab}
+        />
+      </div>
     </div>
   );
 };

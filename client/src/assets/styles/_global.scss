@@ -64,3 +64,24 @@
   justify-content: center;
   min-width: 120px;
 }
+
+.open-new-tab-btn{
+  position: absolute;
+  z-index: 100;
+  top: 50%;
+  transform: translatey(-50%);
+  right: 4px;
+  background: #6c757d;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 12px;
+  cursor: pointer;
+  border-top-right-radius: 0.2rem;
+  border-bottom-right-radius: 0.2rem;
+
+  &:hover {
+    background: #5a6268;
+  }
+}
