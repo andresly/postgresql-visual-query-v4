@@ -88,9 +88,9 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
         position={Position.Right}
         style={{
           background: '#555',
-          width: '8px',
-          height: '8px',
-          right: '-4px',
+          width: '10px',
+          height: '10px',
+          right: '-2px',
           zIndex: 2,
         }}
       />
@@ -100,9 +100,9 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
         position={Position.Right}
         style={{
           background: '#555',
-          width: '8px',
-          height: '8px',
-          right: '-4px',
+          width: '10px',
+          height: '10px',
+          right: '-2px',
           zIndex: 1,
         }}
       />
@@ -114,9 +114,9 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
         position={Position.Left}
         style={{
           background: '#555',
-          width: '8px',
-          height: '8px',
-          left: '-4px',
+          width: '10px',
+          height: '10px',
+          left: '-2px',
           zIndex: 2,
         }}
       />
@@ -126,9 +126,9 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
         position={Position.Left}
         style={{
           background: '#555',
-          width: '8px',
-          height: '8px',
-          left: '-4px',
+          width: '10px',
+          height: '10px',
+          left: '-2px',
           zIndex: 1,
         }}
       />
