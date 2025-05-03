@@ -598,6 +598,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             edgeTypes={edgeTypes}
             fitView
             zoomOnScroll={true}
+            preventScrolling={false}
+            panOnDrag={true}
             minZoom={0.2}
             maxZoom={1}
             onPaneClick={() => {
