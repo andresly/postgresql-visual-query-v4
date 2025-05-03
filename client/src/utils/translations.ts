@@ -334,7 +334,7 @@ export const translations = {
       columnLabel: 'Veerg',
       aliasLabel: 'Alias',
       tableLabel: 'Tabel',
-      aggregateLabel: 'Agregaatfunktsioon',
+      aggregateLabel: 'Kokkuvõttefunktsioon',
       scalarLabel: 'Skalaarfunktsioon',
       sortLabel: 'Sorteerimine',
       sortOrderLabel: 'Sorteerimise järjekord',
