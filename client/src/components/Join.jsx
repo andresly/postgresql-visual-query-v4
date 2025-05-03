@@ -11,7 +11,6 @@ import JoinCondition from './JoinCondition';
 import { translations } from '../utils/translations';
 
 export const Join = (props) => {
-  // console.log('join props', props);
   const constructOptions = () => {
     const options = [];
     const newTables = [];

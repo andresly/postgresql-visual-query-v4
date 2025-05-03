@@ -49,15 +49,12 @@ function JoinEdge({
     targetPosition,
   });
 
-  console.log('joinData2', data);
   // Extract join data from the edge
   const typedData = data as JoinEdgeData | undefined;
   const join = typedData?.join || { type: 'inner', id: 0, color: '#000000', main_table: {}, conditions: [] };
   const mainTable = typedData?.mainTable || 'Table';
   const secondaryTable = typedData?.secondaryTable || 'Table';
 
-  console.log({ mainTable });
-  console.log({ secondaryTable });
   const isActive = typedData?.isActive || false;
   const setIsActiveNull = typedData?.setIsActiveNull;
 

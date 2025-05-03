@@ -141,21 +141,16 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
 
             // Also save flow states for all other queries if available
             if (allQueryFlowStates) {
-              console.log('Saving all query flow states:', Object.keys(allQueryFlowStates));
               Object.entries(allQueryFlowStates).forEach(([queryId, queryFlowState]) => {
                 const flowStateKey = `flow-state-${queryId}`;
-                console.log(`Saving flow state for query ${queryId} to ${flowStateKey}`);
                 sessionStorage.setItem(flowStateKey, JSON.stringify(queryFlowState));
               });
             } else {
               // Fallback to old behavior for backward compatibility
-              console.log('No allQueryFlowStates found, using fallback behavior');
               // Also check if there are flow states for other queries in the saved data
               allQueries.forEach((query) => {
                 // If this is not the active query, we need to manually create a flow state for it
                 if (query.id !== activeQuery.id) {
-                  console.log(`Creating flow state for query ${query.id} based on active query flow state`);
-
                   // Create a new flow state based on the active query's flow state
                   const newFlowState = {
                     nodes: flowState.nodes.map((node) => {

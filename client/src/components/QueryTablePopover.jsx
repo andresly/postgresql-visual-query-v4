@@ -30,7 +30,6 @@ export class QueryTablePopover extends Component {
     this.setState({ [e.target.name]: '' });
     let table = _.cloneDeep(this.props.data);
 
-    console.log({ table });
     table = {
       ...table,
       table_alias: '',

@@ -145,17 +145,12 @@ export const SaveQueryButton: React.FC<SaveQueryButtonProps> = ({ className }) =
           const queryFlowState = JSON.parse(queryFlowStateStr);
           if (queryFlowState && queryFlowState.nodes && queryFlowState.viewport) {
             allQueryFlowStates[query.id] = queryFlowState;
-            console.log(`Found and saving flow state for query ${query.id}`);
           }
-        } else {
-          console.log(`No flow state found for query ${query.id}`);
         }
       } catch (err) {
         console.warn(`Unable to parse flow state for query ${query.id}:`, err);
       }
     });
-
-    console.log('All queries flow states:', Object.keys(allQueryFlowStates));
 
     // Save database info for this query
     const databaseInfo: DatabaseInfo = {
