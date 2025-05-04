@@ -474,8 +474,16 @@ const addColumnsToQuery = (
         if (column.table_alias.length === 0) {
           let field = column.column_name;
 
-          // Only add table prefix if column_name matches the original
-          if (column.column_name === column.column_name_original) {
+          // If the column name is different from original, it might be an expression
+          if (column.column_name !== column.column_name_original) {
+            // Replace the original column name with the qualified version
+            const tableRef = quoteIdentifier(column.table_name);
+            const columnRef = quoteIdentifier(column.column_name_original);
+            const qualifiedRef = `${tableRef}.${columnRef}`;
+
+            // Replace all occurrences of the original column name with the qualified version
+            field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+          } else {
             field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
           }
 
@@ -490,16 +498,24 @@ const addColumnsToQuery = (
           } else {
             // If column name is modified, use it directly without table prefix
             if (column.column_name === column.column_name_original) {
-              addField(column.table_name, column.column_name);
+              addFieldWithAlias(column.table_name, column.column_name, autoAlias);
             } else {
-              query.field(column.column_name);
+              query.field(field, quoteIdentifier(autoAlias));
             }
           }
         } else {
           let field = column.column_name;
 
-          // Only add table alias prefix if column_name matches the original
-          if (column.column_name === column.column_name_original) {
+          // If the column name is different from original, it might be an expression
+          if (column.column_name !== column.column_name_original) {
+            // Use table alias instead of table name when available
+            const tableRef = quoteIdentifier(column.table_alias);
+            const columnRef = quoteIdentifier(column.column_name_original);
+            const qualifiedRef = `${tableRef}.${columnRef}`;
+
+            // Replace all occurrences of the original column name with the qualified version
+            field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+          } else {
             field = `${quoteIdentifier(column.table_alias)}.${quoteIdentifier(field)}`;
           }
 
@@ -513,41 +529,27 @@ const addColumnsToQuery = (
             query.field(field, quoteIdentifier(autoAlias));
           } else {
             if (column.column_name === column.column_name_original) {
-              addField(column.table_alias, column.column_name);
+              addFieldWithAlias(column.table_alias, column.column_name, autoAlias);
             } else {
-              query.field(column.column_name);
+              query.field(field, quoteIdentifier(autoAlias));
             }
-          }
-        }
-      } else if (column.table_alias.length === 0) {
-        let field = column.column_name;
-
-        // Only add table prefix if column_name matches the original
-        if (column.column_name === column.column_name_original) {
-          field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
-        }
-
-        if (column.column_aggregate.length > 0) {
-          // Aggregate with alias: aggregate(table.column)
-          const tableRef = column.table_alias || column.table_name;
-          field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
-          query.field(field, quoteIdentifier(column.column_alias));
-        } else if (column.column_single_line_function.length > 0) {
-          field = `${column.column_single_line_function}(${quoteIdentifier(column.table_name)}.${quoteIdentifier(column.column_name)})`;
-          query.field(field, quoteIdentifier(autoAlias));
-        } else {
-          if (column.column_name === column.column_name_original) {
-            addFieldWithAlias(column.table_name, column.column_name, autoAlias);
-          } else {
-            query.field(column.column_name, quoteIdentifier(autoAlias));
           }
         }
       } else {
         let field = column.column_name;
 
-        // Only add table alias prefix if column_name matches the original
-        if (column.column_name === column.column_name_original) {
-          field = `${quoteIdentifier(column.table_alias)}.${quoteIdentifier(field)}`;
+        // If the column name is different from original, it might be an expression
+        if (column.column_name !== column.column_name_original) {
+          // Use table alias if available, otherwise use table name
+          const tableRef = quoteIdentifier(column.table_alias || column.table_name);
+          const columnRef = quoteIdentifier(column.column_name_original);
+          const qualifiedRef = `${tableRef}.${columnRef}`;
+
+          // Replace all occurrences of the original column name with the qualified version
+          field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+        } else {
+          const tableRef = column.table_alias || column.table_name;
+          field = `${quoteIdentifier(tableRef)}.${quoteIdentifier(field)}`;
         }
 
         if (column.column_aggregate.length > 0) {
@@ -556,13 +558,15 @@ const addColumnsToQuery = (
           field = `${column.column_aggregate}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
           query.field(field, quoteIdentifier(column.column_alias));
         } else if (column.column_single_line_function.length > 0) {
-          field = `${column.column_single_line_function}(${quoteIdentifier(column.table_alias)}.${quoteIdentifier(column.column_name)})`;
+          const tableRef = column.table_alias || column.table_name;
+          field = `${column.column_single_line_function}(${quoteIdentifier(tableRef)}.${quoteIdentifier(column.column_name)})`;
           query.field(field, quoteIdentifier(autoAlias));
         } else {
           if (column.column_name === column.column_name_original) {
-            addFieldWithAlias(column.table_alias, column.column_name, autoAlias);
+            const tableRef = column.table_alias || column.table_name;
+            addFieldWithAlias(tableRef, column.column_name, autoAlias);
           } else {
-            query.field(column.column_name, quoteIdentifier(autoAlias));
+            query.field(field, quoteIdentifier(autoAlias));
           }
         }
       }
