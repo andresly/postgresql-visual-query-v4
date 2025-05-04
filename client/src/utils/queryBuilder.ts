@@ -1,3 +1,21 @@
+/**
+ * PostgreSQL Query Builder Utility
+ *
+ * This module provides a comprehensive set of utilities for building PostgreSQL queries
+ * using the squel query builder. It handles various SQL operations including:
+ * - SELECT queries with complex joins
+ * - INSERT operations
+ * - UPDATE operations
+ * - DELETE operations
+ * - Set operations (UNION, INTERSECT, EXCEPT)
+ * - Column and table aliasing
+ * - Filtering and conditions
+ * - Ordering and grouping
+ *
+ * The module is designed to work with a visual query builder interface, allowing
+ * users to construct complex SQL queries through a graphical interface.
+ */
+
 import * as _ from 'lodash';
 import * as format from 'pg-format';
 import squel, { JoinMixin } from 'squel';
@@ -39,8 +57,20 @@ const quoteIdentifier = (identifier: string): string => {
   return needsQuoting ? `"${identifier}"` : identifier;
 };
 
+/**
+ * Initialize PostgreSQL flavor of squel query builder
+ */
 const squelPostgres = squel.useFlavour('postgres');
 
+/**
+ * Adds ORDER BY clauses to a query based on column configuration
+ * Handles complex cases including:
+ * - Ordering by aliases
+ * - Ordering by aggregate functions
+ * - Ordering by expressions
+ * @param column The column configuration containing ordering information
+ * @param query The squel query object to modify
+ */
 const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
   // Helper function to check if a string is an expression (contains operators)
   const isExpression = (str: string) => {
@@ -102,6 +132,20 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
   }
 };
 
+/**
+ * Adds columns, aggregates, and functions to a SELECT query
+ * Handles:
+ * - Regular columns
+ * - Aliased columns
+ * - Aggregate functions
+ * - Scalar functions
+ * - DISTINCT ON clauses
+ * - GROUP BY clauses for aggregates
+ * @param data The query configuration object
+ * @param query The squel query object to modify
+ * @param queries Array of all queries (for subquery support)
+ * @param isSetQuery Whether this query is part of a set operation
+ */
 const addColumnsToQuery = (
   data: QueryType,
   query: squel.PostgresSelect,
@@ -335,7 +379,7 @@ const addColumnsToQuery = (
   /**
    * 4) parseFilterCondition
    *    - The main function that combines tokenizeConditionString + buildConditionString.
-   *    - For a raw condition like "= 'test' OR ='lala'", it returns "table.col = 'test' OR table.col = 'lala'".
+   *    - For a raw condition like "= 'test' OR ='test2'", it returns "table.col = 'test' OR table.col = 'test2'".
    *    - Now also supports query references like "IN {Query Name}" which get replaced with subqueries.
    */
   const parseFilterCondition = (condition: string, columnName: string, queries: QueryType[]) => {
@@ -578,6 +622,17 @@ const addColumnsToQuery = (
   }
 };
 
+/**
+ * Processes and adds JOIN clauses to a query using the traditional method
+ * Supports all PostgreSQL join types:
+ * - INNER JOIN
+ * - LEFT JOIN
+ * - RIGHT JOIN
+ * - FULL OUTER JOIN
+ * - CROSS JOIN
+ * @param data The query configuration object
+ * @param query The squel query object to modify
+ */
 const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
   const mainTable = data.tables[0] ?? null;
@@ -728,6 +783,13 @@ const addJoinsToQuery = (data: QueryType, query: squel.PostgresSelect) => {
   });
 };
 
+/**
+ * Processes and adds JOIN clauses to a query using drag-and-drop interface data
+ * Provides a more intuitive way to build joins based on visual relationships
+ * between tables. Handles complex join scenarios and prevents circular references.
+ * @param data The query configuration object
+ * @param query The squel query object to modify
+ */
 const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSelect) => {
   const joins = _.cloneDeep(data.joins);
   const mainTable = data.tables[0] ?? null;
@@ -856,6 +918,13 @@ const addJoinsToQueryByDragAndDrop = (data: QueryType, query: squel.PostgresSele
   });
 };
 
+/**
+ * Builds and adds set operations (UNION, INTERSECT, EXCEPT) to a query
+ * Supports both regular and ALL variants of set operations
+ * @param data The query configuration object
+ * @param queries Array of all queries for subquery resolution
+ * @returns The complete set operation SQL string
+ */
 const buildSetQuery = (data: QueryType, queries: QueryType[]) => {
   const sets = _.cloneDeep(data.sets);
   let setQuery = '';
@@ -902,6 +971,13 @@ const buildSetQuery = (data: QueryType, queries: QueryType[]) => {
   return setQuery;
 };
 
+/**
+ * Adds tables to the FROM clause of a query
+ * Handles both simple table references and complex join scenarios
+ * @param data The query configuration object
+ * @param query The squel query object to modify
+ * @param queries Array of all queries for subquery support
+ */
 const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect, queries: QueryType[]) => {
   const addTable = (table: QueryTableType) => {
     if (_.isEmpty(table.table_alias)) {
@@ -933,6 +1009,13 @@ const addTablesToQuery = (data: QueryType, query: squel.PostgresSelect, queries:
   }
 };
 
+/**
+ * Main query builder function that orchestrates the creation of a complete SELECT query
+ * @param data The query configuration object
+ * @param queries Array of all queries for subquery support
+ * @param isSetQuery Whether this query is part of a set operation
+ * @returns The complete SQL query string
+ */
 export const buildQuery = ({
   data,
   queries,
@@ -973,6 +1056,12 @@ export const buildQuery = ({
   return `${query}${setQueryString}${orderByString};`;
 };
 
+/**
+ * Adds ORDER BY clauses for set operations
+ * Handles ordering across multiple queries in a set operation
+ * @param queries Array of all queries to process
+ * @returns The ORDER BY clause SQL string
+ */
 const addOrderByForSetQuery = (queries: QueryType[]) => {
   const orderByClauses: string[] = [];
 
@@ -995,6 +1084,13 @@ const addOrderByForSetQuery = (queries: QueryType[]) => {
 
   return orderByClauses.length > 0 ? `\nORDER BY ${orderByClauses.join(', ')}` : '';
 };
+
+/**
+ * Builds filter conditions for WHERE and HAVING clauses
+ * Supports complex conditions with AND/OR logic
+ * @param data The query configuration object
+ * @returns The WHERE clause SQL string
+ */
 const addFilterToQueryNew = (data: QueryType) => {
   const columns = _.cloneDeep(data.columns);
 
@@ -1039,6 +1135,11 @@ const addFilterToQueryNew = (data: QueryType) => {
   return whereQuery;
 };
 
+/**
+ * Extracts tables used in USING clauses
+ * @param data The query configuration object
+ * @returns Array of table references for USING clause
+ */
 const getUsingTables = (data: QueryType) => {
   const usings = _.cloneDeep(data.using);
 
@@ -1053,6 +1154,11 @@ const getUsingTables = (data: QueryType) => {
   return usingTables;
 };
 
+/**
+ * Builds conditions for USING clauses
+ * @param data The query configuration object
+ * @returns Array of condition strings for USING clause
+ */
 const getUsingConditions = (data: QueryType) => {
   const usings = _.cloneDeep(data.using);
 
@@ -1069,6 +1175,11 @@ const getUsingConditions = (data: QueryType) => {
   return usingConditions;
 };
 
+/**
+ * Processes RETURNING clause for DML operations
+ * @param data The query configuration object
+ * @returns The RETURNING clause SQL string
+ */
 const addReturningToQuery = (data: QueryType) => {
   const columns = _.cloneDeep(data.columns);
 
@@ -1094,6 +1205,13 @@ const addReturningToQuery = (data: QueryType) => {
   return returning;
 };
 
+/**
+ * Processes values for INSERT operations
+ * Handles multiple rows and NULL values
+ * @param data The query configuration object
+ * @param query The squel insert query object
+ * @returns Array of value lists for insertion
+ */
 const addInsertValuesToQuery = (data: QueryType, query: squel.PostgresInsert) => {
   const columns = _.cloneDeep(data.columns);
   const valuesList = [];
@@ -1117,6 +1235,11 @@ const addInsertValuesToQuery = (data: QueryType, query: squel.PostgresInsert) =>
   return valuesList;
 };
 
+/**
+ * Processes column values for UPDATE operations
+ * @param data The query configuration object
+ * @param query The squel update query object
+ */
 const addUpdateValuesToQuery = (data: QueryType, query: squel.PostgresUpdate) => {
   const columns = _.cloneDeep(data.columns);
 
@@ -1127,6 +1250,11 @@ const addUpdateValuesToQuery = (data: QueryType, query: squel.PostgresUpdate) =>
   });
 };
 
+/**
+ * Builds a complete DELETE query with USING and WHERE clauses
+ * @param data The query configuration object
+ * @returns The complete DELETE query SQL string
+ */
 export const buildDeleteQuery = (data: QueryType) => {
   const query = squelPostgres.delete({
     useAsForTableAliasNames: true,
@@ -1154,6 +1282,11 @@ export const buildDeleteQuery = (data: QueryType) => {
   }\n${addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : ''}`};`;
 };
 
+/**
+ * Builds a complete INSERT query with VALUES and RETURNING clauses
+ * @param data The query configuration object
+ * @returns The complete INSERT query SQL string
+ */
 export const buildInsertQuery = (data: QueryType) => {
   const query = squelPostgres.insert({
     useAsForTableAliasNames: true,
@@ -1190,6 +1323,11 @@ export const buildInsertQuery = (data: QueryType) => {
   return `INSERT\n${lastQueryLine} ${columnsPart}${returningPart};`;
 };
 
+/**
+ * Builds a complete UPDATE query with SET, FROM, WHERE, and RETURNING clauses
+ * @param data The query configuration object
+ * @returns The complete UPDATE query SQL string
+ */
 export const buildUpdateQuery = (data: QueryType) => {
   const query = squelPostgres.update({
     useAsForTableAliasNames: true,

@@ -675,7 +675,7 @@ export const QueryPage: React.FC = () => {
         <Col sm="2" className="py-2 vh-100 d-flex bg-light">
           <SideBar language={language} />
         </Col>
-        <Col sm="10" className="pr-0">
+        <Col sm="10" className="pr-0" id={'query-area'}>
           <Scrollbars>
             {activeTableId === null ? (
               <QueryBuilder queryValid={queryValid} language={language} tables={tables} queryType={queryType} />
