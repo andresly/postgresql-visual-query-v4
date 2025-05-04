@@ -327,15 +327,12 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
       case 'full':
       case 'outer':
         return { markerStart: marker, markerEnd: marker };
-
       case 'left':
         // Arrow TO secondary table → secondary is NOT main side
         return { markerEnd: marker };
-
       case 'right':
         // Arrow TO main table → main side gets the arrow start
         return { markerStart: marker };
-
       case 'inner':
       case 'cross':
       default:

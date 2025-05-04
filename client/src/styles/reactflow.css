@@ -157,7 +157,7 @@
 
 /* Table drag handle */
 .table-drag-handle {
-  padding: 6px 10px;
+  padding: 6px 0;
   background-color: #f5f5f5;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
@@ -228,4 +228,11 @@
 
 .join-controls .dropdown-item:hover {
   background-color: #f0f0f0;
+}
+
+
+.react-flow__edges{
+  svg{
+    z-index: 999 !important;
+  }
 }
