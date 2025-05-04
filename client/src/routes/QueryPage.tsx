@@ -621,7 +621,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
             <Panel position="top-right">
               <div className="p-2 bg-light border rounded">
-                <small>Drag to connect tables | Scroll to zoom</small>
+                <small>{translations[language.code].queryBuilder.dragToConnect}</small>
               </div>
             </Panel>
           </ReactFlow>

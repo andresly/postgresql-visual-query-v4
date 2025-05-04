@@ -1,13 +1,14 @@
 import React from 'react';
-import { Button, Tooltip } from 'reactstrap';
+import { Button, Tooltip, UncontrolledTooltip } from 'reactstrap';
 import _ from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { addTable, resetQuery } from '../actions/queryActions';
 import { openTableView, setActiveTableView } from '../actions/tableViewActions';
-import { useAppDispatch } from '../hooks';
+import { useAppDispatch, useAppSelector } from '../hooks';
 import { withToggle } from '../hocs/withToggle';
 import { QueryTableType } from '../types/queryTypes';
+import { translations } from '../utils/translations';
 
 interface DatabaseTableProps {
   data: QueryTableType;
@@ -20,6 +21,7 @@ interface DatabaseTableProps {
 
 export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id, toggle, toggleStatus, queryType }) => {
   const dispatch = useAppDispatch();
+  const language = useAppSelector((state) => state.settings.language);
 
   const handleOnClick = () => {
     if (queryType === 'INSERT') {
@@ -56,6 +58,8 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
     },
   };
 
+  const buttonId = `open-new-tab-${data.table_name}-${data.table_schema}`;
+
   return (
     <div className="w-100 pr-1 position-relative my-1 ">
       <Button
@@ -88,14 +92,12 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
       >
         {data.table_name}
       </Tooltip>
-      <div className={'open-new-tab-btn'}>
-        <FontAwesomeIcon
-          icon={faExternalLinkAlt}
-          style={{ width: '1rem', height: '1rem' }}
-          color={'white'}
-          onClick={handleOpenNewTab}
-        />
+      <div className={'open-new-tab-btn'} id={buttonId} onClick={handleOpenNewTab}>
+        <FontAwesomeIcon icon={faExternalLinkAlt} style={{ width: '1rem', height: '1rem' }} color={'white'} />
       </div>
+      <UncontrolledTooltip placement="top" target={buttonId}>
+        {translations[language.code].tooltips.openInNewTab}
+      </UncontrolledTooltip>
     </div>
   );
 };

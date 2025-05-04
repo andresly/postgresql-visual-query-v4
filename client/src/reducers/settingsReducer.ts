@@ -4,7 +4,7 @@ import { Reducer } from 'redux';
 import { SettingActions } from '../types/actions/settingsActionTypes';
 
 export const DEFAULT_STATE: SettingsType = {
-  language: { code: 'eng', name: 'English' },
+  language: { code: 'est', name: 'Eesti' },
 };
 
 export const settingsReducer: Reducer<SettingsType, SettingActions> = (

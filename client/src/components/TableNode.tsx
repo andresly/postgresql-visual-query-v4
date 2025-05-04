@@ -1,10 +1,13 @@
 import React from 'react';
-import { NodeProps } from '@xyflow/react';
 import QueryTable from './QueryTable';
-import { QueryTableType } from '../types/queryTypes';
+import { useAppSelector } from '../hooks';
+import { translations } from '../utils/translations';
 
 // TableNode component for displaying database tables in flow diagram
 function TableNode({ data }: any) {
+  const { language } = useAppSelector((store) => ({
+    language: store.settings.language,
+  }));
   // Extract data from the node
   const { table, index, isDraggable } = data || { table: {}, index: 0, isDraggable: false };
 
@@ -12,7 +15,7 @@ function TableNode({ data }: any) {
     <div className="table-node">
       {isDraggable && (
         <div className="table-drag-handle">
-          <i className="fa fa-arrows-alt mr-2" /> Drag to move
+          <i className="fa fa-arrows-alt mr-2" /> {translations[language.code].queryBuilder.dragToMove}
         </div>
       )}
 

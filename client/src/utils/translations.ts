@@ -126,6 +126,8 @@ export const translations = {
       groupByL: 'Group rows',
       havingL: 'Filter grouping results',
       withTiesL: 'With ties',
+      dragToConnect: 'Drag from dots to join tables',
+      dragToMove: 'Drag to move',
       // Join descriptions
       innerJoinDescription: 'Select only matching rows from',
       leftJoinDescription: 'Select all rows from',
@@ -142,8 +144,8 @@ export const translations = {
       tableLabel: 'Table',
       aggregateLabel: 'Aggregate function',
       scalarLabel: 'Scalar function',
-      sortLabel: 'Sort',
-      sortOrderLabel: 'Sort order',
+      sortLabel: 'Sort order',
+      sortOrderLabel: 'Sort order number',
       showLabel: 'Show',
       removeDuplicatesLabel: 'Remove Duplicates',
       criteriaLabel: 'Criteria',
@@ -163,6 +165,7 @@ export const translations = {
       setType: 'Set operation type',
       linkSq: 'Link subquery to filter',
       queryName: 'Rename query',
+      openInNewTab: 'Click to open table preview in new tab',
       // Table label tooltips
       column:
         "Column or expression that will be included in the result. You can use mathematical operators and functions. Example: (price * quantity) or CONCAT(first_name, ' ', last_name). More info: https://www.postgresql.org/docs/current/sql-expressions.html",
@@ -320,6 +323,8 @@ export const translations = {
       groupByL: 'Grupeeri ridu',
       havingL: 'Piira grupeerimise tulemusi',
       withTiesL: 'Koos seotud ridadega',
+      dragToConnect: 'Lohista mustadest ringidest, et tabeleid ühendada',
+      dragToMove: 'Lohista, et liigutada',
       // Join descriptions
       innerJoinDescription: 'Vali ainult sobivad read tabelist',
       leftJoinDescription: 'Vali kõik read tabelist',
@@ -336,8 +341,8 @@ export const translations = {
       tableLabel: 'Tabel',
       aggregateLabel: 'Kokkuvõttefunktsioon',
       scalarLabel: 'Skalaarfunktsioon',
-      sortLabel: 'Sorteerimine',
-      sortOrderLabel: 'Sorteerimise järjekord',
+      sortLabel: 'Sorteerimise suund',
+      sortOrderLabel: 'Sorteerimise järjekorra number',
       showLabel: 'Näita',
       removeDuplicatesLabel: 'Eemalda kordused',
       criteriaLabel: 'Kriteeriumid',
@@ -357,6 +362,7 @@ export const translations = {
       setType: 'Hulga tüüp',
       linkSq: 'Alampäringu linkimine filtrile',
       queryName: 'Päringu ümbernimetamine',
+      openInNewTab: 'Klõpsa tabeli eelvaate avamiseks uuel vahekaardil',
       // Table label tooltips
       column:
         "Veerg või avaldis, mis lisatakse tulemustesse. Võite kasutada matemaatilisi operaatoreid ja funktsioone. Näide: (hind * kogus) või CONCAT(eesnimi, ' ', perekonnanimi). Rohkem infot: https://www.postgresql.org/docs/current/sql-expressions.html",

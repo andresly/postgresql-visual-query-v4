@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGripVertical } from '@fortawesome/free-solid-svg-icons';
 import { Draggable } from 'react-beautiful-dnd';
 import { getScalarFunctions, getAggregateFunctions } from '../utils/functionUtils';
+import { translations } from '../utils/translations';
 
 const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; index: number }> = ({
   data,
@@ -16,11 +17,12 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   index,
 }) => {
   const dispatch = useAppDispatch();
-  const { columns, queries, query } = useAppSelector((store) => ({
+  const { columns, queries, query, language } = useAppSelector((store) => ({
     distinct: store.query.distinct,
     queries: store.queries.filter((query) => query.id !== 0).sort((query1, query2) => query1.id - query2.id),
     columns: store.query.columns,
     query: store.query,
+    language: store.settings.language,
   }));
   const maxConditions = Math.max(...columns.map((col) => col.column_conditions.length), data.column_conditions.length);
   const [filterValid, setFilterValid] = useState(true);
@@ -368,7 +370,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
                 const column = { ..._.cloneDeep(data), column_alias: columnAlias };
                 dispatch(updateColumn(column));
               }}
-              placeholder="Alias"
+              // placeholder="Alias"
             />
           </div>
 
@@ -392,16 +394,13 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               name="column_aggregate"
               value={data.column_aggregate}
               onChange={(e) => {
-                // Create a deep copy of the column data
                 const column = _.cloneDeep(data);
-                // Update the aggregate function
                 column.column_aggregate = e.target.value;
-                // Immediately dispatch the update to Redux
                 dispatch(updateColumn(column));
               }}
               className="form-control"
             >
-              <option value="">None</option>
+              <option value="" />
               {singleLineFunctions.map((func) => (
                 <option key={func} value={func}>
                   {func}
@@ -416,16 +415,13 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               name="column_single_line_function"
               value={data.column_single_line_function}
               onChange={(e) => {
-                // Create a deep copy of the column data
                 const column = _.cloneDeep(data);
-                // Update the scalar function
                 column.column_single_line_function = e.target.value;
-                // Immediately dispatch the update to Redux
                 dispatch(updateColumn(column));
               }}
               className="form-control"
             >
-              <option value="">None</option>
+              <option value="" />
               {scalarFunctions.map((func) => (
                 <option key={func} value={func}>
                   {func}
@@ -442,7 +438,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               onChange={changeColumnOrder}
               className="form-control"
             >
-              <option value="">None</option>
+              <option value="" />
               <option value="ASC">Ascending</option>
               <option value="DESC">Descending</option>
             </select>
@@ -456,14 +452,13 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               value={data.column_order_nr || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 const value = e.target.value;
-                // Only allow positive numbers
                 if (value === '' || parseInt(value, 10) > 0) {
                   handleOnSave(e as any);
                 }
               }}
               min="1"
               className="form-control"
-              placeholder="Sort order number"
+              // placeholder="Sort order number"
             />
           </div>
 
@@ -472,7 +467,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             <CustomInput
               type="checkbox"
               id={`show-${id}`}
-              label="Show"
+              label={translations[language.code].queryBuilder.showLabel}
               checked={data.display_in_query}
               disabled={isCanShowDisabled}
               onChange={handleSwitch}
@@ -485,7 +480,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
             <CustomInput
               type="checkbox"
               id={`distinct-${id}`}
-              label="Remove Duplicates"
+              label={translations[language.code].queryBuilder.distinctOnL}
               checked={data.column_distinct_on}
               onChange={handleSwitch}
               name="column_distinct_on"
