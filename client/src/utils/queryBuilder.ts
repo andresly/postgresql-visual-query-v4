@@ -141,6 +141,7 @@ const addColumnsToQuery = (
     const tokens = [];
 
     let insideQuotes = false;
+    let insideParens = 0; // Track nested parentheses
     let current = '';
     let i = 0;
 
@@ -155,8 +156,22 @@ const addColumnsToQuery = (
         continue;
       }
 
-      // If we are OUTSIDE quotes, check for "OR" or "AND"
-      if (!insideQuotes) {
+      // Track parentheses depth
+      if (char === '(') {
+        insideParens++;
+        current += char;
+        i += 1;
+        continue;
+      }
+      if (char === ')') {
+        insideParens--;
+        current += char;
+        i += 1;
+        continue;
+      }
+
+      // Only check for operators if we're not inside quotes or parentheses
+      if (!insideQuotes && insideParens === 0) {
         // Check "OR"
         if (matchesIgnoreCase(str, i, 'OR')) {
           // If we have accumulated some text, push it as TEXT
@@ -224,6 +239,9 @@ const addColumnsToQuery = (
     let result = '';
     let hasOperator = false; // track if we've seen an OR/AND
 
+    // If columnName is just a dot (.), treat it as empty
+    const effectiveColumnName = columnName === '.' ? '' : columnName;
+
     for (let i = 0; i < tokens.length; i += 1) {
       const token = tokens[i];
 
@@ -255,24 +273,35 @@ const addColumnsToQuery = (
 
         // If no query references were found, process as normal
         if (!foundQueryRef) {
-          // If it starts with '=', handle "colName = <stuff>"
-          const eqMatch = textVal.match(/^=+\s*(.*)/);
-          if (eqMatch) {
-            const rightSide = eqMatch[1];
-            result += `${columnName} = ${rightSide}`;
+          // Special handling for subqueries (starting with IN, EXISTS, etc.)
+          const subqueryMatch = textVal.match(/^(IN|EXISTS|NOT\s+EXISTS|NOT\s+IN)\s*(\(SELECT[\s\S]*\))/i);
+          if (subqueryMatch) {
+            const [, operator, subquery] = subqueryMatch;
+            result += effectiveColumnName
+              ? `${effectiveColumnName} ${operator} ${subquery}`
+              : `${operator} ${subquery}`;
           } else {
-            // If text doesn't already have columnName, insert it
-            if (!textVal.includes(columnName)) {
-              result += `${columnName} ${textVal}`;
+            // Check for other operators at the start
+            const operatorMatch = textVal.match(/^(=|LIKE|>|<|>=|<=|<>|!=)\s*(.*)/i);
+            if (operatorMatch) {
+              const [, operator, rightSide] = operatorMatch;
+              result += effectiveColumnName
+                ? `${effectiveColumnName} ${operator} ${rightSide}`
+                : `${operator} ${rightSide}`;
             } else {
-              result += textVal;
+              // If text doesn't start with the column name (exact match), insert it
+              if (!textVal.startsWith(effectiveColumnName + ' ') && !textVal.startsWith(effectiveColumnName + '.')) {
+                result += effectiveColumnName ? `${effectiveColumnName} ${textVal}` : textVal;
+              } else {
+                result += textVal;
+              }
             }
           }
         } else {
           // Query reference was found and processed
           // If text starts with '{', default operator is '='
           if (textVal.startsWith('{')) {
-            result += `${columnName} = ${modifiedText}`;
+            result += effectiveColumnName ? `${effectiveColumnName} = ${modifiedText}` : `= ${modifiedText}`;
           } else {
             // Extract everything before the first '{' as the operator
             const parts = textVal.split('{');
@@ -281,7 +310,9 @@ const addColumnsToQuery = (
             // Rebuild the modifiedText without the operator
             const rightSide = modifiedText.substring(operator.length);
 
-            result += `${columnName} ${operator} ${rightSide}`;
+            result += effectiveColumnName
+              ? `${effectiveColumnName} ${operator} ${rightSide}`
+              : `${operator} ${rightSide}`;
           }
         }
       } else if (token.type === 'OPERATOR') {
