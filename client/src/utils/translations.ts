@@ -126,7 +126,8 @@ export const translations = {
       groupByL: 'Group rows',
       havingL: 'Filter grouping results',
       withTiesL: 'With ties',
-      dragToConnect: 'Drag from dots to join tables',
+      dragToConnect: 'Drag from dots to join tables.',
+      generatedSQL: 'Generated SQL is shown at the bottom of the page.',
       dragToMove: 'Drag to move',
       // Join descriptions
       innerJoinDescription: 'Select only matching rows from',
@@ -323,7 +324,8 @@ export const translations = {
       groupByL: 'Grupeeri ridu',
       havingL: 'Piira grupeerimise tulemusi',
       withTiesL: 'Koos seotud ridadega',
-      dragToConnect: 'Lohista mustadest ringidest, et tabeleid ühendada',
+      dragToConnect: 'Lohista mustadest ringidest, et tabeleid ühendada.',
+      generatedSQL: 'Genereeritud SQL asub lehe allosas.',
       dragToMove: 'Lohista, et liigutada',
       // Join descriptions
       innerJoinDescription: 'Vali ainult sobivad read tabelist',

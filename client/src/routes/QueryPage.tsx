@@ -616,9 +616,14 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             <Background gap={16} color="#f8f8f8" />
             <MiniMap zoomable pannable />
 
-            <Panel position="top-right">
-              <div className="p-2 bg-light border rounded">
-                <small>{translations[language.code].queryBuilder.dragToConnect}</small>
+            <Panel position="top-left" style={{ margin: '4px' }}>
+              <div className="p-1 bg-light border rounded" style={{ fontSize: '14px', lineHeight: '100%' }}>
+                <small>
+                  <strong>
+                    {translations[language.code].queryBuilder.dragToConnect} <br />
+                    {translations[language.code].queryBuilder.generatedSQL}
+                  </strong>
+                </small>
               </div>
             </Panel>
           </ReactFlow>

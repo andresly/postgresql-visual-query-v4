@@ -67,7 +67,7 @@ export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle 
             style={{ padding: '2px 8px' }}
             type="button"
           >
-            Dock
+            <strong>Dock</strong>
           </button>
         </div>
       )}
@@ -102,7 +102,7 @@ export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle 
           }}
           type="button"
         >
-          Float
+          <strong>Float</strong>
         </button>
       )}
     </div>
