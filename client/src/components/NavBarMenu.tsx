@@ -84,15 +84,16 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
       </div>
       <div className="col-auto pl-0 pt-3 d-flex align-items-center">
         <Row form className="align-items-center">
-          <Label for="changeQueryType">Statement type:</Label>
-          <Col md={3}>
-            <Input bsSize="sm" type="select" id="changeQueryType" onChange={handleTypeChange} value={queryType}>
-              <option value="SELECT">SELECT</option>
-              <option value="DELETE">DELETE</option>
-              <option value="INSERT">INSERT</option>
-              <option value="UPDATE">UPDATE</option>
-            </Input>
-          </Col>
+          {/*TODO: Add change query type back and fix errors*/}
+          {/*<Label for="changeQueryType">Statement type:</Label>*/}
+          {/*<Col md={3}>*/}
+          {/*  <Input bsSize="sm" type="select" id="changeQueryType" onChange={handleTypeChange} value={queryType}>*/}
+          {/*    <option value="SELECT">SELECT</option>*/}
+          {/*    <option value="DELETE">DELETE</option>*/}
+          {/*    <option value="INSERT">INSERT</option>*/}
+          {/*    <option value="UPDATE">UPDATE</option>*/}
+          {/*  </Input>*/}
+          {/*</Col>*/}
           <Col md={8} className="d-flex pt-3">
             <SaveQueryButton />
             <LoadQueryButton />
