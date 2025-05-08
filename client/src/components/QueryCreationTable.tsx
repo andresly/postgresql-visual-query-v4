@@ -173,7 +173,7 @@ export const QueryCreationTable = () => {
       .fill(null)
       .map((_, i) => ({
         id: `or-1`,
-        label: translations[language.code].queryBuilder.orLabel,
+        label: 'OR',
       })),
   ];
 
@@ -239,9 +239,6 @@ export const QueryCreationTable = () => {
             ))}
           </div>
 
-          {columns.length === 0 && (
-            <div className={'columns-placeholder'}>{translations[language.code].queryBuilder.selectColumnsFromTop}</div>
-          )}
           {/* Droppable area for columns */}
           <Droppable droppableId="droppable-columns" direction="horizontal">
             {(provided) => (
@@ -253,8 +250,14 @@ export const QueryCreationTable = () => {
                   flexGrow: 1,
                   border: '1px solid #dee2e6',
                   borderLeft: 'none',
+                  position: 'relative',
                 }}
               >
+                {columns.length === 0 && (
+                  <div className={'columns-placeholder'}>
+                    {translations[language.code].queryBuilder.selectColumnsFromTop}
+                  </div>
+                )}
                 {columns.map((column, index) => (
                   <QueryCreationTableColumn
                     key={column.id}
