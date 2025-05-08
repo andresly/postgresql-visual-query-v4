@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Alert, Col, Container, Row } from 'reactstrap';
+import { Alert, Button, Col, Container, Row } from 'reactstrap';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import { connect } from 'react-redux';
 import * as PropTypes from 'prop-types';
@@ -54,25 +54,32 @@ import '@xyflow/react/dist/style.css';
 import TableNode from '../components/TableNode';
 // @ts-ignore - component will be created later
 import JoinEdge from '../components/JoinEdge';
+import { logout } from '../actions/hostActions';
 
 interface SideBarProps {
   language: LanguageType;
 }
 
-export const SideBar: React.FC<SideBarProps> = ({ language }) => (
-  <div className="d-flex flex-column w-100">
-    <div className="">
-      <LanguageSwitcher />
-      <DisconnectButton />
+export const SideBar: React.FC<SideBarProps> = ({ language }) => {
+  const dispatch = useAppDispatch();
+  return (
+    <div className="d-flex flex-column w-100">
+      <div className="">
+        <LanguageSwitcher />
+        <DisconnectButton />
+        <Button className="w-100 mb-4 switch-db" color={'black'} onClick={() => dispatch(logout())}>
+          {translations[language.code].loginForm.logout}
+        </Button>
+      </div>
+      <SchemaSelector />
+      <SearchBar />
+      <h5 className="mt-2">{translations[language.code].sideBar.tablesH}</h5>
+      <div className="d-flex flex-fill">
+        <DatabaseViewer />
+      </div>
     </div>
-    <SchemaSelector />
-    <SearchBar />
-    <h5 className="mt-2">{translations[language.code].sideBar.tablesH}</h5>
-    <div className="d-flex flex-fill">
-      <DatabaseViewer />
-    </div>
-  </div>
-);
+  );
+};
 
 interface TableTypeWrapperProps {
   index: number;
