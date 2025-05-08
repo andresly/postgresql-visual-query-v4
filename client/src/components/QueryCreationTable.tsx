@@ -239,6 +239,9 @@ export const QueryCreationTable = () => {
             ))}
           </div>
 
+          {columns.length === 0 && (
+            <div className={'columns-placeholder'}>{translations[language.code].queryBuilder.selectColumnsFromTop}</div>
+          )}
           {/* Droppable area for columns */}
           <Droppable droppableId="droppable-columns" direction="horizontal">
             {(provided) => (

@@ -27,7 +27,6 @@ import 'react-resizable/css/styles.css';
 import '../styles/grid-layout.css';
 import '../styles/reactflow.css';
 import _ from 'lodash';
-
 import {
   ReactFlow,
   Background,
@@ -340,7 +339,6 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     }
   };
 
-  // Create edges from joins when page loads or joins update
   useEffect(() => {
     if (!joins || joins.length === 0 || !tables || tables.length === 0) {
       setEdges([]);
@@ -413,6 +411,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   }, [joins, setEdges, tables, activeEdgeId, query.id]);
 
   // Handle new connections
+
   const onConnect = (params: Connection) => {
     // console.log('tables', query.tables);
     // Extract table and column IDs from the source and target handles
@@ -534,15 +533,15 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         // console.log({ targetTable });
         const join = _.cloneDeep(newJoin); // safe clone if needed
+        const newEdgeId = `join-${query.id}-${join.id}-0`;
 
         // Add the edge to React Flow for visualization with the join data
         // @ts-ignore - bypass TypeScript for edge type in addEdge
-
         setEdges((eds) => {
-          return addEdge(
+          const updatedEdges = addEdge(
             {
               ...params,
-              id: `join-${join.id}-0`,
+              id: `join-${query.id}-${join.id}`,
               type: 'joinEdge',
               animated: false,
               style: {
@@ -566,6 +565,8 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             },
             eds,
           );
+
+          return updatedEdges;
         });
 
         // Add the join first
@@ -573,6 +574,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
         // Then update it to ensure it's properly registered
         dispatch(updateJoin(join));
+        setTimeout(() => {
+          setActiveEdgeId(newEdgeId);
+        }, 100);
       }
     }
 
@@ -580,11 +584,16 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // highlightEdges();
   };
 
+  console.log({ activeEdgeId });
   return (
     <div className="mt-0 pr-2">
       <NavBar language={language} queryType={queryType} />
+
       <div ref={containerRef} className="grid-container">
         <div style={{ width: '100%', height: '50vh', border: '1px solid #ddd', borderRadius: '4px' }}>
+          {query.tables.length === 0 && (
+            <div className={'flow-cover'}>{translations[language.code].queryBuilder.selectTableToStart}</div>
+          )}
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -616,13 +625,15 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
             <Background gap={16} color="#f8f8f8" />
             <MiniMap zoomable pannable />
 
-            <Panel position="top-left" style={{ margin: '4px' }}>
-              <div className="p-1 bg-light border rounded" style={{ fontSize: '14px', lineHeight: '100%' }}>
+            <Panel position="top-left" style={{ margin: '4px', boxShadow: 'none', border: 'none' }}>
+              <div className="p-1 bg-light" style={{ fontSize: '14px', lineHeight: '100%' }}>
                 <small>
-                  <strong>
-                    {translations[language.code].queryBuilder.dragToConnect} <br />
-                    {translations[language.code].queryBuilder.generatedSQL}
-                  </strong>
+                  {query.tables.length > 1 && (
+                    <>
+                      {translations[language.code].queryBuilder.dragToConnect} <br />
+                    </>
+                  )}
+                  {translations[language.code].queryBuilder.generatedSQL}
                 </small>
               </div>
             </Panel>
@@ -667,21 +678,62 @@ export const QueryPage: React.FC = () => {
   const { tables, queryValid, queryType } = useAppSelector((state) => state.query);
   const language = useAppSelector((state) => state.settings.language);
   const { activeTableId } = useAppSelector((state) => state.tableView);
+  const scrollbarsRef = useRef<Scrollbars>(null);
+  const [nearBottom, setNearBottom] = useState(false);
+  const [codeVisible, setCodeVisible] = useState(false);
 
-  const queries = useAppSelector((state) => {
-    return [...state.queries, state.query]
-      .slice()
-      .sort((query1: QueryType, query2: QueryType) => query1.id - query2.id);
-  });
+  const scrollToBottom = () => {
+    const scrollEl = (scrollbarsRef.current as any)?.view;
+    scrollEl?.scrollTo({
+      top: scrollEl.scrollHeight,
+      behavior: 'smooth',
+    });
+  };
+
+  const scrollToTop = () => {
+    const scrollEl = (scrollbarsRef.current as any)?.view;
+    scrollEl?.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  useEffect(() => {
+    const el = (scrollbarsRef.current as any)?.view;
+    if (!el) return;
+
+    const handleCodeVisibility = () => {
+      const scrollTop = el.scrollTop;
+      const scrollHeight = el.scrollHeight;
+      const clientHeight = el.clientHeight;
+
+      const visibleBottom = scrollTop + clientHeight;
+      const codeAreaStart = scrollHeight - window.innerHeight * 0.3;
+
+      setCodeVisible(visibleBottom >= codeAreaStart);
+    };
+
+    el.addEventListener('scroll', handleCodeVisibility);
+    return () => el.removeEventListener('scroll', handleCodeVisibility);
+  }, []);
 
   return (
     <Container fluid>
+      {codeVisible || nearBottom ? (
+        <div className={'view-sql-shortcut'} onClick={scrollToTop}>
+          {translations[language.code].queryBuilder.scrollToTop}
+        </div>
+      ) : (
+        <div className={'view-sql-shortcut'} onClick={scrollToBottom}>
+          {translations[language.code].queryBuilder.viewSQLCode}
+        </div>
+      )}
       <Row>
         <Col sm="2" className="py-2 vh-100 d-flex bg-light">
           <SideBar language={language} />
         </Col>
         <Col sm="10" className="pr-0" id={'query-area'}>
-          <Scrollbars>
+          <Scrollbars ref={scrollbarsRef} id={'query-area-scroll'}>
             {activeTableId === null ? (
               <QueryBuilder queryValid={queryValid} language={language} tables={tables} queryType={queryType} />
             ) : (

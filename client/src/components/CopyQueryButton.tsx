@@ -55,7 +55,7 @@ export const CopyQueryButton: React.FC<CopyQueryButtonProps> = ({ className }) =
 
   return (
     <Button
-      color="info"
+      // color="info"
       size="sm"
       className={`query-button mr-2 ${className || ''}`}
       onClick={handleCopyQuery}

@@ -61,7 +61,7 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
   const buttonId = `open-new-tab-${data.table_name}-${data.table_schema}`;
 
   return (
-    <div className="w-100 pr-1 position-relative my-1 ">
+    <div className="w-100 pr-1 position-relative my-1">
       <Button
         size="sm"
         color={btnSelected}
@@ -69,6 +69,13 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
         className="btn-block pt-0 text-left"
         style={{ paddingRight: '30px' }}
       >
+        {/*<Button*/}
+        {/*  size="sm"*/}
+        {/*  color={checked ? 'success' : ''}*/}
+        {/*  id={id}*/}
+        {/*  className={`btn-block pt-0 text-left ${!checked && 'custom-table'}`}*/}
+        {/*  style={{ paddingRight: '30px' }}*/}
+        {/*>*/}
         <div className="d-flex justify-content-between align-items-center">
           <div onClick={handleOnClick} className="w-100">
             <small color={tableTypeColor} className="text-truncate align-self-start">
@@ -93,7 +100,7 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
         {` ${translations[language.code].tooltips.selectToQuery}:  ${data.table_name}`}
       </Tooltip>
       <div className={'open-new-tab-btn'} id={buttonId} onClick={handleOpenNewTab}>
-        <FontAwesomeIcon icon={faExternalLinkAlt} style={{ width: '1rem', height: '1rem' }} color={'white'} />
+        <FontAwesomeIcon icon={faExternalLinkAlt} style={{ width: '1rem', height: '1rem' }} color={'#007bff'} />
       </div>
       <UncontrolledTooltip placement="top" target={buttonId}>
         {translations[language.code].tooltips.openInNewTab}

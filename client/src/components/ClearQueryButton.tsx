@@ -47,9 +47,9 @@ export const ClearQueryButton: React.FC<ClearQueryButtonProps> = ({ className })
   return (
     <>
       <Button
-        color="secondary"
+        // color="secondary"
         size="sm"
-        className={`query-button mr-2 ${className || ''}`}
+        className={`query-button mr-2 ${className || ''} query-action-button`}
         onClick={toggleConfirmModal}
         title={translations[language.code].clearQuery.buttonTitle}
         disabled={!hostInfo.connected || !hostInfo.database}

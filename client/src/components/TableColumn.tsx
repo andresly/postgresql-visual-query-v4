@@ -20,6 +20,7 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
   const dispatch = useAppDispatch();
   const columns = useAppSelector((state) => state.query.columns);
   const joins = useAppSelector((state) => state.query.joins);
+  const tables = useAppSelector((state) => state.query.tables);
   const databaseColumns = useAppSelector((state) => state.database.columns);
   const constraints = useAppSelector((state) => state.database.constraints);
 
@@ -81,7 +82,7 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
       data-column-id={`${data.table_id}-${data.column_name}`}
       id={`${data.table_id}-column-${data.column_name}`}
     >
-      {data.column_name !== '*' && (
+      {data.column_name !== '*' && tables.length > 1 && (
         <>
           {/* Add React Flow connection handles */}
           <Handle

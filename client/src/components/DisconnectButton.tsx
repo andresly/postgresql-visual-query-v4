@@ -19,7 +19,7 @@ export const DisconnectButton: React.FC = () => {
   }
 
   return (
-    <Button size="lg" className="btn-block my-2 px-2" color="danger" onClick={handleOnClick}>
+    <Button size="lg" className="btn-block my-2 px-2 switch-db" color="black" onClick={handleOnClick}>
       {translations[language.code].sideBar.disconnectB}
     </Button>
   );

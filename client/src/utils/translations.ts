@@ -82,6 +82,9 @@ export const translations = {
       copyNameSuffix: 'Copy',
     },
     queryBuilder: {
+      viewSQLCode: 'View SQL Code',
+      scrollToTop: 'Scroll to top',
+      selectColumnsFromTop: 'Select columns from top',
       moreInfo: 'More info: ',
       queryB: 'Execute',
       querying: 'Querying',
@@ -151,6 +154,7 @@ export const translations = {
       removeDuplicatesLabel: 'Remove Duplicates',
       criteriaLabel: 'Criteria',
       orLabel: 'Or',
+      selectTableToStart: 'Select a table from the left to start building your query',
     },
     tooltips: {
       invalidFilter: 'Invalid filter condition',
@@ -281,6 +285,9 @@ export const translations = {
       copyNameSuffix: 'Koopia',
     },
     queryBuilder: {
+      viewSQLCode: 'Vaata SQL koodi',
+      scrollToTop: 'Keri üles',
+      selectColumnsFromTop: 'Vali veerud ülemiselt alalt',
       moreInfo: 'Rohkem infot: ',
       queryB: 'Käivita',
       querying: 'Käivitan',
@@ -350,6 +357,7 @@ export const translations = {
       removeDuplicatesLabel: 'Eemalda kordused',
       criteriaLabel: 'Kriteeriumid',
       orLabel: 'Või',
+      selectTableToStart: 'Vali vasakust veerust tabel, et alustada päringu loomist',
     },
     tooltips: {
       invalidFilter: 'Kehtetu tingimuse sisu',

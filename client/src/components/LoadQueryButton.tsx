@@ -212,9 +212,9 @@ export const LoadQueryButton: React.FC<LoadQueryButtonProps> = ({ className }) =
   return (
     <>
       <Button
-        color="primary"
+        // color="primary"
         size="sm"
-        className={`query-button mr-2 ${className || ''}`}
+        className={`query-button mr-2 ${className || ''} query-action-button`}
         onClick={toggleModal}
         title={translations[language.code].loadQuery.buttonTitle}
         disabled={!hostInfo.connected || !hostInfo.database}

@@ -62,13 +62,13 @@ const QueryTableHeader: React.FC<QueryTableHeaderProps> = ({
       <ButtonGroup>
         <Button
           size="sm"
-          color="secondary"
-          className=""
+          // color="secondary"
+          className="close-button"
           style={{ borderTopLeftRadius: '0px' }}
           onClick={handleCopy}
           id={`${target}_copy`}
         >
-          <FontAwesomeIcon icon="copy" />
+          <FontAwesomeIcon icon="copy" color={'#4c4c4c'} />
         </Button>
         <UncontrolledTooltip
           placement="top"
@@ -80,13 +80,13 @@ const QueryTableHeader: React.FC<QueryTableHeaderProps> = ({
         </UncontrolledTooltip>
         <Button
           size="sm"
-          className="align-self-start"
-          color="danger"
+          className="align-self-start close-button"
+          // color="danger"
           style={{ borderBottomRightRadius: '0px' }}
           onClick={handleRemoveTable}
           id={`${target}_remove`}
         >
-          <FontAwesomeIcon icon="times" />
+          <FontAwesomeIcon icon="times" color={'#4c4c4c'} />
         </Button>
       </ButtonGroup>
       <QueryTablePopover target={target} data={data} />

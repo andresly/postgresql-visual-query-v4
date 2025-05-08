@@ -27,12 +27,17 @@ const DeleteQueryButton: React.FC<{ queryId: number }> = ({ queryId }) => {
 
   return (
     <Button
-      color="danger"
-      className="btn-sm"
+      // color="danger"
+      className="btn-sm close-button"
       onClick={handleOnClick}
-      style={{ borderTopLeftRadius: '0px', borderBottomLeftRadius: '0px' }}
+      style={{
+        borderTopLeftRadius: '0px',
+        borderBottomLeftRadius: '0px',
+        borderColor: '#6c757d',
+        border: '1px solid #6c757d',
+      }}
     >
-      <FontAwesomeIcon icon="times" />
+      <FontAwesomeIcon icon="times" color={'#4c4c4c'} />
     </Button>
   );
 };
