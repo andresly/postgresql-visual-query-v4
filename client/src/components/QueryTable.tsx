@@ -124,9 +124,53 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
     };
   }, [debouncedResize]);
 
+  // Create a special "select all" column for the table
+  const allColumnsData: QueryColumnType = {
+    id: -1, // Special ID for the "all columns" option
+    column_name: '*',
+    column_name_original: '*',
+    display_in_query: true,
+    table_name: data.table_name,
+    table_schema: data.table_schema,
+    table_alias: data.table_alias,
+    table_id: data.id,
+    column_alias: '',
+    column_aggregate: '',
+    column_order: false,
+    column_order_dir: true,
+    column_order_nr: 0,
+    column_single_line_function: '',
+    column_conditions: [],
+    column_filters: [],
+    column_values: [],
+    column_value: '',
+    value_enabled: false,
+    returning: false,
+    returningOnly: false,
+    // Add missing required properties
+    column_filter: '',
+    column_filter_operand: '',
+    column_distinct_on: false,
+    column_sort_order: '',
+    column_group_by: false,
+    filter_as_having: false,
+    ordinal_position: 0,
+    data_type: '*',
+    constraints: [],
+    subquerySql: '',
+    subqueryId: 0,
+  };
+
   return (
-    <Scrollbars autoHeight autoHeightMax={400} onScroll={debouncedResize}>
+    <Scrollbars autoHeight autoHeightMax={350} onScroll={debouncedResize}>
       <CardBody className="py-0 mt-2 mx-2 px-0 position-relative" style={{ zIndex: 1, backgroundColor: 'white' }}>
+        {/* Add the "select all" * column first */}
+        <div key={`${data.id}-column-all`} id={`${data.id}-column-all`} className="column-container">
+          <div>
+            <TableColumn id={`${id}-table-column-all`} data={constructData(allColumnsData)} joins={[]} />
+          </div>
+        </div>
+
         {data.columns.map((column) => {
           const columnJoins = (joins || [])?.flatMap((join) => {
             const conditions = join.conditions.filter(

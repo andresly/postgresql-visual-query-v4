@@ -28,7 +28,7 @@ export const TableColumnPopover = (props) => {
     >
       <PopoverHeader>{translations[props.language.code].queryBuilder.foreignKeyH}</PopoverHeader>
       <PopoverBody className="p-1">
-        <Scrollbars autoHeight autoHeightMax={400}>
+        <Scrollbars autoHeight autoHeightMax={350}>
           <Table bordered className="table-sm mb-3">
             <thead>
               <tr>

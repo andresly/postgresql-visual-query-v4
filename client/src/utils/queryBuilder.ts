@@ -141,6 +141,7 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
  * - Scalar functions
  * - DISTINCT ON clauses
  * - GROUP BY clauses for aggregates
+ * - Special '*' column to select all columns from a table
  * @param data The query configuration object
  * @param query The squel query object to modify
  * @param queries Array of all queries (for subquery support)
@@ -466,6 +467,13 @@ const addColumnsToQuery = (
     }
 
     if (column.display_in_query) {
+      // Special case for the '*' column (select all columns from a table)
+      if (column.column_name === '*') {
+        const tableRef = column.table_alias || column.table_name;
+        query.field(`${quoteIdentifier(tableRef)}.*`);
+        return;
+      }
+
       // Generate automatic alias for aggregated or single line function columns if no alias is specified
       const hasInlineAlias = column.column_name.toUpperCase().includes(' AS ');
       const autoAlias = hasInlineAlias ? '' : column.column_alias;
