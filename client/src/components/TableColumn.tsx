@@ -81,57 +81,61 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
       data-column-id={`${data.table_id}-${data.column_name}`}
       id={`${data.table_id}-column-${data.column_name}`}
     >
-      {/* Add React Flow connection handles */}
-      <Handle
-        type="source"
-        id={`${columnId}-right-source`}
-        position={Position.Right}
-        style={{
-          background: '#555',
-          width: '14px',
-          height: '14px',
-          right: '-2px',
-          zIndex: 2,
-        }}
-      />
-      <Handle
-        type="target"
-        id={`${columnId}-right-target`}
-        position={Position.Right}
-        style={{
-          background: '#555',
-          width: '14px',
-          height: '14px',
-          right: '-2px',
-          zIndex: 1,
-        }}
-      />
+      {data.column_name !== '*' && (
+        <>
+          {/* Add React Flow connection handles */}
+          <Handle
+            type="source"
+            id={`${columnId}-right-source`}
+            position={Position.Right}
+            style={{
+              background: '#555',
+              width: '14px',
+              height: '14px',
+              right: '-2px',
+              zIndex: 2,
+            }}
+          />
+          <Handle
+            type="target"
+            id={`${columnId}-right-target`}
+            position={Position.Right}
+            style={{
+              background: '#555',
+              width: '14px',
+              height: '14px',
+              right: '-2px',
+              zIndex: 1,
+            }}
+          />
 
-      {/* Left side: source & target */}
-      <Handle
-        type="source"
-        id={`${columnId}-left-source`}
-        position={Position.Left}
-        style={{
-          background: '#555',
-          width: '14px',
-          height: '14px',
-          left: '-2px',
-          zIndex: 2,
-        }}
-      />
-      <Handle
-        type="target"
-        id={`${columnId}-left-target`}
-        position={Position.Left}
-        style={{
-          background: '#555',
-          width: '14px',
-          height: '14px',
-          left: '-2px',
-          zIndex: 1,
-        }}
-      />
+          {/* Left side: source & target */}
+          <Handle
+            type="source"
+            id={`${columnId}-left-source`}
+            position={Position.Left}
+            style={{
+              background: '#555',
+              width: '14px',
+              height: '14px',
+              left: '-2px',
+              zIndex: 2,
+            }}
+          />
+          <Handle
+            type="target"
+            id={`${columnId}-left-target`}
+            position={Position.Left}
+            style={{
+              background: '#555',
+              width: '14px',
+              height: '14px',
+              left: '-2px',
+              zIndex: 1,
+            }}
+          />
+        </>
+      )}
 
       <ButtonGroup size="sm" className="btn-block my-1 p-0 px-1">
         <Button
