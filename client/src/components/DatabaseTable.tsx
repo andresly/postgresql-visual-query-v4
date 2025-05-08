@@ -90,7 +90,7 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
         delay={{ show: 200, hide: 0 }}
         className=""
       >
-        {data.table_name}
+        {` ${translations[language.code].tooltips.selectToQuery}:  ${data.table_name}`}
       </Tooltip>
       <div className={'open-new-tab-btn'} id={buttonId} onClick={handleOpenNewTab}>
         <FontAwesomeIcon icon={faExternalLinkAlt} style={{ width: '1rem', height: '1rem' }} color={'white'} />

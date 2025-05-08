@@ -167,6 +167,7 @@ export const translations = {
       linkSq: 'Link subquery to filter',
       queryName: 'Rename query',
       openInNewTab: 'Click to open table preview in new tab',
+      selectToQuery: 'Select table to query',
       // Table label tooltips
       column:
         "Column or expression that will be included in the result. You can use mathematical operators and functions. Example: (price * quantity) or CONCAT(first_name, ' ', last_name). More info: https://www.postgresql.org/docs/current/sql-expressions.html",
@@ -365,6 +366,7 @@ export const translations = {
       linkSq: 'Alampäringu linkimine filtrile',
       queryName: 'Päringu ümbernimetamine',
       openInNewTab: 'Klõpsa tabeli eelvaate avamiseks uuel vahekaardil',
+      selectToQuery: 'Vali tabel päringusse',
       // Table label tooltips
       column:
         "Veerg või avaldis, mis lisatakse tulemustesse. Võite kasutada matemaatilisi operaatoreid ja funktsioone. Näide: (hind * kogus) või CONCAT(eesnimi, ' ', perekonnanimi). Rohkem infot: https://www.postgresql.org/docs/current/sql-expressions.html",
