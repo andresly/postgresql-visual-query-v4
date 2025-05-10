@@ -460,6 +460,9 @@ const addColumnsToQuery = (
   // Check if any column uses aggregation
   const hasAggregates = columns.some((col) => col.column_aggregate && col.column_aggregate.length > 0);
 
+  // console.log({ columns });
+  // console.log({ queries });
+  // console.log({ data });
   // Process columns for fields, orders, group by, etc.
   columns.forEach((column) => {
     if (!data.distinct && column.column_distinct_on) {
@@ -484,13 +487,23 @@ const addColumnsToQuery = (
 
           // If the column name is different from original, it might be an expression
           if (column.column_name !== column.column_name_original) {
-            // Replace the original column name with the qualified version
-            const tableRef = quoteIdentifier(column.table_name);
-            const columnRef = quoteIdentifier(column.column_name_original);
-            const qualifiedRef = `${tableRef}.${columnRef}`;
+            // Check if the new column name is just another column name (no operators or special characters)
+            const isJustColumnName = !/[\s!"#$%&'()*+,\-./:;<=>?@[\\\]^`{|}~]/.test(column.column_name);
 
-            // Replace all occurrences of the original column name with the qualified version
-            field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+            if (isJustColumnName) {
+              // If it's just another column name, use the table qualification
+              const tableRef = quoteIdentifier(column.table_name);
+              const columnRef = quoteIdentifier(column.column_name);
+              field = `${tableRef}.${columnRef}`;
+            } else {
+              // For actual expressions, don't use quoteIdentifier on the column part and don't prepend table name
+              const tableRef = quoteIdentifier(column.table_name);
+              const columnRef = quoteIdentifier(column.column_name_original);
+              const qualifiedRef = `${tableRef}.${columnRef}`;
+
+              // Replace all occurrences of the original column name with the qualified version
+              field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+            }
           } else {
             field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
           }
