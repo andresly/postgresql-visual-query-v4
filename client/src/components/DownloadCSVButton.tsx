@@ -1,21 +1,28 @@
 import React from 'react';
-import { connect } from 'react-redux';
 import { CSVLink } from 'react-csv';
 import _ from 'lodash';
 import { Button } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import * as PropTypes from 'prop-types';
+import { useAppSelector } from '../hooks';
+import { ResultType } from '../types/queryTypes';
 
-export const DownloadCSVButton = (props) => {
-  const getHeaders = (result) => {
+interface CSVHeader {
+  label: string;
+  key: string;
+}
+
+const DownloadCSVButton: React.FC = () => {
+  const result = useAppSelector((state) => state.query.result);
+
+  const getHeaders = (result: ResultType | null): CSVHeader[] => {
     if (_.isNull(result)) {
       return [];
     }
 
-    const headers = [];
+    const headers: CSVHeader[] = [];
 
     result.fields.forEach((field) => {
-      const header = {
+      const header: CSVHeader = {
         label: field.name,
         key: field.name,
       };
@@ -26,22 +33,17 @@ export const DownloadCSVButton = (props) => {
     return headers;
   };
 
-  const getData = (result) => {
+  const getData = (result: ResultType | null): any[] => {
     if (_.isNull(result)) {
       return [];
     }
     return result.rows;
   };
 
-  const disabled = _.isNull(props.result);
+  const disabled = _.isNull(result);
 
   return (
-    <CSVLink
-      className="mr-2"
-      data={getData(props.result)}
-      headers={getHeaders(props.result)}
-      filename="result.csv"
-    >
+    <CSVLink className="mr-2" data={getData(result)} headers={getHeaders(result)} filename="result.csv">
       <Button disabled={disabled}>
         <FontAwesomeIcon icon="download" />
         <div className="d-inline"> CSV</div>
@@ -50,12 +52,4 @@ export const DownloadCSVButton = (props) => {
   );
 };
 
-DownloadCSVButton.propTypes = {
-  result: PropTypes.shape({}),
-};
-
-const mapStateToProps = store => ({
-  result: store.query.result,
-});
-
-export default connect(mapStateToProps)(DownloadCSVButton);
+export default DownloadCSVButton;

@@ -4,16 +4,25 @@ import 'codemirror/mode/sql/sql';
 import 'codemirror/addon/edit/matchbrackets';
 import { UnControlled as CodeMirror } from 'react-codemirror2';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { updateSql } from '../actions/queryActions';
+import { generateSql, regenerateSql, updateSql } from '../actions/queryActions';
+import { languages, translations } from '../utils/translations';
 
 interface ResultSQLProps {
   isFloating: boolean;
   onFloatToggle: (floating: boolean) => void;
+  isActive: boolean;
 }
 
-export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle }) => {
+export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle, isActive }) => {
   const { sql } = useAppSelector((state) => state.query);
+  const language = useAppSelector((state) => state.settings.language);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (isActive) {
+      dispatch(generateSql());
+    }
+  }, [isActive]);
 
   // Toggle padding on query-area when floating state changes
   useEffect(() => {
@@ -67,7 +76,7 @@ export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle 
             style={{ padding: '2px 8px' }}
             type="button"
           >
-            <strong>Dock</strong>
+            <strong>{translations[language.code].queryBuilder.dock}</strong>
           </button>
         </div>
       )}
@@ -102,7 +111,7 @@ export const ResultSQL: React.FC<ResultSQLProps> = ({ isFloating, onFloatToggle 
           }}
           type="button"
         >
-          <strong>Float</strong>
+          <strong>{translations[language.code].queryBuilder.float}</strong>
         </button>
       )}
     </div>

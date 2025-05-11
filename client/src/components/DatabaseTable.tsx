@@ -2,7 +2,7 @@ import React from 'react';
 import { Button, Tooltip, UncontrolledTooltip } from 'reactstrap';
 import _ from 'lodash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { addTable, resetQuery } from '../actions/queryActions';
 import { openTableView, setActiveTableView } from '../actions/tableViewActions';
 import { useAppDispatch, useAppSelector } from '../hooks';
@@ -100,7 +100,7 @@ export const DatabaseTable: React.FC<DatabaseTableProps> = ({ data, checked, id,
         {` ${translations[language.code].tooltips.selectToQuery}:  ${data.table_name}`}
       </Tooltip>
       <div className={'open-new-tab-btn'} id={buttonId} onClick={handleOpenNewTab}>
-        <FontAwesomeIcon icon={faExternalLinkAlt} style={{ width: '1rem', height: '1rem' }} color={'#007bff'} />
+        <FontAwesomeIcon icon={faEye} style={{ width: '1rem', height: '1rem' }} color={'#007bff'} />
       </div>
       <UncontrolledTooltip placement="top" target={buttonId}>
         {translations[language.code].tooltips.openInNewTab}

@@ -1,18 +1,22 @@
 import { CustomInput, Row } from 'reactstrap';
-import React, { useEffect, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import * as PropTypes from 'prop-types';
+import React, { useEffect, useState, ChangeEvent } from 'react';
 import { updateColumnOperand } from '../actions/queryActions';
+import { useAppDispatch } from '../hooks';
+import { QueryColumnType } from '../types/queryTypes';
 
-const FilterOperandSelectbox = ({ column }) => {
-  const dispatch = useDispatch();
+interface FilterOperandSelectboxProps {
+  column: Pick<QueryColumnType, 'id'>;
+}
+
+const FilterOperandSelectbox: React.FC<FilterOperandSelectboxProps> = ({ column }) => {
+  const dispatch = useAppDispatch();
   const [filterOperand, setFilterOperand] = useState('AND');
 
   useEffect(() => {
     dispatch(updateColumnOperand(filterOperand, column.id));
   }, [filterOperand, column.id, dispatch]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFilterOperand(e.target.value);
   };
 
@@ -35,10 +39,6 @@ const FilterOperandSelectbox = ({ column }) => {
       </div>
     </Row>
   );
-};
-
-FilterOperandSelectbox.propTypes = {
-  column: PropTypes.shape({ id: PropTypes.number }),
 };
 
 export default FilterOperandSelectbox;

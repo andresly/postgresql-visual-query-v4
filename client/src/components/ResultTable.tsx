@@ -1,35 +1,71 @@
 import React, { useMemo } from 'react';
-import { connect } from 'react-redux';
 import { useTable, usePagination } from 'react-table';
-import * as PropTypes from 'prop-types';
+import { useAppSelector } from '../hooks';
+
+// Define error type
+interface ErrorResponse {
+  message: string;
+  code: string;
+  position: string;
+  request?: {
+    response: string;
+  };
+}
+
+// Define field type
+interface FieldType {
+  name: string;
+  tableID: number;
+  columnID: number;
+  dataTypeID: number;
+  dataTypeSize: number;
+  dataTypeModifier: number;
+  format: string;
+}
+
+// Define result type
+interface ResultType {
+  command: string;
+  fields: FieldType[];
+  oid: number | null;
+  rowAsArray: boolean;
+  rowCount: number;
+  rows: Record<string, any>[];
+  fullRowCount?: number;
+  hasMoreRows?: boolean;
+}
 
 // Define the row number cell component outside the main component
-const RowNumberCell = ({ index }) => <div>{index + 1}</div>;
+interface RowNumberCellProps {
+  index: number;
+}
 
-RowNumberCell.propTypes = {
-  index: PropTypes.number.isRequired,
-};
+const RowNumberCell: React.FC<RowNumberCellProps> = ({ index }) => <div>{index + 1}</div>;
 
 // Cell renderer for row numbers - defined outside component
-const CellRenderer = ({ row }) => <RowNumberCell index={row.index} />;
+interface CellRendererProps {
+  row: {
+    index: number;
+  };
+}
 
-CellRenderer.propTypes = {
-  row: PropTypes.shape({
-    index: PropTypes.number.isRequired,
-  }).isRequired,
-};
+const CellRenderer: React.FC<CellRendererProps> = ({ row }) => <RowNumberCell index={row.index} />;
 
-export const ResultTable = (props) => {
+const ResultTable: React.FC = () => {
+  // Use Redux hooks instead of connect HOC
+  const result = useAppSelector((state) => state.query.result) as ResultType | null;
+  const error = useAppSelector((state) => state.query.error) as ErrorResponse | null;
+
   // Use useMemo to cache the parsed rows and columns to avoid recalculation on every render
   const parsedRows = useMemo(() => {
-    if (!props.result || !props.result.rows) return [];
+    if (!result || !result.rows) return [];
 
     // Don't clone the entire result set - process rows individually
-    return props.result.rows.map((row) => {
+    return result.rows.map((row: Record<string, any>) => {
       // Create a new object instead of mutating the original
-      const tableRow = {};
+      const tableRow: Record<string, string> = {};
 
-      props.result.fields.forEach((field) => {
+      result.fields.forEach((field: FieldType) => {
         const value = row[field.name];
         if (value === null || value === undefined) {
           tableRow[field.name] = '';
@@ -42,12 +78,12 @@ export const ResultTable = (props) => {
 
       return tableRow;
     });
-  }, [props.result]);
+  }, [result]);
 
   const columns = useMemo(() => {
-    if (!props.result || !props.result.fields) return [];
+    if (!result || !result.fields) return [];
 
-    const cols = [
+    const cols: any[] = [
       {
         Header: '#',
         id: 'row',
@@ -57,15 +93,25 @@ export const ResultTable = (props) => {
       },
     ];
 
-    props.result.fields.forEach((field) => {
+    // Keep track of column names to handle duplicates
+    const columnCounts: Record<string, number> = {};
+
+    result.fields.forEach((field: FieldType) => {
+      // Count occurrences of this column name
+      columnCounts[field.name] = (columnCounts[field.name] || 0) + 1;
+
+      // If this is a duplicate, append a number to make it unique
+      const columnId = columnCounts[field.name] > 1 ? `${field.name}_${columnCounts[field.name]}` : field.name;
+
       cols.push({
         Header: field.name,
         accessor: field.name,
+        id: columnId, // Use the unique columnId as the column identifier
       });
     });
 
     return cols;
-  }, [props.result]);
+  }, [result]);
 
   const defaultPageSize = 20;
 
@@ -74,10 +120,10 @@ export const ResultTable = (props) => {
     {
       columns,
       data: parsedRows,
-      initialState: { pageSize: defaultPageSize },
+      initialState: { pageSize: defaultPageSize } as any,
     },
     usePagination,
-  );
+  ) as any;
 
   const {
     getTableProps,
@@ -94,23 +140,23 @@ export const ResultTable = (props) => {
     state: { pageIndex },
   } = tableInstance;
 
-  let { error } = props;
+  let errorData: ErrorResponse | null = error;
 
-  if (props.error && props.error.request && props.error.request.response) {
-    error = JSON.parse(props.error.request.response);
+  if (error && error.request && error.request.response) {
+    errorData = JSON.parse(error.request.response);
   }
 
   // Check if we have a large result set that's been limited
-  const hasLimitedResults = props.result && props.result.hasMoreRows;
-  const fullRowCount = props.result?.fullRowCount;
+  const hasLimitedResults = result && result.hasMoreRows;
+  const fullRowCount = result?.fullRowCount;
 
   return (
     <div className="result">
-      {props.result && (
+      {result && (
         <>
           {hasLimitedResults && (
             <div className="alert alert-info mb-3" role="alert">
-              <strong>Note:</strong> Showing {props.result.rows.length} of {fullRowCount || 'many'} rows for better
+              <strong>Note:</strong> Showing {result.rows.length} of {fullRowCount || 'many'} rows for better
               performance. You can modify your query to include a LIMIT clause for more specific results.
             </div>
           )}
@@ -118,9 +164,9 @@ export const ResultTable = (props) => {
           <div className="table-responsive">
             <table {...getTableProps()} className="table table-striped table-hover">
               <thead>
-                {headerGroups.map((headerGroup) => (
+                {headerGroups.map((headerGroup: any) => (
                   <tr {...headerGroup.getHeaderGroupProps()} key={headerGroup.id}>
-                    {headerGroup.headers.map((column) => (
+                    {headerGroup.headers.map((column: any) => (
                       <th {...column.getHeaderProps()} key={column.id}>
                         {column.render('Header')}
                       </th>
@@ -129,11 +175,11 @@ export const ResultTable = (props) => {
                 ))}
               </thead>
               <tbody {...getTableBodyProps()}>
-                {page.map((row) => {
+                {page.map((row: any) => {
                   prepareRow(row);
                   return (
                     <tr {...row.getRowProps()} key={row.id}>
-                      {row.cells.map((cell) => (
+                      {row.cells.map((cell: any) => (
                         <td {...cell.getCellProps()} key={cell.column.id}>
                           {cell.render('Cell')}
                         </td>
@@ -176,40 +222,17 @@ export const ResultTable = (props) => {
           )}
         </>
       )}
-      {props.error && (
+      {error && errorData && (
         <div>
-          {`ERROR: ${error.message}`}
+          {`ERROR: ${errorData.message}`}
           <div className="w-100" />
-          {`CODE: ${error.code}`}
+          {`CODE: ${errorData.code}`}
           <div className="w-100" />
-          {`POSITION: ${error.position}`}
+          {`POSITION: ${errorData.position}`}
         </div>
       )}
     </div>
   );
 };
 
-ResultTable.propTypes = {
-  result: PropTypes.shape({
-    rows: PropTypes.arrayOf(PropTypes.shape({})),
-    fields: PropTypes.arrayOf(PropTypes.shape({})),
-    rowCount: PropTypes.number,
-    fullRowCount: PropTypes.number,
-    hasMoreRows: PropTypes.bool,
-  }),
-  error: PropTypes.shape({
-    message: PropTypes.string,
-    code: PropTypes.string,
-    position: PropTypes.string,
-    request: PropTypes.shape({
-      response: PropTypes.string,
-    }),
-  }),
-};
-
-const mapStateToProps = (store) => ({
-  result: store.query.result,
-  error: store.query.error,
-});
-
-export default connect(mapStateToProps)(ResultTable);
+export default ResultTable;

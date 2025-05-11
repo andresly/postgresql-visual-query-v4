@@ -133,6 +133,38 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
 };
 
 /**
+ * Replaces column names in an expression with their fully qualified versions
+ * @param expression The expression containing column names
+ * @param tables Array of tables with their columns
+ * @returns The expression with qualified column names
+ */
+const replaceColumnNamesWithQualified = (expression: string, tables: QueryTableType[]) => {
+  // Get all column names from all tables in the query
+  const allColumns = tables.flatMap((table) =>
+    table.columns.map((col) => ({
+      name: col.column_name,
+      table: table.table_name,
+      tableAlias: table.table_alias,
+    })),
+  );
+
+  // Create a regex pattern that matches any column name
+  const columnPattern = new RegExp(`\\b(${allColumns.map((c) => c.name).join('|')})\\b`, 'gi');
+
+  // Replace any column name with its qualified version
+  return expression.replace(columnPattern, (match) => {
+    // Find the table for this column
+    const columnInfo = allColumns.find((c) => c.name.toLowerCase() === match.toLowerCase());
+    if (columnInfo) {
+      // Use table alias if available, otherwise use table name
+      const tableRef = columnInfo.tableAlias || columnInfo.table;
+      return `${quoteIdentifier(tableRef)}.${quoteIdentifier(match)}`;
+    }
+    return match;
+  });
+};
+
+/**
  * Adds columns, aggregates, and functions to a SELECT query
  * Handles:
  * - Regular columns
@@ -460,9 +492,6 @@ const addColumnsToQuery = (
   // Check if any column uses aggregation
   const hasAggregates = columns.some((col) => col.column_aggregate && col.column_aggregate.length > 0);
 
-  // console.log({ columns });
-  // console.log({ queries });
-  // console.log({ data });
   // Process columns for fields, orders, group by, etc.
   columns.forEach((column) => {
     if (!data.distinct && column.column_distinct_on) {
@@ -487,23 +516,7 @@ const addColumnsToQuery = (
 
           // If the column name is different from original, it might be an expression
           if (column.column_name !== column.column_name_original) {
-            // Check if the new column name is just another column name (no operators or special characters)
-            const isJustColumnName = !/[\s!"#$%&'()*+,\-./:;<=>?@[\\\]^`{|}~]/.test(column.column_name);
-
-            if (isJustColumnName) {
-              // If it's just another column name, use the table qualification
-              const tableRef = quoteIdentifier(column.table_name);
-              const columnRef = quoteIdentifier(column.column_name);
-              field = `${tableRef}.${columnRef}`;
-            } else {
-              // For actual expressions, don't use quoteIdentifier on the column part and don't prepend table name
-              const tableRef = quoteIdentifier(column.table_name);
-              const columnRef = quoteIdentifier(column.column_name_original);
-              const qualifiedRef = `${tableRef}.${columnRef}`;
-
-              // Replace all occurrences of the original column name with the qualified version
-              field = column.column_name.split(column.column_name_original).join(qualifiedRef);
-            }
+            field = replaceColumnNamesWithQualified(column.column_name, data.tables);
           } else {
             field = `${quoteIdentifier(column.table_name)}.${quoteIdentifier(field)}`;
           }
@@ -529,13 +542,7 @@ const addColumnsToQuery = (
 
           // If the column name is different from original, it might be an expression
           if (column.column_name !== column.column_name_original) {
-            // Use table alias instead of table name when available
-            const tableRef = quoteIdentifier(column.table_alias);
-            const columnRef = quoteIdentifier(column.column_name_original);
-            const qualifiedRef = `${tableRef}.${columnRef}`;
-
-            // Replace all occurrences of the original column name with the qualified version
-            field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+            field = replaceColumnNamesWithQualified(column.column_name, data.tables);
           } else {
             field = `${quoteIdentifier(column.table_alias)}.${quoteIdentifier(field)}`;
           }
@@ -561,13 +568,7 @@ const addColumnsToQuery = (
 
         // If the column name is different from original, it might be an expression
         if (column.column_name !== column.column_name_original) {
-          // Use table alias if available, otherwise use table name
-          const tableRef = quoteIdentifier(column.table_alias || column.table_name);
-          const columnRef = quoteIdentifier(column.column_name_original);
-          const qualifiedRef = `${tableRef}.${columnRef}`;
-
-          // Replace all occurrences of the original column name with the qualified version
-          field = column.column_name.split(column.column_name_original).join(qualifiedRef);
+          field = replaceColumnNamesWithQualified(column.column_name, data.tables);
         } else {
           const tableRef = column.table_alias || column.table_name;
           field = `${quoteIdentifier(tableRef)}.${quoteIdentifier(field)}`;

@@ -4,7 +4,7 @@ import ResultTable from './ResultTable';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { translations } from '../utils/translations';
 import ResultSQL from './ResultSQL';
-import { generateSql } from '../actions/queryActions';
+import { generateSql, regenerateSql } from '../actions/queryActions';
 import { LanguageType } from '../types/settingsType';
 import { QueryType, ResultType } from '../types/queryTypes';
 import { withTabSwitcher } from '../hocs/withTabSwitcher';
@@ -32,7 +32,6 @@ export const ResultTabs: React.FC<ResultTabsProps> = ({ activeTab, toggle }) => 
   const [isFloating, setIsFloating] = useState(false);
 
   const handleTabSwitch = (tabId: string) => {
-    dispatch(generateSql());
     if (tabId === '2') {
       setIsFloating(false);
     }
@@ -72,7 +71,7 @@ export const ResultTabs: React.FC<ResultTabsProps> = ({ activeTab, toggle }) => 
           <Container fluid>
             <Row>
               <Col sm="12" className="p-1 h-auto">
-                <ResultSQL isFloating={isFloating} onFloatToggle={handleFloatToggle} />
+                <ResultSQL isFloating={isFloating} onFloatToggle={handleFloatToggle} isActive={activeTab === '1'} />
               </Col>
             </Row>
           </Container>

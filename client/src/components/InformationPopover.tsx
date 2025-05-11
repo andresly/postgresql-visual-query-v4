@@ -1,11 +1,11 @@
 import { Button, Popover, PopoverBody, PopoverHeader } from 'reactstrap';
 import React, { useState } from 'react';
-import { connect } from 'react-redux';
-import * as PropTypes from 'prop-types';
+import { useAppSelector } from '../hooks';
 import { translations } from '../utils/translations';
 
-export const InformationPopover = (props) => {
+const InformationPopover: React.FC = () => {
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const language = useAppSelector((state) => state.settings.language);
 
   const toggle = () => setPopoverOpen(!popoverOpen);
 
@@ -37,19 +37,11 @@ export const InformationPopover = (props) => {
         target="infoPopover"
         toggle={toggle}
       >
-        <PopoverHeader>{translations[props.language.code].loginForm.aboutH}</PopoverHeader>
-        <PopoverBody>{translations[props.language.code].loginForm.about}</PopoverBody>
+        <PopoverHeader>{translations[language.code].loginForm.aboutH}</PopoverHeader>
+        <PopoverBody>{translations[language.code].loginForm.about}</PopoverBody>
       </Popover>
     </div>
   );
 };
 
-InformationPopover.propTypes = {
-  language: PropTypes.shape({ code: PropTypes.string }),
-};
-
-const mapStateToProps = store => ({
-  language: store.settings.language,
-});
-
-export default connect(mapStateToProps)(InformationPopover);
+export default InformationPopover;

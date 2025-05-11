@@ -155,6 +155,8 @@ export const translations = {
       criteriaLabel: 'Criteria',
       orLabel: 'Or',
       selectTableToStart: 'Select a table from the left to start building your query',
+      float: 'Pin to screen',
+      dock: 'Restore position',
     },
     tooltips: {
       invalidFilter: 'Invalid filter condition',
@@ -179,7 +181,7 @@ export const translations = {
         'Optional name to assign to the column in the query result. Easier to reference the column in other parts of the query. More info: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
       table: 'The source table for this column. More info: https://www.postgresql.org/docs/current/ddl-basics.html',
       aggregate:
-        'Functions that operate on multiple rows and return a single result, like SUM, AVG, COUNT. More info: https://www.postgresql.org/docs/current/functions-aggregate.html',
+        'Functions that operate on multiple rows and return a single result, like SUM, AVG, COUNT. NB! By applying this, GROUP BY is added automatically to necessary fields. More info: https://www.postgresql.org/docs/current/functions-aggregate.html',
       scalar:
         'Functions that operate on a single row and return a single value, like UPPER, LOWER, LENGTH. More info: https://www.postgresql.org/docs/current/functions.html',
       sort: 'Sort the results by this column. More info: https://www.postgresql.org/docs/current/queries-order.html',
@@ -358,6 +360,8 @@ export const translations = {
       criteriaLabel: 'Kriteeriumid',
       orLabel: 'Või',
       selectTableToStart: 'Vali vasakust veerust tabel, et alustada päringu loomist',
+      float: 'Kinnita ekraanile',
+      dock: 'Taasta positsioon',
     },
     tooltips: {
       invalidFilter: 'Kehtetu tingimuse sisu',
@@ -382,7 +386,7 @@ export const translations = {
         'Valikuline nimi, mis antakse veerule päringu tulemustes. Lihtsustab veerule viitamist päringu teistes osades. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
       table: 'Selle veeru lähtetabel. Rohkem infot: https://www.postgresql.org/docs/current/ddl-basics.html',
       aggregate:
-        'Funktsioonid, mis töötavad mitme reaga ja tagastavad ühe tulemuse, nagu SUM, AVG, COUNT. Rohkem infot: https://www.postgresql.org/docs/current/functions-aggregate.html',
+        'Funktsioonid, mis töötavad mitme reaga ja tagastavad ühe tulemuse, nagu SUM, AVG, COUNT. NB! Väärtuse lisamisel rakendatakse vajalikele veergudele GROUP BY automaatselt. Rohkem infot: https://www.postgresql.org/docs/current/functions-aggregate.html',
       scalar:
         'Funktsioonid, mis töötavad ühe reaga ja tagastavad ühe väärtuse, nagu UPPER, LOWER, LENGTH. Rohkem infot: https://www.postgresql.org/docs/current/functions.html',
       sort: 'Sorteeri tulemused selle veeru järgi. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
