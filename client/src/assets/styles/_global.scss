@@ -65,7 +65,7 @@
   min-width: 120px;
 }
 
-.open-new-tab-btn{
+.open-new-tab-btn {
   position: absolute;
   z-index: 100;
   top: 50%;
@@ -87,12 +87,12 @@
   //}
 }
 
-.close-button{
+.close-button {
   background: white;
-  border: none
+  border: none;
 }
 
-.view-sql-shortcut{
+.view-sql-shortcut {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -104,31 +104,31 @@
   cursor: pointer;
 }
 
-.custom-table{
+.custom-table {
   padding-right: 30px;
   background-color: white;
   border-color: black;
   color: rgba(0, 0, 0, 0.8);
 }
 
-.switch-db{
+.switch-db {
   border: 1px solid black;
 }
 
-.query-action-button{
+.query-action-button {
   background-color: white;
   color: black;
   border: none;
 }
 
-.query-action-button:hover{
+.query-action-button:hover {
   background-color: #007bff;
   /*color: black;*/
   border: none;
   color: white;
 }
 
-.columns-placeholder{
+.columns-placeholder {
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.02);
@@ -139,4 +139,11 @@
   align-items: center;
   font-size: 1.25rem;
   font-weight: 600;
+}
+
+// New query tab with hover underline effect
+.new-query-tab {
+  &:hover {
+    text-decoration: underline !important;
+  }
 }

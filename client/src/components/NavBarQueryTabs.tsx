@@ -2,10 +2,24 @@ import React, { Fragment } from 'react';
 import { NavBarQueryTab } from './NavBarQueryTab';
 import NavBarTableTab from './NavBarTableTab';
 import { getCorrectQueryName } from '../utils/getCorrectQueryName';
-import { useAppSelector } from '../hooks';
+import { useAppSelector, useAppDispatch } from '../hooks';
 import { QueryType } from '../types/queryTypes';
+import { addQuery } from '../actions/queriesActions';
+import { translations } from '../utils/translations';
+
+// Add hover effect style
+const newQueryTabStyle = {
+  cursor: 'pointer',
+  background: 'transparent',
+  fontSize: '0.9rem',
+  fontWeight: 'normal',
+  // color: '#007bff',
+  outline: 'none',
+  position: 'relative',
+} as React.CSSProperties;
 
 export const NavBarQueryTabs = () => {
+  const dispatch = useAppDispatch();
   const { queries, activeIndex, language } = useAppSelector((state) => {
     const allQueries = [...state.queries, state.query]
       .slice()
@@ -22,6 +36,10 @@ export const NavBarQueryTabs = () => {
   // Get table tabs from tableView reducer
   const { tables, activeTableId } = useAppSelector((state) => state.tableView);
 
+  const handleAddQuery = () => {
+    dispatch(addQuery(queries[activeIndex].id));
+  };
+
   return (
     <>
       {/* Query Tabs */}
@@ -34,6 +52,16 @@ export const NavBarQueryTabs = () => {
           />
         </Fragment>
       ))}
+
+      {/* New Query Tab */}
+      <button
+        type="button"
+        className="nav-item nav-link text-nowrap px-2 py-1 border-0 new-query-tab"
+        style={newQueryTabStyle}
+        onClick={handleAddQuery}
+      >
+        <strong>+ {translations[language.code]?.queryBuilder?.queryH || 'New query'}</strong>
+      </button>
 
       {/* Table Tabs */}
       {tables.map((table) => (

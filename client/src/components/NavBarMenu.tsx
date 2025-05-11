@@ -78,11 +78,11 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
           </div>
         </Row>
       )}
-      <div className="col-12 pl-0 text-info pt-6">
-        <AddNewButton size="sm" id="newQuery" onClick={handleAddQuery} />
-        {` ${translations[language.code].queryBuilder.queryH}`}
-      </div>
-      <div className="col-auto pl-0 pt-3 d-flex align-items-center">
+      {/*<div className="col-12 pl-0 text-info pt-6">*/}
+      {/*  <AddNewButton size="sm" id="newQuery" onClick={handleAddQuery} />*/}
+      {/*  {` ${translations[language.code].queryBuilder.queryH}`}*/}
+      {/*</div>*/}
+      <div className="col-auto pl-0 d-flex align-items-center">
         <Row form className="align-items-center">
           {/*TODO: Add change query type back and fix errors*/}
           {/*<Label for="changeQueryType">Statement type:</Label>*/}
@@ -94,7 +94,7 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
           {/*    <option value="UPDATE">UPDATE</option>*/}
           {/*  </Input>*/}
           {/*</Col>*/}
-          <Col md={8} className="d-flex pt-3">
+          <Col md={8} className="d-flex pt-1">
             <SaveQueryButton />
             <LoadQueryButton />
             <ClearQueryButton />
