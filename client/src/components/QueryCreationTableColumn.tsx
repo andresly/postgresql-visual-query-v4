@@ -193,13 +193,27 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
   const handleFilterChange = (index: number) => {
     // First, create a deep copy of the original data
     const column = _.cloneDeep(data);
+
+    // Make sure column_conditions exists
+    if (!column.column_conditions) {
+      column.column_conditions = [];
+    }
+
     const filterValue = conditionsData[index];
+
+    // Check if the value actually changed before updating
+    if (column.column_conditions[index] === filterValue) {
+      return; // No change, don't update
+    }
 
     // Update the specific condition at the given index
     column.column_conditions[index] = filterValue;
 
     // Get the last two conditions
     const lastTwo = column.column_conditions.slice(-2);
+
+    // Handle dynamic adding/removing of condition rows
+    let shouldUpdate = true;
 
     // If this is the second-to-last condition and it's being filled
     if (index === column.column_conditions.length - 1 && filterValue !== '') {
@@ -213,8 +227,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       column.column_conditions.pop(); // Remove the last empty condition
     }
 
+    // Check for banned words
     const filter = _.lowerCase(filterValue).split(' ');
-
     let contains = false;
     bannedWords.forEach((el) => {
       if (filter.includes(el)) {
@@ -226,7 +240,9 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       setFilterValid(false);
     } else {
       setFilterValid(true);
-      dispatch(updateColumn(column));
+      if (shouldUpdate) {
+        dispatch(updateColumn(column));
+      }
     }
   };
 

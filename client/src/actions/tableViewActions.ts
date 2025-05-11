@@ -51,13 +51,19 @@ export const fetchTableCount = (
   tableName: string,
   tableSchema: string,
   connectionDetails: any,
+  whereClause?: string,
 ): ThunkAction<void, RootState, unknown, any> => {
   return async (dispatch: Dispatch) => {
     try {
       dispatch({ type: FETCH_TABLE_COUNT });
 
       // Construct SQL query to get count
-      const sql = `SELECT COUNT(*) as total_count FROM "${tableSchema}"."${tableName}"`;
+      let sql = `SELECT COUNT(*) as total_count FROM "${tableSchema}"."${tableName}"`;
+
+      // Add WHERE clause if provided
+      if (whereClause && whereClause.trim() !== '') {
+        sql += ` WHERE ${whereClause}`;
+      }
 
       const data = {
         database: connectionDetails.database,
@@ -82,6 +88,7 @@ export const fetchTableData = (
   connectionDetails: any,
   page = 0,
   pageSize = 20,
+  whereClause?: string,
 ): ThunkAction<void, RootState, unknown, any> => {
   return async (dispatch: Dispatch) => {
     try {
@@ -89,7 +96,14 @@ export const fetchTableData = (
 
       // Construct SQL query with pagination to limit payload size
       const offset = page * pageSize;
-      const sql = `SELECT * FROM "${tableSchema}"."${tableName}" LIMIT ${pageSize} OFFSET ${offset}`;
+      let sql = `SELECT * FROM "${tableSchema}"."${tableName}"`;
+
+      // Add WHERE clause if provided
+      if (whereClause && whereClause.trim() !== '') {
+        sql += ` WHERE ${whereClause}`;
+      }
+
+      sql += ` LIMIT ${pageSize} OFFSET ${offset}`;
 
       const response = await axiosClient.post('/query/query', {
         database: connectionDetails.database,
