@@ -145,6 +145,18 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
   // Add filters state
   const [filters, setFilters] = useState<ColumnFilter[]>([]);
 
+  // Add state to track which column's input is focused - moved to top with other state
+  const [activeColumn, setActiveColumn] = useState<string | null>(null);
+
+  // Create a stable context value with useMemo
+  const focusContextValue = useMemo(
+    () => ({
+      activeColumn,
+      setActiveColumn,
+    }),
+    [activeColumn],
+  );
+
   // Use a ref to track filters for data fetching
   const filtersRef = React.useRef<ColumnFilter[]>([]);
 
@@ -476,18 +488,6 @@ const TableView: React.FC<TableViewProps> = ({ tableId }) => {
   }
 
   const totalPages = getTotalPages();
-
-  // Add state to track which column's input is focused
-  const [activeColumn, setActiveColumn] = useState<string | null>(null);
-
-  // Create a stable context value with useMemo
-  const focusContextValue = useMemo(
-    () => ({
-      activeColumn,
-      setActiveColumn,
-    }),
-    [activeColumn],
-  );
 
   return (
     <FocusContext.Provider value={focusContextValue}>
