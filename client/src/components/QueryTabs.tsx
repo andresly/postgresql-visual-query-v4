@@ -8,7 +8,6 @@ import NewQueryColumnList from './NewQueryColumnList';
 import InsertQueryColumnList from './InsertQueryColumnList';
 import UpdateQueryColumnList from './UpdateQueryColumnList';
 import { QueryCreationTable } from './QueryCreationTable';
-import { LanguageType } from '../types/settingsType';
 
 export const QueryTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');

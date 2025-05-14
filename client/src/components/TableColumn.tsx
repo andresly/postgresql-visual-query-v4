@@ -4,19 +4,17 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import _ from 'lodash';
 import { Handle, Position } from '@xyflow/react';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { addColumn, removeColumn, addJoin, updateJoin } from '../actions/queryActions';
+import { addColumn } from '../actions/queryActions';
 import { iconPicker } from '../utils/iconPicker';
-import { QueryColumnType, JoinType, JoinConditionType } from '../types/queryTypes';
-import { DatabaseColumnType, DatabaseConstraintType } from '../types/databaseTypes';
+import { QueryColumnType } from '../types/queryTypes';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 interface TableColumnProps {
-  id?: string;
+  id: string;
   data: QueryColumnType;
-  joins?: { condition: JoinConditionType; join: JoinType }[];
 }
 
-const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins }) => {
+const TableColumn: React.FC<TableColumnProps> = ({ id, data }) => {
   const dispatch = useAppDispatch();
   const columns = useAppSelector((state) => state.query.columns);
   const joins = useAppSelector((state) => state.query.joins);
@@ -31,10 +29,6 @@ const TableColumn: React.FC<TableColumnProps> = ({ id, data, joins: columnJoins 
 
   const toggle = () => {
     setToggleStatus(!toggleStatus);
-  };
-
-  const handleRemove = () => {
-    dispatch(removeColumn(data));
   };
 
   const handleOnChange = () => {

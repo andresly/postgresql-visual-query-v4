@@ -4,7 +4,6 @@ import { Dispatch } from 'redux';
 import { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import {
   AddColumnAction,
-  AddResultAction,
   AddTableAction,
   ChangeDefaultValueAction,
   ChangeQueryTypeAction,

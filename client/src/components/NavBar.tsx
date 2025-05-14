@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect, useState } from 'react';
+import React, { Fragment, useState } from 'react';
 import {
   Button,
   ButtonDropdown,
@@ -16,22 +16,17 @@ import NavBarMenu from './NavBarMenu';
 import NavBarQueryTabs from './NavBarQueryTabs';
 import { getCorrectQueryName } from '../utils/getCorrectQueryName';
 import { useAppSelector } from '../hooks';
-import { LanguageType } from '../types/settingsType';
 import { QueryType } from '../types/queryTypes';
-
-interface NavBarProps {
-  language: LanguageType;
-  queryType: string;
-}
 
 interface QueryWithSubqueries extends QueryType {
   subqueries?: QueryWithSubqueries[];
 }
 
-const NavBar: React.FC<NavBarProps> = ({ language, queryType }) => {
+const NavBar: React.FC = () => {
   const [showNavBarMenu, setShowNavBarMenu] = useState(true);
   const [dropdownOpen, setOpen] = useState(false);
   const [treeElementOpen, setTreeElementOpen] = useState<{ [key: string]: boolean }>({});
+  const language = useAppSelector((state) => state.settings.language);
   const { activeTableId } = useAppSelector((state) => state.tableView);
 
   const queries = useAppSelector((state) => {

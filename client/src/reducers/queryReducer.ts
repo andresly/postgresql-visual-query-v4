@@ -3,7 +3,6 @@ import randomColor from 'randomcolor';
 import {
   ADD_COLUMN,
   ADD_JOIN,
-  ADD_RESULT,
   ADD_RESULT_FULFILLED,
   ADD_SET,
   ADD_TABLE,

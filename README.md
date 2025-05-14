@@ -1,4 +1,4 @@
-# Postgres Visual Query v3
+# Postgres Visual Query v4
 
 Application that allows users to visually create PostgreSQL SELECT queries.
 

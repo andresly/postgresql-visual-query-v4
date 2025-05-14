@@ -6,10 +6,8 @@ import { translations } from '../utils/translations';
 import { LanguageType } from '../types/settingsType';
 import { QueryType } from '../types/queryTypes';
 import { copyQuery } from '../actions/queriesActions';
-import { regenerateSql, setActiveQuery } from '../actions/queryActions';
 import _ from 'lodash';
 import store from '../store';
-import { setActiveTableView } from '../actions/tableViewActions';
 
 interface CopyQueryButtonProps {
   className?: string;

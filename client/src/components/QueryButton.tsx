@@ -4,7 +4,6 @@ import { query, updateValidity } from '../actions/queryActions';
 import { translations } from '../utils/translations';
 import { validateSql } from '../utils/validateQuery';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { LanguageType } from '../types/settingsType';
 
 export const QueryButton: React.FC = () => {
   const dispatch = useAppDispatch();

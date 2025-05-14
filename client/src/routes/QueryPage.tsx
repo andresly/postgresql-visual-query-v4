@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Alert, Button, Col, Container, Row } from 'reactstrap';
 import { Scrollbars } from 'react-custom-scrollbars-2';
-import { connect } from 'react-redux';
-import * as PropTypes from 'prop-types';
 import { translations } from '../utils/translations';
 import QueryTable from '../components/QueryTable';
 import QueryTabs from '../components/QueryTabs';
@@ -15,12 +13,10 @@ import DisconnectButton from '../components/DisconnectButton';
 import SchemaSelector from '../components/SchemaSelector';
 import SearchBar from '../components/SearchBar';
 import DatabaseViewer from '../components/DatabaseViewer';
-// eslint-disable-next-line import/no-named-as-default-member
 import NavBar from '../components/NavBar';
 import TableView from '../components/TableView';
 import { useAppSelector, useAppDispatch } from '../hooks';
-import { LanguageType } from '../types/settingsType';
-import { QueryTableType, QueryType, JoinType, JoinConditionType } from '../types/queryTypes';
+import { QueryTableType, JoinType } from '../types/queryTypes';
 import { addJoin, updateJoin } from '../actions/queryActions';
 import 'react-grid-layout/css/styles.css';
 import 'react-resizable/css/styles.css';
@@ -44,9 +40,7 @@ import {
   applyNodeChanges,
   NodeChange,
   Node,
-  EdgeProps,
   Viewport,
-  useReactFlow,
   ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
@@ -57,12 +51,9 @@ import TableNode from '../components/TableNode';
 import JoinEdge from '../components/JoinEdge';
 import { logout } from '../actions/hostActions';
 
-interface SideBarProps {
-  language: LanguageType;
-}
-
-export const SideBar: React.FC<SideBarProps> = ({ language }) => {
+export const SideBar: React.FC = () => {
   const dispatch = useAppDispatch();
+  const language = useAppSelector((state) => state.settings.language);
   return (
     <div className="d-flex flex-column w-100">
       <div className="">
@@ -99,7 +90,6 @@ export const TableTypeWrapper: React.FC<TableTypeWrapperProps> = ({ index, child
 );
 
 interface QueryBuilderProps {
-  language: LanguageType;
   tables: QueryTableType[];
   queryValid: boolean;
   queryType: string;
@@ -111,10 +101,11 @@ interface SavedFlowState {
   viewport: Viewport;
 }
 
-export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, queryValid, queryType }) => {
+export const QueryBuilder: React.FC<QueryBuilderProps> = ({ tables, queryValid, queryType }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const dispatch = useAppDispatch();
   const reactFlowInstance = useRef<any>(null);
+  const language = useAppSelector((state) => state.settings.language);
 
   // Get joins data from redux state
   const joins = useAppSelector((state) => state.query.joins);
@@ -123,7 +114,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   // Track active edge ID
   const [activeEdgeId, setActiveEdgeId] = useState<string | null>(null);
   // Container dimensions
-  const [containerWidth, setContainerWidth] = useState(1200);
+  const [containerWidth] = useState(1200);
 
   // Default viewport
   const defaultViewport = { x: 0, y: 0, zoom: 0.6 };
@@ -140,7 +131,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
 
   // React Flow states with TypeScript errors bypassed
   // @ts-ignore - bypass TypeScript errors for node state
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes] = useNodesState([]);
   // @ts-ignore - bypass TypeScript errors for edge state
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -592,10 +583,9 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
     // highlightEdges();
   };
 
-  console.log({ activeEdgeId });
   return (
     <div className="mt-0 pr-2">
-      <NavBar language={language} queryType={queryType} />
+      <NavBar />
       <ReactFlowProvider>
         <div ref={containerRef} className="grid-container">
           {['SELECT'].includes(queryType) && (
@@ -691,7 +681,6 @@ export const QueryPage: React.FC = () => {
   const language = useAppSelector((state) => state.settings.language);
   const { activeTableId } = useAppSelector((state) => state.tableView);
   const scrollbarsRef = useRef<Scrollbars>(null);
-  const [nearBottom, setNearBottom] = useState(false);
   const [codeVisible, setCodeVisible] = useState(false);
 
   const scrollToBottom = () => {
@@ -731,7 +720,7 @@ export const QueryPage: React.FC = () => {
 
   return (
     <Container fluid>
-      {codeVisible || nearBottom ? (
+      {codeVisible ? (
         <div className={'view-sql-shortcut'} onClick={scrollToTop}>
           {translations[language.code].queryBuilder.scrollToTop}
         </div>
@@ -742,15 +731,15 @@ export const QueryPage: React.FC = () => {
       )}
       <Row>
         <Col sm="2" className="py-2 vh-100 d-flex bg-light">
-          <SideBar language={language} />
+          <SideBar />
         </Col>
         <Col sm="10" className="pr-0" id={'query-area'}>
           <Scrollbars ref={scrollbarsRef} id={'query-area-scroll'}>
             {activeTableId === null ? (
-              <QueryBuilder queryValid={queryValid} language={language} tables={tables} queryType={queryType} />
+              <QueryBuilder queryValid={queryValid} tables={tables} queryType={queryType} />
             ) : (
               <div className="mt-0 pr-2">
-                <NavBar language={language} queryType={queryType} />
+                <NavBar />
                 <TableView tableId={activeTableId} />
               </div>
             )}

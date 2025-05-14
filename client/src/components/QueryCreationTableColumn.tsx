@@ -366,7 +366,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               name="column_name"
               value={columnName}
               onChange={handleOnChange}
-              onBlur={(e) => {
+              onBlur={() => {
                 const column = { ..._.cloneDeep(data), column_name: columnName };
                 dispatch(updateColumn(column));
               }}
@@ -382,7 +382,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               name="column_alias"
               value={columnAlias}
               onChange={handleOnChange}
-              onBlur={(e) => {
+              onBlur={() => {
                 const column = { ..._.cloneDeep(data), column_alias: columnAlias };
                 dispatch(updateColumn(column));
               }}
@@ -397,7 +397,7 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               name="table_name"
               value={tableName}
               onChange={handleOnChange}
-              onBlur={(e) => {
+              onBlur={() => {
                 const column = { ..._.cloneDeep(data), table_name: tableName };
                 dispatch(updateColumn(column));
               }}

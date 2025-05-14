@@ -10,7 +10,7 @@ import { setActiveQuery, changeQueryType } from '../actions/queryActions';
 import SaveQueryButton from './SaveQueryButton';
 import LoadQueryButton from './LoadQueryButton';
 import ClearQueryButton from './ClearQueryButton';
-import CopyQueryButton from './CopyQueryButton';
+// import CopyQueryButton from './CopyQueryButton';
 
 interface NavBarMenuProps {
   language: LanguageType;

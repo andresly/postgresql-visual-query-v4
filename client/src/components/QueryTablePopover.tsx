@@ -6,7 +6,6 @@ import { updateTable } from '../actions/queryActions';
 import { useAppSelector, useAppDispatch } from '../hooks';
 import { translations } from '../utils/translations';
 import { QueryTableType } from '../types/queryTypes';
-import { LanguageType } from '../types/settingsType';
 
 interface QueryTablePopoverProps {
   data: QueryTableType;

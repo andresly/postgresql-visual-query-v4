@@ -4,8 +4,8 @@ import 'codemirror/mode/sql/sql';
 import 'codemirror/addon/edit/matchbrackets';
 import { UnControlled as CodeMirror } from 'react-codemirror2';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { generateSql, regenerateSql, updateSql } from '../actions/queryActions';
-import { languages, translations } from '../utils/translations';
+import { generateSql, updateSql } from '../actions/queryActions';
+import { translations } from '../utils/translations';
 
 interface ResultSQLProps {
   isFloating: boolean;

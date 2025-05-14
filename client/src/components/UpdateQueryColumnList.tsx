@@ -6,7 +6,7 @@ import SetInput from './SetInput';
 import UpdateSwitch from './UpdateSwitch';
 import { useAppSelector } from '../hooks';
 import { RootState } from '../store';
-import { QueryColumnType, QueryTableType } from '../types/queryTypes';
+import { QueryColumnType } from '../types/queryTypes';
 
 const UpdateQueryColumnList: React.FC = () => {
   const { columns, tables } = useAppSelector((state: RootState) => ({

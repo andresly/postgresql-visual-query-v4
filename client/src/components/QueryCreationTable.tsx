@@ -171,7 +171,7 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
     ...baseLabels,
     ...Array(maxConditions - 1)
       .fill(null)
-      .map((_, i) => ({
+      .map(() => ({
         id: `or-1`,
         label: 'OR',
       })),

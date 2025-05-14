@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef, useContext, createContext } from 'react';
-// @ts-ignore
-import { useTable, Column } from 'react-table';
+import { useTable } from 'react-table';
 import _ from 'lodash';
 import { Button, ButtonGroup, Alert, Badge, Input, InputGroup } from 'reactstrap';
 import { useAppSelector, useAppDispatch } from '../hooks';
@@ -133,9 +132,7 @@ const createFilterComponent = (
 
 const TableView: React.FC<TableViewProps> = ({ tableId }) => {
   const dispatch = useAppDispatch();
-  const { tables, tableData, loading, error, rowCount, countLoading, countError } = useAppSelector(
-    (state) => state.tableView,
-  );
+  const { tables, tableData, loading, error, rowCount } = useAppSelector((state) => state.tableView);
   const activeTable = tables.find((table) => table.id === tableId);
 
   // Add pagination state

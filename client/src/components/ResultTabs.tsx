@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { Col, Container, Nav, NavItem, NavLink, Row, TabContent, TabPane } from 'reactstrap';
 import ResultTable from './ResultTable';
-import { useAppSelector, useAppDispatch } from '../hooks';
+import { useAppSelector } from '../hooks';
 import { translations } from '../utils/translations';
 import ResultSQL from './ResultSQL';
-import { generateSql, regenerateSql } from '../actions/queryActions';
-import { LanguageType } from '../types/settingsType';
-import { QueryType, ResultType } from '../types/queryTypes';
 import { withTabSwitcher } from '../hocs/withTabSwitcher';
 
 // Component props without the HOC added props
@@ -22,7 +19,6 @@ type TabSwitcherProps = {
 type ResultTabsProps = OwnProps & TabSwitcherProps;
 
 export const ResultTabs: React.FC<ResultTabsProps> = ({ activeTab, toggle }) => {
-  const dispatch = useAppDispatch();
   const { language, result, query } = useAppSelector((state) => ({
     language: state.settings.language,
     result: state.query.result,

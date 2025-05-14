@@ -20,7 +20,7 @@ function TableNode({ data }: any) {
       )}
 
       {/* Render the actual table content */}
-      <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} isFlowNode />
+      <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />
     </div>
   );
 }

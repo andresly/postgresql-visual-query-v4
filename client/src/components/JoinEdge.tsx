@@ -75,7 +75,7 @@ function JoinEdge({
   }, [isActive]);
 
   // Toggle dropdown manually
-  const toggleDropdown = (e?: React.MouseEvent) => {
+  const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
 
@@ -130,8 +130,8 @@ function JoinEdge({
           strokeWidth: 2,
         }}
         interactionWidth={40}
-        onClick={(e) => {
-          toggleDropdown(e);
+        onClick={() => {
+          toggleDropdown();
         }}
       />
       <EdgeLabelRenderer>

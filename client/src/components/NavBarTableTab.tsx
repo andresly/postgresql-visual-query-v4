@@ -2,9 +2,8 @@ import { Button, NavLink } from 'reactstrap';
 import React from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { setActiveTableView, closeTableView } from '../actions/tableViewActions';
-import { useAppDispatch, useAppSelector } from '../hooks';
+import { useAppDispatch } from '../hooks';
 import { QueryTableType } from '../types/queryTypes';
-import { changeQueryType } from '../actions/queryActions';
 
 interface NavBarTableTabProps {
   table: QueryTableType;

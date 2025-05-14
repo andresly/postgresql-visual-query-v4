@@ -1,6 +1,6 @@
 import { Button, Input, InputGroup, InputGroupAddon, UncontrolledTooltip } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import React, { ChangeEvent, FocusEvent } from 'react';
+import React, { ChangeEvent } from 'react';
 
 interface InputWithDeleteButtonProps {
   id: string;

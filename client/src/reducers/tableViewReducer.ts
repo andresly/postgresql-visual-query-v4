@@ -12,7 +12,6 @@ import {
 } from '../actions/tableViewActions';
 import { QueryTableType } from '../types/queryTypes';
 import { Reducer } from 'redux';
-import { TableViewActions } from '../types/actions/tableViewActionTypes';
 
 export interface TableViewState {
   isTableView: boolean;

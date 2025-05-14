@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, ButtonGroup, Card, CardBody, CardTitle, UncontrolledTooltip } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import _ from 'lodash';
-import { addTable, removeTable, resetQuery, removeJoin } from '../actions/queryActions';
+import { addTable, removeTable, resetQuery } from '../actions/queryActions';
 import { translations } from '../utils/translations';
 import { QueryTablePopover } from './QueryTablePopover';
 import TableColumn from './TableColumn';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { QueryTableType, JoinType, QueryColumnType } from '../types/queryTypes';
+import { QueryTableType, QueryColumnType } from '../types/queryTypes';
 import { LanguageType } from '../types/settingsType';
 
 interface QueryTableHeaderProps {
@@ -87,19 +87,9 @@ interface QueryTableBodyProps {
   data: QueryTableType;
   id: string;
   constructData: (column: QueryColumnType) => any;
-  joins?: JoinType[] | false;
 }
 
-const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, constructData, joins }) => {
-  const dispatch = useAppDispatch();
-
-  const handleRemove = useCallback(
-    (join: JoinType) => {
-      dispatch(removeJoin(join));
-    },
-    [dispatch],
-  );
-
+const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, constructData }) => {
   const debouncedResize = useCallback(
     _.debounce(() => {
       window.dispatchEvent(new Event('resize'));
@@ -156,30 +146,17 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
         {/* Add the "select all" * column first */}
         <div key={`${data.id}-column-all`} id={`${data.id}-column-all`} className="column-container">
           <div>
-            <TableColumn id={`${id}-table-column-all`} data={constructData(allColumnsData)} joins={[]} />
+            <TableColumn id={`${id}-table-column-all`} data={constructData(allColumnsData)} />
           </div>
         </div>
 
         {data.columns.map((column) => {
-          const columnJoins = (joins || [])?.flatMap((join) => {
-            const conditions = join.conditions.filter(
-              (condition) =>
-                (condition.main_column === column.column_name && condition.main_table?.id === data?.id) ||
-                (condition.secondary_column === column.column_name && condition.secondary_table?.id === data?.id),
-            );
-            return conditions.length ? conditions.map((condition) => ({ condition, join })) : [];
-          });
-
           const columnId = `${data.id}-column-${column.column_name}`;
 
           return (
             <div key={columnId} id={columnId} className="column-container">
               <div>
-                <TableColumn
-                  id={`${id}-table-column-${column.column_name}`}
-                  data={constructData(column)}
-                  joins={columnJoins}
-                />
+                <TableColumn id={`${id}-table-column-${column.column_name}`} data={constructData(column)} />
               </div>
             </div>
           );
@@ -190,16 +167,14 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
 });
 
 interface QueryTableProps {
-  data: QueryTableType;
   id: string;
-  isFlowNode?: boolean;
+  data: QueryTableType;
 }
 
-const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id, isFlowNode = false }) => {
+const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id }) => {
   const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.settings.language);
   const queryType = useAppSelector((state) => state.query.queryType);
-  const joins = useAppSelector((state) => state.query.joins);
   const firstTableId = useAppSelector((state) => state.query.tables[0]?.id);
 
   const handleRemoveTable = useCallback(() => {
@@ -225,17 +200,6 @@ const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id, isFlowNode
     [data],
   );
 
-  const tableJoins = useMemo(
-    () =>
-      joins.length > 0 &&
-      joins.filter(
-        (join) =>
-          join.main_table.id === data.id ||
-          join.conditions.some((condition) => condition.secondary_table.id === data.id),
-      ),
-    [joins, data.id],
-  );
-
   return (
     <Card className="d-inline-flex pb-2  position-relative">
       <QueryTableHeader
@@ -245,7 +209,7 @@ const QueryTable: React.FC<QueryTableProps> = React.memo(({ data, id, isFlowNode
         handleRemoveTable={handleRemoveTable}
         handleCopy={handleCopy}
       />
-      <QueryTableBody data={data} id={id} constructData={constructData} joins={tableJoins} />
+      <QueryTableBody data={data} id={id} constructData={constructData} />
     </Card>
   );
 });

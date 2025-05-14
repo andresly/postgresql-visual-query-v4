@@ -17,12 +17,9 @@
  */
 
 import * as _ from 'lodash';
-import * as format from 'pg-format';
 import squel, { JoinMixin } from 'squel';
 import { QueryColumnType, JoinType, QueryTableType, QueryType } from '../types/queryTypes';
 import { ReservedKeywordType } from '../types/hostTypes';
-
-// PostgreSQL reserved words that always need quoting
 
 /**
  * Determines if a SQL identifier needs quoting and returns the properly quoted version if necessary.
@@ -187,16 +184,8 @@ const addColumnsToQuery = (
 ) => {
   const columns = _.cloneDeep(data.columns);
 
-  const addField = (table: string, column: string) => {
-    query.field(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`);
-  };
-
   const addFieldWithAlias = (table: string, column: string, alias: string) => {
     query.field(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`, quoteIdentifier(alias));
-  };
-
-  const addGroupBy = (table: string, column: string) => {
-    query.group(`${quoteIdentifier(table)}.${quoteIdentifier(column)}`);
   };
 
   const matchesIgnoreCase = (str: string, startIndex: number, pattern: string) =>
@@ -616,8 +605,6 @@ const addColumnsToQuery = (
     }
   });
 
-  //check if any of the queries have sets.
-  const hasSets = queries.some((query) => query.sets.length > 0);
   // Add order by here only when Don't have sets
   if (data.sets.length === 0 && !isSetQuery) {
     // Handle ordering separately, sorted by column_order_nr
