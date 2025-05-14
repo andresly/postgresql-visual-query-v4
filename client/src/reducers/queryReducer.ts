@@ -247,17 +247,25 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       };
     }
     case UPDATE_COLUMN_FILTER: {
-      const columns = _.cloneDeep(state.columns);
-      const columnIndex = state.columns.findIndex((column) => -_.isEqual(column.id, action.payload.columnId));
-      const filters = state.columns[columnIndex].column_filters;
-
-      filters[action.payload.filterId].filter = action.payload.filter;
-
-      columns[columnIndex].column_filters = filters;
-
       return {
         ...state,
-        columns,
+        columns: state.columns.map((column) => {
+          if (column.id === action.payload.columnId) {
+            return {
+              ...column,
+              column_filters: column.column_filters.map((filter) => {
+                if (filter.id === action.payload.filterId) {
+                  return {
+                    ...filter,
+                    filter: action.payload.filter,
+                  };
+                }
+                return filter;
+              }),
+            };
+          }
+          return column;
+        }),
       };
     }
     case UPDATE_FROM_QUERY: {
@@ -270,17 +278,10 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       };
     }
     case UPDATE_COLUMN: {
-      const columns = _.cloneDeep(state.columns);
       const updatedColumn = action.payload;
-      const columnIndex = state.columns.findIndex((column) => _.isEqual(column.id, updatedColumn.id));
-
-      if (columnIndex > -1) {
-        columns[columnIndex] = updatedColumn;
-      }
-
       return {
         ...state,
-        columns,
+        columns: state.columns.map((column) => (_.isEqual(column.id, updatedColumn.id) ? updatedColumn : column)),
       };
     }
     case UPDATE_COLUMN_OPERAND: {
@@ -750,43 +751,50 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       };
     }
     case GENERATE_SQL: {
-      if (state.queryType === 'SELECT') {
-        const query = buildQuery({ data: state, queries: action.payload.queries });
-
+      try {
+        if (state.queryType === 'SELECT') {
+          const query = buildQuery({ data: state, queries: action.payload.queries });
+          return {
+            ...state,
+            sql: query,
+            error: null,
+          };
+        }
+        if (state.queryType === 'DELETE') {
+          const query = buildDeleteQuery(state);
+          return {
+            ...state,
+            sql: query,
+            error: null,
+          };
+        }
+        if (state.queryType === 'INSERT') {
+          const query = buildInsertQuery(state);
+          return {
+            ...state,
+            sql: query,
+            error: null,
+          };
+        }
+        if (state.queryType === 'UPDATE') {
+          const query = buildUpdateQuery(state);
+          return {
+            ...state,
+            sql: query,
+            error: null,
+          };
+        }
+        return state;
+      } catch (error) {
+        console.error('Error generating SQL:', error);
         return {
           ...state,
-          sql: query,
+          sql: '',
+          error: error instanceof Error ? error.message : 'An error occurred while generating the query',
         };
       }
-      if (state.queryType === 'DELETE') {
-        const query = buildDeleteQuery(state);
-
-        return {
-          ...state,
-          sql: query,
-        };
-      }
-      if (state.queryType === 'INSERT') {
-        const query = buildInsertQuery(state);
-
-        return {
-          ...state,
-          sql: query,
-        };
-      }
-      if (state.queryType === 'UPDATE') {
-        const query = buildUpdateQuery(state);
-
-        return {
-          ...state,
-          sql: query,
-        };
-      }
-      return state;
     }
     case UPDATE_SQL: {
-      console.log(action.payload);
-      console.log(state.sql);
       return {
         ...state,
         sql: action.payload,

@@ -6,7 +6,7 @@ import DatabaseSelector from '../components/DatabaseSelector';
 import LoginFormContainer from '../components/LoginFormContainer';
 import { useAppSelector } from '../hooks';
 
-const LandingPage = () => {
+const LandingPage: React.FC = () => {
   const { loggedIn } = useAppSelector((state) => ({
     loggedIn: state.host.loggedIn,
   }));

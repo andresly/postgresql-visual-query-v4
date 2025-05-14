@@ -53,6 +53,17 @@ export type SetType = {
   type: string;
 };
 
+export interface UsingCondition {
+  id: number;
+  secondary_table: {
+    table_name: string;
+    table_schema?: string;
+    table_alias?: string;
+  };
+  secondary_column: string;
+  main_column: string;
+}
+
 export type UsingType = {
   id: number;
   main_table: {
@@ -60,14 +71,9 @@ export type UsingType = {
     table_name: string;
     table_schema: string;
     table_alias: string;
+    columns?: Array<{ column_name: string; [key: string]: any }>;
   };
-  conditions: {
-    secondary_table: {
-      table_name: string;
-    };
-    secondary_column: string;
-    main_column: string;
-  }[];
+  conditions: UsingCondition[];
 };
 
 export type JoinType = {

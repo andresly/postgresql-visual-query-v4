@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Col, Container, Nav, NavItem, NavLink, Row, TabContent, TabPane } from 'reactstrap';
-import { connect } from 'react-redux';
-import * as PropTypes from 'prop-types';
+import { useAppSelector } from '../hooks';
 import UsingList from './UsingList';
 import { translations } from '../utils/translations';
 import SetList from './SetList';
@@ -9,13 +8,18 @@ import NewQueryColumnList from './NewQueryColumnList';
 import InsertQueryColumnList from './InsertQueryColumnList';
 import UpdateQueryColumnList from './UpdateQueryColumnList';
 import { QueryCreationTable } from './QueryCreationTable';
+import { LanguageType } from '../types/settingsType';
 
-export const QueryTabs = (props) => {
+export const QueryTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState('1');
+  const { language, queryType } = useAppSelector((state) => ({
+    language: state.settings.language,
+    queryType: state.query.queryType,
+  }));
 
   return (
     <div>
-      {props.queryType === 'SELECT' && (
+      {queryType === 'SELECT' && (
         <Nav tabs className="flex-row">
           <NavItem>
             <NavLink
@@ -24,7 +28,7 @@ export const QueryTabs = (props) => {
                 setActiveTab('1');
               }}
             >
-              {translations[props.language.code].queryBuilder.columnsH}
+              {translations[language.code].queryBuilder.columnsH}
             </NavLink>
           </NavItem>
           <NavItem>
@@ -34,12 +38,12 @@ export const QueryTabs = (props) => {
                 setActiveTab('3');
               }}
             >
-              {translations[props.language.code].queryBuilder.setsH}
+              {translations[language.code].queryBuilder.setsH}
             </NavLink>
           </NavItem>
         </Nav>
       )}
-      {props.queryType === 'DELETE' && (
+      {queryType === 'DELETE' && (
         <Nav tabs className="flex-row">
           <NavItem>
             <NavLink
@@ -63,7 +67,7 @@ export const QueryTabs = (props) => {
           </NavItem>
         </Nav>
       )}
-      {props.queryType === 'INSERT' && (
+      {queryType === 'INSERT' && (
         <Nav tabs className="flex-row">
           <NavItem>
             <NavLink
@@ -77,7 +81,7 @@ export const QueryTabs = (props) => {
           </NavItem>
         </Nav>
       )}
-      {props.queryType === 'UPDATE' && (
+      {queryType === 'UPDATE' && (
         <Nav tabs className="flex-row">
           <NavItem>
             <NavLink
@@ -111,7 +115,7 @@ export const QueryTabs = (props) => {
           </NavItem>
         </Nav>
       )}
-      {props.queryType === 'SELECT' && (
+      {queryType === 'SELECT' && (
         <TabContent activeTab={activeTab} style={{ minHeight: '20vh' }}>
           <TabPane tabId="1">
             <Container fluid>
@@ -133,7 +137,7 @@ export const QueryTabs = (props) => {
           </TabPane>
         </TabContent>
       )}
-      {props.queryType === 'DELETE' && (
+      {queryType === 'DELETE' && (
         <TabContent activeTab={activeTab} style={{ minHeight: '20vh' }}>
           <TabPane tabId="1">
             <Container fluid>
@@ -155,7 +159,7 @@ export const QueryTabs = (props) => {
           </TabPane>
         </TabContent>
       )}
-      {props.queryType === 'INSERT' && (
+      {queryType === 'INSERT' && (
         <TabContent activeTab={activeTab} style={{ minHeight: '20vh' }}>
           <TabPane tabId="1">
             <Container fluid>
@@ -164,7 +168,7 @@ export const QueryTabs = (props) => {
           </TabPane>
         </TabContent>
       )}
-      {props.queryType === 'UPDATE' && (
+      {queryType === 'UPDATE' && (
         <TabContent activeTab={activeTab} style={{ minHeight: '20vh' }}>
           <TabPane tabId="1">
             <Container fluid>
@@ -191,13 +195,4 @@ export const QueryTabs = (props) => {
   );
 };
 
-QueryTabs.propTypes = {
-  language: PropTypes.shape({ code: PropTypes.string }),
-};
-
-const mapStateToProps = (store) => ({
-  language: store.settings.language,
-  queryType: store.query.queryType,
-});
-
-export default connect(mapStateToProps)(QueryTabs);
+export default QueryTabs;

@@ -56,6 +56,7 @@ import {
 } from '../../actions/hostActions';
 
 import { QueryColumnType, JoinType, QueryTableType, QueryType, SetType, UsingType, ResultType } from '../queryTypes';
+import { DatabaseTableType } from '../databaseTypes';
 
 export interface SetActiveQueryAction {
   type: typeof SET_ACTIVE_QUERY;

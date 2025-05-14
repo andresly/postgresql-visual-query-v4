@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Alert, Button, Container, Form, FormGroup, Input, Label } from 'reactstrap';
-import PropTypes from 'prop-types';
 import { logIn } from '../actions/databaseActions';
 import { translations } from '../utils/translations';
+import { useAppSelector, useAppDispatch } from '../hooks';
+import { LanguageType } from '../types/settingsType';
 
-const LoginForm = (props) => {
-  const languageCode = props.language && props.language.code ? props.language.code : 'eng';
+interface LoginFormProps {
+  language: LanguageType;
+  handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  user: string;
+  password: string;
+  connecting: boolean;
+}
+
+const LoginForm: React.FC<LoginFormProps> = ({ language, handleSubmit, handleChange, user, password, connecting }) => {
+  const languageCode = language?.code || 'eng';
+
   return (
     <Container>
       <h3>{translations[languageCode].loginForm.formHeader}</h3>
-      <Form onSubmit={props.handleSubmit}>
+      <Form onSubmit={handleSubmit}>
         <FormGroup>
           <Label htmlFor="userName">{translations[languageCode].loginForm.usernameL}</Label>
           <Input
@@ -20,8 +30,8 @@ const LoginForm = (props) => {
             id="userName"
             name="user"
             placeholder={translations[languageCode].loginForm.usernamePh}
-            value={props.user}
-            onChange={props.handleChange}
+            value={user}
+            onChange={handleChange}
           />
         </FormGroup>
         <FormGroup>
@@ -34,12 +44,12 @@ const LoginForm = (props) => {
             id="password"
             name="password"
             placeholder={translations[languageCode].loginForm.passwordPh}
-            value={props.password}
-            onChange={props.handleChange}
+            value={password}
+            onChange={handleChange}
           />
         </FormGroup>
-        <Button color="primary" type="submit" className="btn-block" disabled={props.connecting}>
-          {props.connecting ? (
+        <Button color="primary" type="submit" className="btn-block" disabled={connecting}>
+          {connecting ? (
             <div className="d-flex align-items-center justify-content-center">
               <div className="mr-2">{translations[languageCode].loginForm.connecting}</div>
               <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true" />
@@ -53,33 +63,23 @@ const LoginForm = (props) => {
   );
 };
 
-LoginForm.propTypes = {
-  language: PropTypes.shape({ code: PropTypes.string }),
-  handleSubmit: PropTypes.func,
-  handleChange: PropTypes.func,
-  user: PropTypes.string,
-  password: PropTypes.string,
-  connecting: PropTypes.bool,
-};
-
-const LoginFormContainer = () => {
+const LoginFormContainer: React.FC = () => {
   const [user, setUser] = useState('');
   const [password, setPassword] = useState('');
 
-  const dispatch = useDispatch();
-  const { connected, error, language, connecting } = useSelector((state) => ({
-    connected: state.host.connected,
+  const dispatch = useAppDispatch();
+  const { error, language, connecting } = useAppSelector((state) => ({
     error: state.host.error,
     language: state.settings.language,
     connecting: state.host.connecting,
   }));
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     dispatch(logIn({ user, password }));
   };
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     if (name === 'user') {
       setUser(value);

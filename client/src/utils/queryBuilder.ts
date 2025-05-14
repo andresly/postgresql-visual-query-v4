@@ -1314,39 +1314,50 @@ export const buildDeleteQuery = (data: QueryType) => {
  * @returns The complete INSERT query SQL string
  */
 export const buildInsertQuery = (data: QueryType) => {
-  const query = squelPostgres.insert({
-    useAsForTableAliasNames: true,
-    fieldAliasQuoteCharacter: '',
-    tableAliasQuoteCharacter: '',
-    nameQuoteCharacter: '"',
-    separator: '\n',
-  });
-
-  query.into(`${quoteIdentifier(data.tables[0].table_schema)}.${quoteIdentifier(data.tables[0].table_name)}`);
-
-  const columnString: string[] = [];
-  data.columns.forEach((column) => {
-    if (!column.returningOnly) {
-      columnString.push(quoteIdentifier(column.column_name));
+  try {
+    // Check if there are any tables
+    if (!data.tables || data.tables.length === 0) {
+      return '';
     }
-  });
 
-  if (data.fromQuery) {
-    const columnsPart = columnString.length > 0 ? `(${columnString.join(', ')})` : '';
-    const subqueryPart = data.subquerySql.slice(0, -1);
+    const query = squelPostgres.insert({
+      useAsForTableAliasNames: true,
+      fieldAliasQuoteCharacter: '',
+      tableAliasQuoteCharacter: '',
+      nameQuoteCharacter: '"',
+      separator: '\n',
+    });
+
+    query.into(`${quoteIdentifier(data.tables[0].table_schema)}.${quoteIdentifier(data.tables[0].table_name)}`);
+
+    const columnString: string[] = [];
+    data.columns.forEach((column) => {
+      if (!column.returningOnly) {
+        columnString.push(quoteIdentifier(column.column_name));
+      }
+    });
+
+    if (data.fromQuery) {
+      const columnsPart = columnString.length > 0 ? `(${columnString.join(', ')})` : '';
+      const subqueryPart = data.subquerySql.slice(0, -1);
+      const returningPart = addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : '';
+
+      return `${query.toString()} ${columnsPart}\n${subqueryPart}\n${returningPart};`;
+    }
+
+    const lastQueryLine = query.toString().split('\n').slice(-1).join('\n');
+    const columnsPart =
+      columnString.length > 0
+        ? `(${columnString.join(', ')})\nVALUES ${addInsertValuesToQuery(data, query).join(',')}\n`
+        : '';
     const returningPart = addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : '';
 
-    return `${query.toString()} ${columnsPart}\n${subqueryPart}\n${returningPart};`;
+    return `INSERT\n${lastQueryLine} ${columnsPart}${returningPart};`;
+  } catch (error) {
+    // Return an empty string or a default query instead of throwing
+    console.error('Error building INSERT query:', error);
+    return '';
   }
-
-  const lastQueryLine = query.toString().split('\n').slice(-1).join('\n');
-  const columnsPart =
-    columnString.length > 0
-      ? `(${columnString.join(', ')})\nVALUES ${addInsertValuesToQuery(data, query).join(',')}\n`
-      : '';
-  const returningPart = addReturningToQuery(data).length > 0 ? `RETURNING ${addReturningToQuery(data)}` : '';
-
-  return `INSERT\n${lastQueryLine} ${columnsPart}${returningPart};`;
 };
 
 /**

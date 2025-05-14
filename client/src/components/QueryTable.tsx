@@ -1,35 +1,18 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import {
-  Button,
-  ButtonGroup,
-  Card,
-  CardBody,
-  CardTitle,
-  DropdownItem,
-  DropdownMenu,
-  DropdownToggle,
-  UncontrolledDropdown,
-  UncontrolledTooltip,
-} from 'reactstrap';
+import { Button, ButtonGroup, Card, CardBody, CardTitle, UncontrolledTooltip } from 'reactstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import _ from 'lodash';
-import { addTable, removeTable, resetQuery, removeJoin, updateJoin } from '../actions/queryActions';
+import { addTable, removeTable, resetQuery, removeJoin } from '../actions/queryActions';
 import { translations } from '../utils/translations';
-import QueryTablePopover from './QueryTablePopover';
+import { QueryTablePopover } from './QueryTablePopover';
 import TableColumn from './TableColumn';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryTableType, JoinType, QueryColumnType } from '../types/queryTypes';
 import { LanguageType } from '../types/settingsType';
 
 interface QueryTableHeaderProps {
-  data: {
-    table_type: string;
-    table_name: string;
-    table_alias?: string;
-    table_schema: string;
-    id: number;
-  };
+  data: QueryTableType;
   target: string;
   handleCopy: () => void;
   language: LanguageType;
@@ -43,6 +26,12 @@ const QueryTableHeader: React.FC<QueryTableHeaderProps> = ({
   handleCopy,
   handleRemoveTable,
 }) => {
+  const [popoverOpen, setPopoverOpen] = useState(false);
+
+  const togglePopover = () => {
+    setPopoverOpen(!popoverOpen);
+  };
+
   return (
     <CardTitle className="d-flex pb-1 mb-0 border-bottom">
       <div className="px-1 flex-fill d-flex">
@@ -89,7 +78,7 @@ const QueryTableHeader: React.FC<QueryTableHeaderProps> = ({
           <FontAwesomeIcon icon="times" color={'#4c4c4c'} />
         </Button>
       </ButtonGroup>
-      <QueryTablePopover target={target} data={data} />
+      <QueryTablePopover target={target} data={data} toggle={togglePopover} toggleStatus={popoverOpen} />
     </CardTitle>
   );
 };

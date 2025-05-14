@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { Row, Input, Label, Col } from 'reactstrap';
 import _ from 'lodash';
 import { InputWithDeleteButton } from './InputWithDeleteButton';
-import { AddNewButton } from './AddNewButton';
 import { translations } from '../utils/translations';
 import { LanguageType } from '../types/settingsType';
 import { QueryType } from '../types/queryTypes';
 import { useAppDispatch, useAppSelector } from '../hooks';
-import { addQuery } from '../actions/queriesActions';
 import { setActiveQuery, changeQueryType } from '../actions/queryActions';
 import SaveQueryButton from './SaveQueryButton';
 import LoadQueryButton from './LoadQueryButton';
@@ -24,10 +22,6 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
   const dispatch = useAppDispatch();
   const activeQuery = useAppSelector((state) => state.query) as QueryType;
   const queryType = useAppSelector((state) => state.query.queryType) as string;
-
-  const handleAddQuery = () => {
-    dispatch(addQuery(activeQuery.id));
-  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQueryName(e.target.value);
@@ -78,22 +72,18 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
           </div>
         </Row>
       )}
-      {/*<div className="col-12 pl-0 text-info pt-6">*/}
-      {/*  <AddNewButton size="sm" id="newQuery" onClick={handleAddQuery} />*/}
-      {/*  {` ${translations[language.code].queryBuilder.queryH}`}*/}
-      {/*</div>*/}
       <div className="col-auto pl-0 d-flex align-items-center">
         <Row form className="align-items-center">
           {/*TODO: Add change query type back and fix errors*/}
-          {/*<Label for="changeQueryType">Statement type:</Label>*/}
-          {/*<Col md={3}>*/}
-          {/*  <Input bsSize="sm" type="select" id="changeQueryType" onChange={handleTypeChange} value={queryType}>*/}
-          {/*    <option value="SELECT">SELECT</option>*/}
-          {/*    <option value="DELETE">DELETE</option>*/}
-          {/*    <option value="INSERT">INSERT</option>*/}
-          {/*    <option value="UPDATE">UPDATE</option>*/}
-          {/*  </Input>*/}
-          {/*</Col>*/}
+          <Label for="changeQueryType">Statement type:</Label>
+          <Col md={3}>
+            <Input bsSize="sm" type="select" id="changeQueryType" onChange={handleTypeChange} value={queryType}>
+              <option value="SELECT">SELECT</option>
+              <option value="DELETE">DELETE</option>
+              <option value="INSERT">INSERT</option>
+              <option value="UPDATE">UPDATE</option>
+            </Input>
+          </Col>
           <Col md={8} className="d-flex pt-1">
             <SaveQueryButton />
             <LoadQueryButton />

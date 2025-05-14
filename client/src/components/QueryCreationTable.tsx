@@ -130,7 +130,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
   );
 };
 
-export const QueryCreationTable = () => {
+export const QueryCreationTable: React.FC<Record<string, never>> = () => {
   const dispatch = useAppDispatch();
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
 

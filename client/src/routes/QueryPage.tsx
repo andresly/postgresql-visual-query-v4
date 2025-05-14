@@ -47,6 +47,7 @@ import {
   EdgeProps,
   Viewport,
   useReactFlow,
+  ReactFlowProvider,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
@@ -595,71 +596,75 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ language, tables, qu
   return (
     <div className="mt-0 pr-2">
       <NavBar language={language} queryType={queryType} />
+      <ReactFlowProvider>
+        <div ref={containerRef} className="grid-container">
+          {['SELECT'].includes(queryType) && (
+            <div style={{ width: '100%', height: '50vh', border: '1px solid #ddd', borderRadius: '4px' }}>
+              {query.tables.length === 0 && (
+                <div className={'flow-cover'}>{translations[language.code].queryBuilder.selectTableToStart}</div>
+              )}
 
-      <div ref={containerRef} className="grid-container">
-        <div style={{ width: '100%', height: '50vh', border: '1px solid #ddd', borderRadius: '4px' }}>
-          {query.tables.length === 0 && (
-            <div className={'flow-cover'}>{translations[language.code].queryBuilder.selectTableToStart}</div>
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={handleNodesChange}
+                onEdgesChange={onEdgesChange}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                fitView
+                zoomOnScroll={true}
+                preventScrolling={false}
+                panOnDrag={true}
+                minZoom={0.2}
+                maxZoom={1}
+                onPaneClick={() => {
+                  setActiveEdgeId(null);
+                }}
+                defaultViewport={defaultViewport}
+                onMove={onViewportChange}
+                onInit={onInit}
+                proOptions={{ hideAttribution: true }}
+                className="react-flow-container"
+                onEdgeClick={(event, clickedEdge) => {
+                  setActiveEdgeId((clickedEdge as any).id);
+                }}
+                key={`flow-${query.id}`}
+              >
+                <Controls />
+                <Background gap={16} color="#f8f8f8" />
+                <MiniMap zoomable pannable />
+
+                <Panel position="top-left" style={{ margin: '4px', boxShadow: 'none', border: 'none' }}>
+                  <div className="p-1 bg-light" style={{ fontSize: '14px', lineHeight: '100%' }}>
+                    <small>
+                      {query.tables.length > 1 && (
+                        <>
+                          {translations[language.code].queryBuilder.dragToConnect} <br />
+                        </>
+                      )}
+                      {translations[language.code].queryBuilder.generatedSQL}
+                    </small>
+                  </div>
+                </Panel>
+              </ReactFlow>
+            </div>
           )}
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={handleNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            fitView
-            zoomOnScroll={true}
-            preventScrolling={false}
-            panOnDrag={true}
-            minZoom={0.2}
-            maxZoom={1}
-            onPaneClick={() => {
-              setActiveEdgeId(null);
-            }}
-            defaultViewport={defaultViewport}
-            onMove={onViewportChange}
-            onInit={onInit}
-            proOptions={{ hideAttribution: true }}
-            className="react-flow-container"
-            onEdgeClick={(event, clickedEdge) => {
-              setActiveEdgeId((clickedEdge as any).id);
-            }}
-            key={`flow-${query.id}`}
-          >
-            <Controls />
-            <Background gap={16} color="#f8f8f8" />
-            <MiniMap zoomable pannable />
 
-            <Panel position="top-left" style={{ margin: '4px', boxShadow: 'none', border: 'none' }}>
-              <div className="p-1 bg-light" style={{ fontSize: '14px', lineHeight: '100%' }}>
-                <small>
-                  {query.tables.length > 1 && (
-                    <>
-                      {translations[language.code].queryBuilder.dragToConnect} <br />
-                    </>
-                  )}
-                  {translations[language.code].queryBuilder.generatedSQL}
-                </small>
-              </div>
-            </Panel>
-          </ReactFlow>
+          {/* Display fixed tables for DELETE/UPDATE queries */}
+          {['DELETE', 'UPDATE', 'INSERT'].includes(queryType) && (
+            <div className="fixed-tables mt-3">
+              {tables.map((table, index) => (
+                <div key={`fixed-table-${table.id}`}>
+                  <TableTypeWrapper index={index}>
+                    <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />
+                  </TableTypeWrapper>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
-
-        {/* Display fixed tables for DELETE/UPDATE queries */}
-        {['DELETE', 'UPDATE'].includes(queryType) && (
-          <div className="fixed-tables mt-3">
-            {tables.map((table, index) => (
-              <div key={`fixed-table-${table.id}`}>
-                <TableTypeWrapper index={index}>
-                  <QueryTable key={`query-table-${index}-${table.id}`} id={`query-table-${index}`} data={table} />
-                </TableTypeWrapper>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      </ReactFlowProvider>
       <QueryTabs />
       <div className="my-2">
         <QueryButton />
