@@ -150,6 +150,9 @@ export const translations = {
       scalarLabel: 'Scalar function',
       sortLabel: 'Sort order',
       sortOrderLabel: 'Sort order number',
+      nullsPositionLabel: 'Nulls position',
+      nullsFirst: 'Nulls first',
+      nullsLast: 'Nulls last',
       showLabel: 'Show',
       removeDuplicatesLabel: 'Remove Duplicates',
       criteriaLabel: 'Criteria',
@@ -187,6 +190,8 @@ export const translations = {
       sort: 'Sort the results by this column. More info: https://www.postgresql.org/docs/current/queries-order.html',
       'sort-order':
         'Numerical position for this column in multi-column sorting. More info: https://www.postgresql.org/docs/current/queries-order.html',
+      'nulls-position':
+        'Specify whether NULL values should appear first or last in the sort order. More info: https://www.postgresql.org/docs/current/queries-order.html',
       show: 'Include this column in the query results. More info: https://www.postgresql.org/docs/current/queries-select-lists.html',
       'remove-duplicates':
         'Apply DISTINCT ON to this column to remove duplicate values. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
@@ -355,6 +360,9 @@ export const translations = {
       scalarLabel: 'Skalaarfunktsioon',
       sortLabel: 'Sorteerimise suund',
       sortOrderLabel: 'Sorteerimise järjekorra number',
+      nullsPositionLabel: 'Nullide positsioon',
+      nullsFirst: 'Nullid ees',
+      nullsLast: 'Nullid lõpus',
       showLabel: 'Näita',
       removeDuplicatesLabel: 'Eemalda kordused',
       criteriaLabel: 'Kriteeriumid',
@@ -392,6 +400,8 @@ export const translations = {
       sort: 'Sorteeri tulemused selle veeru järgi. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
       'sort-order':
         'Numbriline positsioon sellele veerule mitme veeru järgi sorteerimisel. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
+      'nulls-position':
+        'Määra, kas NULL väärtused peaksid ilmuma sorteerimise alguses või lõpus. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
       show: 'Lisa see veerg päringu tulemustesse. Rohkem infot: https://www.postgresql.org/docs/current/queries-select-lists.html',
       'remove-duplicates':
         'Rakenda DISTINCT ON sellele veerule, et eemaldada duplikaadid. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',

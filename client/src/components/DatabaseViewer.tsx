@@ -6,6 +6,7 @@ import { filterTable } from '../utils/filterTable';
 import { useAppSelector } from '../hooks';
 import { DatabaseTableType } from '../types/databaseTypes';
 import { QueryTableType, QueryColumnType } from '../types/queryTypes';
+import { createEmptyColumn } from '../utils/columnUtils';
 
 export const DatabaseViewer: React.FC = () => {
   const {
@@ -75,28 +76,15 @@ export const DatabaseViewer: React.FC = () => {
         _.includes(constraint.column_name, column.column_name),
       );
 
-      // Create a QueryColumnType based on the pattern in queryReducer
-      const queryColumn: QueryColumnType = {
+      // Create a QueryColumnType using the utility function with specific overrides
+      const queryColumn = createEmptyColumn({
         id: Math.floor(Math.random() * 1000000),
         column_name: column.column_name,
         column_name_original: column.column_name,
-        column_alias: '',
-        column_filter: '',
-        column_filter_operand: '',
         column_conditions: ['', ''],
         column_filters: [{ id: 0, filter: '' }],
         column_values: [{ id: 0, value: 'DEFAULT' }],
         column_value: 'NULL',
-        column_aggregate: '',
-        column_single_line_function: '',
-        column_distinct_on: false,
-        column_sort_order: 'desc',
-        column_order_dir: true,
-        column_order_nr: null,
-        column_group_by: false,
-        column_order: false,
-        display_in_query: true,
-        filter_as_having: false,
         ordinal_position: column.ordinal_position,
         data_type: column.data_type,
         constraints: columnConstraints.map((c) => ({
@@ -113,12 +101,7 @@ export const DatabaseViewer: React.FC = () => {
         table_schema: table.table_schema,
         table_alias: queryTable.table_alias,
         table_id: tableId,
-        subquerySql: '',
-        subqueryId: 0,
-        returning: false,
-        returningOnly: false,
-        value_enabled: true,
-      };
+      });
 
       return queryColumn;
     });

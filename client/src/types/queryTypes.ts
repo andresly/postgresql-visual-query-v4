@@ -126,6 +126,7 @@ export type QueryColumnType = {
   column_sort_order: string;
   column_order_dir: boolean;
   column_order_nr: number | null;
+  column_nulls_position: string;
   column_group_by: boolean;
   column_order: boolean;
   display_in_query: boolean;

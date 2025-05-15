@@ -48,6 +48,7 @@ import { buildQuery, buildDeleteQuery, buildInsertQuery, buildUpdateQuery } from
 import { QueryType } from '../types/queryTypes';
 import { QueryActions } from '../types/actions/queryActionTypes';
 import { Reducer } from 'redux';
+import { createEmptyColumn } from '../utils/columnUtils';
 
 export const INITIAL_STATE: QueryType = {
   id: 0,
@@ -92,11 +93,7 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       };
     }
     case ADD_COLUMN: {
-      const column = _.cloneDeep(action.payload);
-
-      column.column_name = action.payload.column_name;
-      column.column_name_original = action.payload.column_name;
-      column.id = state.lastColumnId + 1;
+      const baseColumn = _.cloneDeep(action.payload);
 
       // Find existing columns with the same name
       const existingColumns = state.columns.filter(
@@ -104,42 +101,23 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
       );
 
       // Set alias if there are existing columns with the same name
-      // remove double quotes from column_alias
+      let columnAlias = '';
       if (existingColumns.length > 0) {
-        column.column_alias = `${column.column_name}_${existingColumns.length + 1}`;
-      } else {
-        column.column_alias = '';
+        columnAlias = `${baseColumn.column_name}_${existingColumns.length + 1}`;
       }
 
-      column.column_name = action.payload.column_name;
-      column.column_name_original = action.payload.column_name;
-      column.id = state.lastColumnId + 1;
-      column.column_filter = '';
-      column.column_conditions = ['', ''];
-      column.column_filters = Array.from({ length: state.filterRows }, (_, index) => ({ id: index, filter: '' }));
-      column.column_aggregate = '';
-      column.column_single_line_function = '';
-      column.column_distinct_on = false;
-      column.column_sort_order = 'desc';
-      column.column_order_dir = true;
-      column.column_order_nr = null;
-      column.column_group_by = false;
-      column.display_in_query = true;
-      column.column_filter_operand = '';
-      column.filter_as_having = false;
-      column.subquerySql = '';
-      column.subqueryId = 0;
-      column.returning = false;
-      column.returningOnly = false;
-      column.column_values = Array.from(
-        {
-          length: state.rows,
-        },
-        (_, index) => ({ id: index, value: state.defaultValue }),
-      );
-      column.column_value = 'NULL';
-      column.value_enabled = true;
+      // Create column using utility function with specific overrides
+      const column = createEmptyColumn({
+        ...baseColumn,
+        id: state.lastColumnId + 1,
+        column_name: action.payload.column_name,
+        column_name_original: action.payload.column_name,
+        column_alias: columnAlias,
+        column_filters: Array.from({ length: state.filterRows }, (_, index) => ({ id: index, filter: '' })),
+        column_values: Array.from({ length: state.rows }, (_, index) => ({ id: index, value: state.defaultValue })),
+      });
 
+      // Handle column alias for copies
       const copies = state.columns.filter(
         (stateColumn) =>
           _.isEqual(stateColumn.table_name, column.table_name) &&
@@ -165,9 +143,9 @@ export const queryReducer: Reducer<QueryType, QueryActions> = (state = INITIAL_S
 
       if (largestCopy > 0) {
         const index = largestCopy + 1;
-
         column.column_alias = `${column.column_name}_${index}`;
       }
+
       return {
         ...state,
         columns: [...state.columns, column],

@@ -161,6 +161,7 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
     { id: 'scalar', label: translations[language.code].queryBuilder.scalarLabel },
     { id: 'sort', label: translations[language.code].queryBuilder.sortLabel },
     { id: 'sort-order', label: translations[language.code].queryBuilder.sortOrderLabel },
+    { id: 'nulls-position', label: translations[language.code].queryBuilder.nullsPositionLabel },
     { id: 'show', label: translations[language.code].queryBuilder.showLabel },
     { id: 'remove-duplicates', label: translations[language.code].queryBuilder.removeDuplicatesLabel },
     { id: 'criteria', label: translations[language.code].queryBuilder.criteriaLabel },

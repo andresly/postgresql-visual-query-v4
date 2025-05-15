@@ -65,6 +65,7 @@ const squelPostgres = squel.useFlavour('postgres');
  * - Ordering by aliases
  * - Ordering by aggregate functions
  * - Ordering by expressions
+ * - NULLS FIRST/NULLS LAST positioning
  * @param column The column configuration containing ordering information
  * @param query The squel query object to modify
  */
@@ -76,12 +77,18 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     return operators.some((op) => str.includes(op));
   };
 
+  // Helper function to add nulls position to order by clause
+  const addOrderWithNullsPosition = (field: string, direction: boolean) => {
+    const orderClause = `${field} ${direction ? 'ASC' : 'DESC'}${column.column_nulls_position ? ` NULLS ${column.column_nulls_position}` : ''}`;
+    query.order(orderClause, null, { dontQuote: true });
+  };
+
   // If we have an alias, use it directly for aggregate and single-line functions
   if (
     column.column_alias.length > 0 &&
     (column.column_aggregate.length > 0 || column.column_single_line_function.length > 0)
   ) {
-    query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+    addOrderWithNullsPosition(quoteIdentifier(column.column_alias), column.column_order_dir);
     return;
   }
 
@@ -89,7 +96,7 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
   if (column.column_aggregate && column.column_aggregate.length > 0) {
     const tableOrAlias = column.table_alias || column.table_name;
     const aggField = `${column.column_aggregate}(${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)})`;
-    query.order(aggField, column.column_order_dir);
+    addOrderWithNullsPosition(aggField, column.column_order_dir);
     return;
   }
 
@@ -101,12 +108,12 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     if (isExpression(column.column_name)) {
       // For expressions, don't use quoteIdentifier on the column part and don't prepend table name
       const wrappedField = `${column.column_single_line_function}(${column.column_name})`;
-      query.order(wrappedField, column.column_order_dir);
+      addOrderWithNullsPosition(wrappedField, column.column_order_dir);
     } else {
       // For regular column names, use quoteIdentifier
       const baseExpression = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
       const wrappedField = `${column.column_single_line_function}(${baseExpression})`;
-      query.order(wrappedField, column.column_order_dir);
+      addOrderWithNullsPosition(wrappedField, column.column_order_dir);
     }
     return;
   }
@@ -116,16 +123,16 @@ const addOrder = (column: QueryColumnType, query: squel.PostgresSelect) => {
     // Check if column_name is an expression
     if (isExpression(column.column_name)) {
       // For expressions, don't prepend table name
-      query.order(column.column_name, column.column_order_dir);
+      addOrderWithNullsPosition(column.column_name, column.column_order_dir);
     } else {
       // Use table alias if present, else table_name
       const tableOrAlias = _.isEmpty(column.table_alias) ? column.table_name : column.table_alias;
       // For regular column names, use quoteIdentifier
       const orderColumn = `${quoteIdentifier(tableOrAlias)}.${quoteIdentifier(column.column_name)}`;
-      query.order(orderColumn, column.column_order_dir);
+      addOrderWithNullsPosition(orderColumn, column.column_order_dir);
     }
   } else {
-    query.order(quoteIdentifier(column.column_alias), column.column_order_dir);
+    addOrderWithNullsPosition(quoteIdentifier(column.column_alias), column.column_order_dir);
   }
 };
 
@@ -1091,7 +1098,8 @@ const addOrderByForSetQuery = (queries: QueryType[]) => {
         const columnRef =
           column.column_alias.length > 0 ? quoteIdentifier(column.column_alias) : quoteIdentifier(column.column_name);
 
-        orderByClauses.push(`${columnRef} ${column.column_order_dir ? 'ASC' : 'DESC'}`);
+        const nullsPosition = column.column_nulls_position ? ` NULLS ${column.column_nulls_position}` : '';
+        orderByClauses.push(`${columnRef} ${column.column_order_dir ? 'ASC' : 'DESC'}${nullsPosition}`);
       });
   });
 

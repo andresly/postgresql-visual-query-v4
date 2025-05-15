@@ -254,6 +254,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
       ...column,
       column_order: isOrdering,
       column_order_dir: e.target.value === 'ASC',
+      // Clear nulls position when sort order is removed
+      column_nulls_position: isOrdering ? column.column_nulls_position : '',
     };
 
     dispatch(updateColumn(column));
@@ -476,6 +478,25 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               className="form-control"
               // placeholder="Sort order number"
             />
+          </div>
+
+          {/* Nulls position */}
+          <div style={{ minHeight: '56px', padding: '0.5rem', borderBottom: '1px solid #ddd' }}>
+            <select
+              name="column_nulls_position"
+              value={data.column_nulls_position || ''}
+              onChange={(e) => {
+                const column = _.cloneDeep(data);
+                column.column_nulls_position = e.target.value;
+                dispatch(updateColumn(column));
+              }}
+              className="form-control"
+              disabled={!data.column_order}
+            >
+              <option value="" />
+              <option value="FIRST">{translations[language.code].queryBuilder.nullsFirst}</option>
+              <option value="LAST">{translations[language.code].queryBuilder.nullsLast}</option>
+            </select>
           </div>
 
           {/* Show */}

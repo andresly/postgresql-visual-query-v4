@@ -10,6 +10,7 @@ import TableColumn from './TableColumn';
 import { useAppDispatch, useAppSelector } from '../hooks';
 import { QueryTableType, QueryColumnType } from '../types/queryTypes';
 import { LanguageType } from '../types/settingsType';
+import { createEmptyColumn } from '../utils/columnUtils';
 
 interface QueryTableHeaderProps {
   data: QueryTableType;
@@ -103,42 +104,19 @@ const QueryTableBody: React.FC<QueryTableBodyProps> = React.memo(({ data, id, co
     };
   }, [debouncedResize]);
 
-  // Create a special "select all" column for the table
-  const allColumnsData: QueryColumnType = {
+  // Create a special "select all" column for the table using the utility function
+  const allColumnsData = createEmptyColumn({
     id: -1, // Special ID for the "all columns" option
     column_name: '*',
     column_name_original: '*',
-    display_in_query: true,
     table_name: data.table_name,
     table_schema: data.table_schema,
     table_alias: data.table_alias,
     table_id: data.id,
-    column_alias: '',
-    column_aggregate: '',
-    column_order: false,
-    column_order_dir: true,
-    column_order_nr: 0,
-    column_single_line_function: '',
-    column_conditions: [],
-    column_filters: [],
-    column_values: [],
-    column_value: '',
-    value_enabled: false,
-    returning: false,
-    returningOnly: false,
-    // Add missing required properties
-    column_filter: '',
-    column_filter_operand: '',
-    column_distinct_on: false,
-    column_sort_order: '',
-    column_group_by: false,
-    filter_as_having: false,
-    ordinal_position: 0,
     data_type: '*',
-    constraints: [],
-    subquerySql: '',
-    subqueryId: 0,
-  };
+    value_enabled: false,
+    // Override any other specific properties as needed
+  });
 
   return (
     <Scrollbars autoHeight autoHeightMax={350} onScroll={debouncedResize}>
