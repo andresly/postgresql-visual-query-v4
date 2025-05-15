@@ -1,6 +1,10 @@
 # Postgres Visual Query v4
 
-Application that allows users to visually create PostgreSQL SELECT queries.
+Application that allows users to visually create PostgreSQL SELECT, INSERT, UPDATE and DELETE queries.
+
+## Setup
+
+The setup for front-end is described at [client](../master/client) and back-end at [server](../master/server)
 
 ## Functionality
 
@@ -45,6 +49,7 @@ Application that allows users to visually create PostgreSQL SELECT queries.
 ### Columns
 
 * Add/remove columns to/from query
+* Add expressions
 * Add alias to column
 * Add aggregate function to column
 * Add filter condition to column
@@ -61,8 +66,7 @@ Application that allows users to visually create PostgreSQL SELECT queries.
 
 ### Join
 
-* Join table
-* Change order of joins
+* Join tables
 * Add multiple conditions to join
 
 ### Set operations
@@ -87,19 +91,18 @@ Application that allows users to visually create PostgreSQL SELECT queries.
 
 * Change the language (English, Estonian)
 * Refresh the page without losing the built query
-
-## Setup
-
-The setup for front-end is described at [client](../master/client) and back-end at [server](../master/server)
+* Save built queries for later use
+* Download generated SQL code
+* Download results as CSV files
 
 ## Pictures
 
 ### Login page
-![Login page image](../master/common/images/loginPage.png)
+![Login page image](./common/images/loginPage.png)
 
 ### Query creation page
 
-![Query creation page](../master/common/images/queryPage.png)
+![Query creation page](./common/images/queryPage.png)
 
 ## Licence
 
