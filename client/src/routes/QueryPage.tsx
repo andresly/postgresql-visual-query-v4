@@ -448,7 +448,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ tables, queryValid, 
         let mainColumnName, secondaryColumnName;
         let mainSide, secondarySide;
         // always make first table in tables row the main table
-        if (sourceTableId === firstTableId) {
+        if (sourceTableSelectedIndex === firstTableId) {
           mainTable = sourceTable;
           mainColumnName = sourceColumnName;
           mainSide = source.side;
@@ -456,7 +456,7 @@ export const QueryBuilder: React.FC<QueryBuilderProps> = ({ tables, queryValid, 
           secondaryTable = targetTable;
           secondaryColumnName = targetColumnName;
           secondarySide = target.side;
-        } else if (targetTableId === firstTableId) {
+        } else if (targetTableSelectedIndex === firstTableId) {
           mainTable = targetTable;
           mainColumnName = targetColumnName;
           mainSide = target.side;
