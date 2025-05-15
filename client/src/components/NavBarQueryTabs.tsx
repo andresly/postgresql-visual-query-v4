@@ -7,17 +7,6 @@ import { QueryType } from '../types/queryTypes';
 import { addQuery } from '../actions/queriesActions';
 import { translations } from '../utils/translations';
 
-// Add hover effect style
-const newQueryTabStyle = {
-  cursor: 'pointer',
-  background: 'transparent',
-  fontSize: '0.9rem',
-  fontWeight: 'normal',
-  // color: '#007bff',
-  outline: 'none',
-  position: 'relative',
-} as React.CSSProperties;
-
 export const NavBarQueryTabs = () => {
   const dispatch = useAppDispatch();
   const { queries, activeIndex, language } = useAppSelector((state) => {
@@ -57,7 +46,6 @@ export const NavBarQueryTabs = () => {
       <button
         type="button"
         className="nav-item nav-link text-nowrap px-2 py-1 border-0 new-query-tab"
-        style={newQueryTabStyle}
         onClick={handleAddQuery}
       >
         <strong>+ {translations[language.code]?.queryBuilder?.queryH || 'New query'}</strong>
