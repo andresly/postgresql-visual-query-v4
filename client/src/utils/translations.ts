@@ -196,7 +196,7 @@ export const translations = {
       'remove-duplicates':
         'Apply DISTINCT ON to this column to remove duplicate values. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       criteria:
-        'Filter condition for this column. Must start with an operator (=, >, <, >=, <=, LIKE, etc.). Can reference other queries using {} syntax, e.g., LIKE {Query 2}. More info: https://www.postgresql.org/docs/current/functions-comparison.html',
+        'Filter condition for this column. Must start with an operator (=, >, <, >=, <=, LIKE, etc.). Can reference other queries using {} syntax, e.g., IN {Query 2}. More info: https://www.postgresql.org/docs/current/functions-comparison.html',
       'or-1':
         'Alternative filter condition using OR logic. More info: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
       // Switch tooltips
@@ -361,8 +361,8 @@ export const translations = {
       sortLabel: 'Sorteerimise suund',
       sortOrderLabel: 'Sorteerimise järjekorra number',
       nullsPositionLabel: 'NULL-ide asukoht',
-      nullsFirst: 'Nullid ees',
-      nullsLast: 'Nullid lõpus',
+      nullsFirst: 'NULL-id alguses',
+      nullsLast: 'NULL-id lõpus',
       showLabel: 'Näita',
       removeDuplicatesLabel: 'Eemalda kordused',
       criteriaLabel: 'Kriteeriumid',
@@ -406,7 +406,7 @@ export const translations = {
       'remove-duplicates':
         'Rakenda DISTINCT ON sellele veerule, et eemaldada duplikaadid. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       criteria:
-        'Filtreerimistingimus sellele veerule. Peab algama operaatoriga (=, >, <, >=, <=, LIKE jne). Saate viidata teistele päringutele kasutades {} süntaksit, nt LIKE {Päring 2}. Rohkem infot: https://www.postgresql.org/docs/current/functions-comparison.html',
+        'Filtreerimistingimus sellele veerule. Peab algama operaatoriga (=, >, <, >=, <=, LIKE jne). Saate viidata teistele päringutele kasutades {} süntaksit, nt IN {Päring 2}. Rohkem infot: https://www.postgresql.org/docs/current/functions-comparison.html',
       'or-1':
         'Alternatiivne filtreerimistingimus kasutades OR loogikat. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
       // Switch tooltips
