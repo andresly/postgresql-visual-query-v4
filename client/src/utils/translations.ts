@@ -360,7 +360,7 @@ export const translations = {
       scalarLabel: 'Skalaarfunktsioon',
       sortLabel: 'Sorteerimise suund',
       sortOrderLabel: 'Sorteerimise järjekorra number',
-      nullsPositionLabel: 'Nullide positsioon',
+      nullsPositionLabel: 'NULL-ide asukoht',
       nullsFirst: 'Nullid ees',
       nullsLast: 'Nullid lõpus',
       showLabel: 'Näita',
