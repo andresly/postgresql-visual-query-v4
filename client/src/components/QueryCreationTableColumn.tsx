@@ -457,8 +457,8 @@ const QueryCreationTableColumn: React.FC<{ data: QueryColumnType; id: string; in
               className="form-control"
             >
               <option value="" />
-              <option value="ASC">Ascending</option>
-              <option value="DESC">Descending</option>
+              <option value="ASC">{translations[language.code].queryBuilder.ascL}</option>
+              <option value="DESC">{translations[language.code].queryBuilder.descL}</option>
             </select>
           </div>
 
