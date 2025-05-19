@@ -22,14 +22,14 @@ const tooltipStyle = {
 };
 
 // Format tooltip content to make links clickable
-const formatTooltipContent = (content: string, languageCode: 'eng' | 'est') => {
+const formatTooltipContent = (content: string, languageCode: 'eng' | 'est', psqlVersionNr: string) => {
   // Check if content exists and contains link
   if (!content || !content.includes('https://')) return content;
-
   // Split content at "More info: " to separate text and link
   const parts = content.split(/More info: |Rohkem infot: /);
   const text = parts[0];
-  const link = parts[1];
+  let link = parts[1];
+  link = link.replace('current', psqlVersionNr);
 
   return (
     <div>
@@ -133,7 +133,9 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({
 export const QueryCreationTable: React.FC<Record<string, never>> = () => {
   const dispatch = useAppDispatch();
   const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-
+  const psqlVersion = useAppSelector((state) => state.host.psqlVersion);
+  let psqlVersionNr = psqlVersion.replace('PostgreSQL ', '');
+  psqlVersionNr = psqlVersionNr.split('.')[0];
   // Retrieve state using selectors
   const { columns, distinct, limit, limitValue, withTies, language } = useAppSelector((store) => ({
     columns: _.orderBy(store.query.columns, ['filter_as_having'], ['asc']),
@@ -234,6 +236,7 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
                       label.id as keyof (typeof translations)[typeof language.code]['tooltips']
                     ],
                     language.code as 'eng' | 'est',
+                    psqlVersionNr,
                   )}
                 </CustomTooltip>
               </div>
@@ -289,7 +292,11 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
               toggleTooltip={toggleTooltip}
               position="top"
             >
-              {formatTooltipContent(translations[language.code].tooltips.distinct, language.code as 'eng' | 'est')}
+              {formatTooltipContent(
+                translations[language.code].tooltips.distinct,
+                language.code as 'eng' | 'est',
+                psqlVersionNr,
+              )}
             </CustomTooltip>
           </div>
 
@@ -302,7 +309,11 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
               onChange={() => dispatch(switchLimit())}
             />
             <CustomTooltip id="limit-switch" activeTooltip={activeTooltip} toggleTooltip={toggleTooltip} position="top">
-              {formatTooltipContent(translations[language.code].tooltips.limit, language.code as 'eng' | 'est')}
+              {formatTooltipContent(
+                translations[language.code].tooltips.limit,
+                language.code as 'eng' | 'est',
+                psqlVersionNr,
+              )}
             </CustomTooltip>
           </div>
 
@@ -324,7 +335,11 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
                 toggleTooltip={toggleTooltip}
                 position="top"
               >
-                {formatTooltipContent(translations[language.code].tooltips.limitValueD, language.code as 'eng' | 'est')}
+                {formatTooltipContent(
+                  translations[language.code].tooltips.limitValueD,
+                  language.code as 'eng' | 'est',
+                  psqlVersionNr,
+                )}
               </CustomTooltip>
 
               <div className="d-flex align-items-center ml-2" style={{ position: 'relative' }}>
@@ -341,7 +356,11 @@ export const QueryCreationTable: React.FC<Record<string, never>> = () => {
                   toggleTooltip={toggleTooltip}
                   position="top"
                 >
-                  {formatTooltipContent(translations[language.code].tooltips.withTies, language.code as 'eng' | 'est')}
+                  {formatTooltipContent(
+                    translations[language.code].tooltips.withTies,
+                    language.code as 'eng' | 'est',
+                    psqlVersionNr,
+                  )}
                 </CustomTooltip>
               </div>
             </InputGroup>
