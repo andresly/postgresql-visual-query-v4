@@ -191,7 +191,7 @@ export const translations = {
       'sort-order':
         'Numerical position for this column in multi-column sorting. More info: https://www.postgresql.org/docs/current/queries-order.html',
       'nulls-position':
-        'Specify whether NULL values should appear first or last in the sort order. More info: https://www.postgresql.org/docs/current/queries-order.html',
+        'Specify whether nulls should appear first or last in the sort results. More info: https://www.postgresql.org/docs/current/queries-order.html',
       show: 'Include this column in the query results. More info: https://www.postgresql.org/docs/current/queries-select-lists.html',
       'remove-duplicates':
         'Apply DISTINCT ON to this column to remove duplicate values. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
