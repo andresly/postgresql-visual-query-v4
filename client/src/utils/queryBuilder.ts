@@ -448,7 +448,15 @@ const addColumnsToQuery = (
         if (condition && condition.trim() !== '') {
           // Build a fully qualified column reference
           let colRef = '';
-          if (table_alias && !_.isEmpty(table_alias)) {
+
+          // Check if this is an expression (contains operators)
+          const isExpression = /[+\-*/||]/.test(column_name);
+
+          if (isExpression) {
+            // For expressions, use the expression directly with table reference
+            const tableRef = table_alias || table_name;
+            colRef = `${quoteIdentifier(tableRef)}.${column_name}`;
+          } else if (table_alias && !_.isEmpty(table_alias)) {
             colRef = `${quoteIdentifier(table_alias)}.${quoteIdentifier(column_name)}`;
           } else {
             colRef = `${quoteIdentifier(table_name)}.${quoteIdentifier(column_name)}`;
