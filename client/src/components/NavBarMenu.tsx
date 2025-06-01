@@ -75,7 +75,7 @@ export const NavBarMenu: React.FC<NavBarMenuProps> = ({ language }) => {
       <div className="col-auto pl-0 d-flex align-items-center">
         <Row form className="align-items-center">
           {/*TODO: Add change query type back and fix errors*/}
-          <Label for="changeQueryType">Statement type:</Label>
+          <Label for="changeQueryType">{translations[language.code].navBar.statementType}:</Label>
           <Col md={3}>
             <Input bsSize="sm" type="select" id="changeQueryType" onChange={handleTypeChange} value={queryType}>
               <option value="SELECT">SELECT</option>

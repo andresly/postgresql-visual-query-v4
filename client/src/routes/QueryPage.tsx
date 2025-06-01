@@ -54,6 +54,7 @@ import { logout } from '../actions/hostActions';
 export const SideBar: React.FC = () => {
   const dispatch = useAppDispatch();
   const language = useAppSelector((state) => state.settings.language);
+  const dbName = useAppSelector((state) => state.host.database);
   return (
     <div className="d-flex flex-column w-100">
       <div className="">
@@ -65,6 +66,9 @@ export const SideBar: React.FC = () => {
       </div>
       <SchemaSelector />
       <SearchBar />
+      <h5 className="mt-2">
+        {translations[language.code].sideBar.database}: {dbName}
+      </h5>
       <h5 className="mt-2">{translations[language.code].sideBar.tablesH}</h5>
       <div className="d-flex flex-fill">
         <DatabaseViewer />

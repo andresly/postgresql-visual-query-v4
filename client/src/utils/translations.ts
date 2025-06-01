@@ -30,6 +30,11 @@ export const translations = {
       tablesH: 'Tables',
       schemaH: 'Schema',
       searchPh: 'Search',
+      database: 'Database',
+      BASE_TABLE: 'Base Table',
+      VIEW: 'View',
+      FOREIGN: 'Foreign Table',
+      MATERIALIZED_VIEW: 'Materialized View',
     },
     saveQuery: {
       buttonText: 'Save Query',
@@ -149,7 +154,7 @@ export const translations = {
       aggregateLabel: 'Aggregate function',
       scalarLabel: 'Scalar function',
       sortLabel: 'Sort order',
-      sortOrderLabel: 'Sort order number',
+      sortOrderLabel: 'Position in the sort order',
       nullsPositionLabel: 'Nulls position',
       nullsFirst: 'Nulls first',
       nullsLast: 'Nulls last',
@@ -189,14 +194,14 @@ export const translations = {
         'Functions that operate on a single row and return a single value, like UPPER, LOWER, LENGTH. More info: https://www.postgresql.org/docs/current/functions.html',
       sort: 'Sort the results by this column. More info: https://www.postgresql.org/docs/current/queries-order.html',
       'sort-order':
-        'Numerical position for this column in multi-column sorting. More info: https://www.postgresql.org/docs/current/queries-order.html',
+        'What position (counting from the left) should sorting by this column have in the sort order? More info: https://www.postgresql.org/docs/current/queries-order.html',
       'nulls-position':
         'Specify whether nulls should appear first or last in the sort results. More info: https://www.postgresql.org/docs/current/queries-order.html',
       show: 'Include this column in the query results. More info: https://www.postgresql.org/docs/current/queries-select-lists.html',
       'remove-duplicates':
         'Apply DISTINCT ON to this column to remove duplicate values. More info: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       criteria:
-        'Filter condition for this column. Must start with an operator (=, >, <, >=, <=, LIKE, etc.). Can reference other queries using {} syntax, e.g., IN {Query 2}. More info: https://www.postgresql.org/docs/current/functions-comparison.html',
+        'Search condition for this column. Must start with an operator (e.g., =, >, <, >=, <=, LIKE). May include logical operators AND and OR (e.g., >1 AND <10). You can reference other queries using {}, e.g., IN {Query 2}. More info: https://www.postgresql.org/docs/current/functions-comparison.html',
       'or-1':
         'Alternative filter condition using OR logic. More info: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
       // Switch tooltips
@@ -208,6 +213,9 @@ export const translations = {
         'Maximum number of rows to return. More info: https://www.postgresql.org/docs/current/queries-limit.html',
       withTies:
         'Include additional rows that tie with the last row, when using ORDER BY. More info: https://www.postgresql.org/docs/current/queries-limit.html',
+    },
+    navBar: {
+      statementType: 'Statement Type',
     },
   },
   est: {
@@ -240,6 +248,11 @@ export const translations = {
       tablesH: 'Tabelid',
       schemaH: 'Skeem',
       searchPh: 'Otsi',
+      database: 'Andmebaas',
+      BASE_TABLE: 'BAASTABEL',
+      VIEW: 'VAADE',
+      FOREIGN: 'VÄLINE',
+      MATERIALIZED_VIEW: 'MATERIALISEERITUD VAADE',
     },
     saveQuery: {
       buttonText: 'Salvesta päring',
@@ -359,13 +372,13 @@ export const translations = {
       aggregateLabel: 'Kokkuvõttefunktsioon',
       scalarLabel: 'Skalaarfunktsioon',
       sortLabel: 'Sorteerimise suund',
-      sortOrderLabel: 'Sorteerimise järjekorra number',
+      sortOrderLabel: 'Sorteerimise järjekord',
       nullsPositionLabel: 'NULL-ide asukoht',
       nullsFirst: 'NULL-id alguses',
       nullsLast: 'NULL-id lõpus',
       showLabel: 'Näita',
       removeDuplicatesLabel: 'Eemalda kordused',
-      criteriaLabel: 'Kriteeriumid',
+      criteriaLabel: 'Otsingutingimus',
       orLabel: 'Või',
       selectTableToStart: 'Vali vasakust veerust tabel, et alustada päringu loomist',
       float: 'Kinnita ekraanile',
@@ -391,7 +404,7 @@ export const translations = {
       column:
         "Veerg või avaldis, mis lisatakse tulemustesse. Võite kasutada matemaatilisi operaatoreid ja funktsioone. Näide: (hind * kogus) või CONCAT(eesnimi, ' ', perekonnanimi). Rohkem infot: https://www.postgresql.org/docs/current/sql-expressions.html",
       alias:
-        'Valikuline nimi, mis antakse veerule päringu tulemustes. Lihtsustab veerule viitamist päringu teistes osades. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
+        'Valikuline nimi, mis antakse veerule päringu tulemuses. Lihtsustab veerule viitamist päringu teistes osades. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-TABLE-ALIASES',
       table: 'Selle veeru lähtetabel. Rohkem infot: https://www.postgresql.org/docs/current/ddl-basics.html',
       aggregate:
         'Funktsioonid, mis töötavad mitme reaga ja tagastavad ühe tulemuse, nagu SUM, AVG, COUNT. NB! Väärtuse lisamisel rakendatakse vajalikele veergudele GROUP BY automaatselt. Rohkem infot: https://www.postgresql.org/docs/current/functions-aggregate.html',
@@ -399,14 +412,14 @@ export const translations = {
         'Funktsioonid, mis töötavad ühe reaga ja tagastavad ühe väärtuse, nagu UPPER, LOWER, LENGTH. Rohkem infot: https://www.postgresql.org/docs/current/functions.html',
       sort: 'Sorteeri tulemused selle veeru järgi. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
       'sort-order':
-        'Numbriline positsioon sellele veerule mitme veeru järgi sorteerimisel. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
+        'Mitmendal kohal vasakult lugedes peab selle veeru järgi sorteerimine olema sorteerimiseeskirjas. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
       'nulls-position':
         'Määra, kas NULL väärtused peaksid ilmuma sorteerimise alguses või lõpus. Rohkem infot: https://www.postgresql.org/docs/current/queries-order.html',
       show: 'Lisa see veerg päringu tulemustesse. Rohkem infot: https://www.postgresql.org/docs/current/queries-select-lists.html',
       'remove-duplicates':
-        'Rakenda DISTINCT ON sellele veerule, et eemaldada duplikaadid. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
+        'Rakenda DISTINCT ON sellele veerule, et eemaldada kordused. Rohkem infot: https://www.postgresql.org/docs/current/sql-select.html#SQL-DISTINCT',
       criteria:
-        'Filtreerimistingimus sellele veerule. Peab algama operaatoriga (=, >, <, >=, <=, LIKE jne). Saate viidata teistele päringutele kasutades {} süntaksit, nt IN {Päring 2}. Rohkem infot: https://www.postgresql.org/docs/current/functions-comparison.html',
+        'Otsingutingimus selle veeru järgi. Peab algama operaatoriga (nt =, >, <, >=, <=, LIKE). Võib sisaldada loogikaoperaatoreid AND ja OR (nt >1 AND <10). Saate viidata teistele päringutele kasutades {}, nt IN {Päring 2}. Rohkem infot: https://www.postgresql.org/docs/current/functions-comparison.html',
       'or-1':
         'Alternatiivne filtreerimistingimus kasutades OR loogikat. Rohkem infot: https://www.postgresql.org/docs/current/queries-table-expressions.html#QUERIES-WHERE',
       // Switch tooltips
@@ -418,6 +431,9 @@ export const translations = {
         'Maksimaalne tagastatavate ridade arv. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
       withTies:
         'Kaasa täiendavad read, mis on seotud viimase reaga, kui kasutatakse ORDER BY. Rohkem infot: https://www.postgresql.org/docs/current/queries-limit.html',
+    },
+    navBar: {
+      statementType: 'Lause tüüp',
     },
   },
 };
